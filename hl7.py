@@ -25,32 +25,39 @@ The library could eventually also contain the ability to create
 HL7 v2.x messages
 
 As an example, let's create a HL7 message:
+
 >>> message = 'MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4\r'
 >>> message += 'PID|||555-44-4444||EVERYWOMAN^EVE^E^^^^L|JONES|196203520|F|||153 FERNWOOD DR.^^STATESVILLE^OH^35292||(206)3345232|(206)752-121||||AC555444444||67-A4335^OH^20030520\r'
 >>> message += 'OBR|1|845439^GHH OE|1045813^GHH LAB|1554-5^GLUCOSE|||200202150730||||||||555-55-5555^PRIMARY^PATRICIA P^^^^MD^^LEVEL SEVEN HEALTHCARE, INC.|||||||||F||||||444-44-4444^HIPPOCRATES^HOWARD H^^^^MD\r'
 >>> message += 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
 
 We call the hl7.parse() command with string message:
+
 >>> h = parse(message)
 
 We get a n-dimensional list back:
+
 >>> type(h)
 <type 'list'>
 
 There were 4 segments (MSH, PID, OBR, OBX):
+
 >>> len(h)
 4
 
 We can extract individual elements of the message:
+
 >>> h[3][3][1]
 'GLUCOSE'
 >>> h[3][5][1]
 '182'
 
 We can look up segments by the segment identifer:
+
 >>> pid = segment('PID', h)
 >>> pid[3][0]
 '555-44-4444'
+
 
 Project site: http://www.bitbucket.org/johnpaulett/python-hl7/
 
@@ -60,7 +67,7 @@ HL7 References:
  * http://www.hl7.org/
 """
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 __author__ = 'John Paulett'
 __email__ = 'john -at- 7oars.com'
 __license__ = 'BSD'
