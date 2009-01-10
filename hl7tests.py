@@ -24,6 +24,7 @@ class ParsingTestCase(unittest.TestCase):
 
     def test_parse(self):
         h = hl7.parse(self.message)
+        self.assertEqual(5, len(h))
         self.assertEqual('MSH', h[0][0][0])
         self.assertEqual('OBX', h[3][0][0])
         self.assertEqual(['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN'], h[3][3])
