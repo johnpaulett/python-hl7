@@ -18,11 +18,11 @@ is an XML-based format).
 
 python-hl7 currently only parses HL7 version 2.x messages into
 an easy to access data structure. The current implementation
-does not complete follow the HL7 specification, but is good enough
+does not completely follow the HL7 specification, but is good enough
 to parse the most commonly seen HL7 messages. The library could 
-potentially evolution into being fully complainant with the spec.
+potentially evolve into being fully complainant with the spec.
 The library could eventually also contain the ability to create
-HL7 v2.x messages
+HL7 v2.x messages.
 
 As an example, let's create a HL7 message:
 
