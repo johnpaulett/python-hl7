@@ -22,7 +22,7 @@ setup(
     author = _hl7.__author__,
     author_email = _hl7.__email__,
     url = _hl7.__url__,
-    license = 'BSD',
+    license = _hl7.__license__,
     platforms = ['POSIX', 'Windows'],
     keywords = ['HL7', 'Health Level 7', 'healthcare', 'health care', 'medical record'],
     classifiers = [
@@ -37,6 +37,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     py_modules = ['hl7'],
-    test_suite = 'hl7tests.suite',
+    test_suite = 'nose.collector',
     zip_safe=True,
 )
