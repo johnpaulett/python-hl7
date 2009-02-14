@@ -127,3 +127,21 @@ def _split(text, delims):
     ## into sub-lists.
     return [_split(x, delims[1:]) for x in text.split(delims[0])]
 
+class Container(list):
+    """Abstract root class for the parts of the HL7 message."""
+    pass
+    
+class Message(Container):
+    # field, component, repetition, escape, subcomponent
+    def __getitem__(self, key):
+        return None
+
+class Segment(Container):
+    pass
+
+class Field(Container):
+    pass
+
+class Component(Container):
+    pass
+
