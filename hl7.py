@@ -103,45 +103,98 @@ def segments(segment_id, message):
     ## Compare segment_id to the very first string in each segment, returning
     ## all segments that match
     return [segment for segment in message if segment[0][0] == segment_id]
-    
-def parse(line, delims = ('\r','|','^')):
-    """Returns a n-dimensional list of the HL7 message that allows indexed 
-    access of the elements (``n = len(delims)``).
+
+def parse(line):
+    """Returns a instance of the Message class that allows indexed access
+    to the data elements. 
     
     >>> parse('a|b^4|c\re|f|')
     [[['a'], ['b', '4'], ['c']], [['e'], ['f'], ['']]]
     """
-    ## We make delims' default an immutable tuple to avoid issues of a 
-    ## mutable default parameter
-    return _split(line.strip(), delims)
+    ## The method for parsing the message
+    plan = ParsePlan()
+    ## Start spliting the methods based upon the ParsePlan
+    return _split(line.strip(), plan)
 
-def _split(text, delims):
+def _split(text, plan):
     """Recursive function to split the *text* into an n-deep list, where 
-    ``n = len(delims)``. 
+    ``n = len(parts)``. 
     """
     ## Base condition, if we have used up all the delimiters
-    if not delims:
+    if not plan:
         return text
     
-    ## Recurse so that the delims are used in order to split the data
-    ## into sub-lists.
-    return [_split(x, delims[1:]) for x in text.split(delims[0])]
+    ## Recurse so that the sub plans are used in order to split the data
+    ## into the approriate type as defined by the current plan.
+    data = [_split(x, plan.next()) for x in text.split(plan.separator)]
+    ## Return the instance of the current message part according
+    ## to the plan
+    return plan.container(data)
 
 class Container(list):
     """Abstract root class for the parts of the HL7 message."""
-    pass
+    def __init__(self, separator, sequence=[]):
+        ## Initialize the list object, optionally passing in the
+        ## sequence.  Since list([]) == [], using the default
+        ## parameter will not cause any issues.
+        super(Container, self).__init__(sequence)
+        self.separator = separator            
+    
+    def __str__(self):
+        ## Join a the child containers into a single string, separated
+        ## by the self.separator.  This method acts recursively, calling
+        ## the children's __str__ method.  Thus str() is the approriate
+        ## method for turning the python-hl7 representation of HL7 into
+        ## a standard string
+        return self.separator.join((str(x) for x in self))
     
 class Message(Container):
-    # field, component, repetition, escape, subcomponent
-    def __getitem__(self, key):
-        return None
+    """Representation of an HL7 message. It contains a list
+    of :cls:`hl7.Segment` instances.
+    """
+    #def __getitem__(self, key):
+    #    return None
 
 class Segment(Container):
-    pass
+    """Second level of an HL7 message, which represents an HL7 Segment.
+    Traditionally this is a line of a message that ends with a carriage
+    return and is separated by pipes. It contains a list of
+    :cls:`hl7.Field` instances.
+    """
 
 class Field(Container):
-    pass
+    """Third level of an HL7 message, that traditionally is surrounded
+    by pipes and separated by carets. It contains a list of strings.
+    """
+   
+class ParsePlan(object):
+    # field, component, repetition, escape, subcomponent
+    # TODO implement component, repetition, escape, and subcomponent
 
-class Component(Container):
-    pass
+    def __init__(self, separators=('\r', '|', '^'), containers=(Message, Segment, Field)):
+        # TODO test to see performance implications of the assertion
+        # since we generate the ParsePlan, this should never be in
+        # invalid state
+        assert len(containers) == len(separators)
+        self.separators = separators
+        self.containers = containers
+        
+    @property
+    def separator(self):
+        """Return the current separator to use based on the plan."""
+        return self.separators[0]
 
+    def container(self, data):
+        """Return an instance of the approriate container for the *data*
+        as specified by the current plan.
+        """
+        return self.containers[0](self.separator, data)
+    
+    def next(self):
+        """Generate the next level of the plan (essentially generates
+        a copy of this plan with the level of the container and the
+        seperator starting at the next index.
+        """
+        if len(self.separators) > 1:
+            return  self.__class__(self.separators[1:], self.containers[1:])
+        return None

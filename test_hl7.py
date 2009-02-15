@@ -6,10 +6,6 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-import nose
-import doctest
-from nose import with_setup
-
 import hl7
 
 ## Sample message from HL7 Normative Edition
@@ -26,7 +22,12 @@ def test_parse():
     assert h[0][0][0] == 'MSH'
     assert h[3][0][0] == 'OBX'
     assert h[3][3] == ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
-     
+    
+def test_parse_str():
+    h = hl7.parse(sample_hl7)
+    assert str(h) == sample_hl7.strip()
+    assert str(h[3][3]) == '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
+         
 def test_ishl7():
     assert hl7.ishl7(sample_hl7)
 
@@ -50,6 +51,23 @@ def test_segment():
     s = hl7.segment('OBX', hl7.parse(sample_hl7))
     assert s[0:3] == [['OBX'], ['1'], ['SN']]
 
+#####################
+def test_container_str():
+    c = hl7.Container('|')
+    c.extend(['1', 'b', 'data'])
+    assert str(c) == '1|b|data'
+
+def test_parsing_classes():
+    h = hl7.parse(sample_hl7)
+    
+    assert isinstance(h, hl7.Message)
+    assert isinstance(h[3], hl7.Segment)
+    assert isinstance(h[3][0], hl7.Field)
+    assert isinstance(h[3][0][0], str)
+   
+
 if __name__ == '__main__':
-    doctest.testmod(hl7)
+    import doctest
+    import nose
+    #doctest.testmod(hl7)
     nose.main()
