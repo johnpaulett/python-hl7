@@ -18,16 +18,16 @@ sample_hl7 = '\r'.join(['MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^
                         'OBX|2|FN|1553-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'])
 
 def test_parse():
-    h = hl7.parse(sample_hl7)
-    assert 5 == len(h)
-    assert h[0][0][0] == 'MSH'
-    assert h[3][0][0] == 'OBX'
-    assert h[3][3] == ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
+    msg = hl7.parse(sample_hl7)
+    assert len(msg) == 5
+    assert msg[0][0][0] == 'MSH'
+    assert msg[3][0][0] == 'OBX'
+    assert msg[3][3] == ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
     
 def test_parse_str():
-    h = hl7.parse(sample_hl7)
-    assert str(h) == sample_hl7.strip()
-    assert str(h[3][3]) == '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
+    msg = hl7.parse(sample_hl7)
+    assert str(msg) == sample_hl7.strip()
+    assert str(msg[3][3]) == '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
          
 def test_ishl7():
     assert hl7.ishl7(sample_hl7)
@@ -59,12 +59,12 @@ def test_container_str():
     assert str(c) == '1|b|data'
 
 def test_parsing_classes():
-    h = hl7.parse(sample_hl7)
+    msg = hl7.parse(sample_hl7)
     
-    assert isinstance(h, hl7.Message)
-    assert isinstance(h[3], hl7.Segment)
-    assert isinstance(h[3][0], hl7.Field)
-    assert isinstance(h[3][0][0], str)
+    assert isinstance(msg, hl7.Message)
+    assert isinstance(msg[3], hl7.Segment)
+    assert isinstance(msg[3][0], hl7.Field)
+    assert isinstance(msg[3][0][0], str)
 
 def test_create_parse_plan():
     plan = hl7.create_parse_plan(sample_hl7)
@@ -102,6 +102,7 @@ def test_nonstandard_separators():
     assert str(msg) == nonstd
     assert len(msg) == 2
     assert msg[1][5] == ['EVERYWOMAN', 'EVE', 'E', '', '', 'L']
+
         
 if __name__ == '__main__':
     import doctest
