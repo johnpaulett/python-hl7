@@ -119,10 +119,10 @@ def parse(line):
     return _split(strmsg, plan)
 
 def _split(text, plan):
-    """Recursive function to split the *text* into an n-deep list, where 
-    ``n = len(parts)``. 
+    """Recursive function to split the *text* into an n-deep list,
+    according to the :cls:`hl7._ParsePlan`. 
     """
-    ## Base condition, if we have used up all the delimiters
+    ## Base condition, if we have used up all the plans
     if not plan:
         return text
     
@@ -214,6 +214,11 @@ class _ParsePlan(object):
         a copy of this plan with the level of the container and the
         seperator starting at the next index.
         """
-        if len(self.separators) > 1:
+        if len(self.containers) > 1:
+            ## Return a new instance of this class using the tails of
+            ## the separators and containers lists. Use self.__class__()
+            ## in case :cls:`hl7.ParsePlan` is subclassed
             return  self.__class__(self.separators[1:], self.containers[1:])
+        ## When we have no separators and containers left, return None,
+        ## which indicates that we have nothing further.
         return None
