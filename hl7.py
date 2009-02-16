@@ -67,7 +67,7 @@ HL7 References:
  * http://www.hl7.org/
 """
 
-__version__ = '0.0.3'
+__version__ = '0.1.0a'
 __author__ = 'John Paulett'
 __email__ = 'john -at- 7oars.com'
 __license__ = 'BSD'
@@ -111,10 +111,12 @@ def parse(line):
     >>> parse('a|b^4|c\re|f|')
     [[['a'], ['b', '4'], ['c']], [['e'], ['f'], ['']]]
     """
+    ## Strip out unnecessary whitespace
+    strmsg = line.strip()
     ## The method for parsing the message
-    plan = ParsePlan()
+    plan = create_parse_plan(strmsg)
     ## Start spliting the methods based upon the ParsePlan
-    return _split(line.strip(), plan)
+    return _split(strmsg, plan)
 
 def _split(text, plan):
     """Recursive function to split the *text* into an n-deep list, where 
@@ -167,11 +169,28 @@ class Field(Container):
     by pipes and separated by carets. It contains a list of strings.
     """
    
-class ParsePlan(object):
+def create_parse_plan(strmsg):
+    """Creates a plan on how to parse the HL7 message according to
+    the details stored within the message.
+    """
+    ## We will always use a carriage return to separate segments
+    separators = ['\r']
+    ## Parse out the other separators from the characters following
+    ## MSH.  Currently we only go two-levels deep and ignore some
+    ## details.
+    separators.extend(list(strmsg[3:5]))
+    ## The ordered list of containers to create
+    containers = [Message, Segment, Field]
+    return _ParsePlan(separators, containers)
+    
+class _ParsePlan(object):
+    """Details on how to parse an HL7 message. Typically this object
+    should be created via :func:`hl7.create_parse_plan`
+    """
     # field, component, repetition, escape, subcomponent
     # TODO implement component, repetition, escape, and subcomponent
 
-    def __init__(self, separators=('\r', '|', '^'), containers=(Message, Segment, Field)):
+    def __init__(self, separators, containers):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state

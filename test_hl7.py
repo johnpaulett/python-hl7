@@ -7,6 +7,7 @@
 # you should have received as part of this distribution.
 
 import hl7
+from hl7 import *
 
 ## Sample message from HL7 Normative Edition
 ## http://healthinfo.med.dal.ca/hl7intro/CDA_R2_normativewebedition/help/v3guide/v3guide.htm#v3gexamples
@@ -64,8 +65,44 @@ def test_parsing_classes():
     assert isinstance(h[3], hl7.Segment)
     assert isinstance(h[3][0], hl7.Field)
     assert isinstance(h[3][0][0], str)
-   
 
+def test_create_parse_plan():
+    plan = hl7.create_parse_plan(sample_hl7)
+
+    assert plan.separators == ['\r', '|', '^']
+    assert plan.containers == [Message, Segment, Field]
+
+def test_parse_plan():
+    plan = hl7.create_parse_plan(sample_hl7)
+
+    assert plan.separator == '\r'
+    con = plan.container([1, 2])
+    assert isinstance(con, Message)
+    assert con == [1, 2]
+    assert con.separator == '\r'
+
+def test_parse_plan_next():
+    plan = hl7.create_parse_plan(sample_hl7)
+
+    n1 = plan.next()
+    assert n1.separators == ['|', '^']
+    assert n1.containers == [Segment, Field]
+    
+    n2 = n1.next()
+    assert n2.separators == ['^']
+    assert n2.containers == [Field]
+
+    n3 = n2.next()
+    assert n3 is None
+    
+def test_nonstandard_separators():
+    nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
+    msg = hl7.parse(nonstd)
+
+    assert str(msg) == nonstd
+    assert len(msg) == 2
+    assert msg[1][5] == ['EVERYWOMAN', 'EVE', 'E', '', '', 'L']
+        
 if __name__ == '__main__':
     import doctest
     import nose
