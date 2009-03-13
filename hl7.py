@@ -24,6 +24,15 @@ potentially evolve into being fully complainant with the spec.
 The library could eventually also contain the ability to create
 HL7 v2.x messages.
 
+python-hl7 parses HL7 into a series of wrapped hl7.Container objects.
+The there are specific subclasses of hl7.Container depending on
+the part of the HL7 message. The hl7.Container message itself
+is a subclass of a Python list, thus we can easily access the
+HL7 message as an n-dimensional list. Specically, the subclasses of
+hl7.Container, in order, are hl7.Message, hl7.Segment, and hl7.Field.
+Eventually additional containers will be added to fully support
+the HL7 specification.
+
 As an example, let's create a HL7 message:
 
 >>> message = 'MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4\r'
@@ -31,19 +40,41 @@ As an example, let's create a HL7 message:
 >>> message += 'OBR|1|845439^GHH OE|1045813^GHH LAB|1554-5^GLUCOSE|||200202150730||||||||555-55-5555^PRIMARY^PATRICIA P^^^^MD^^LEVEL SEVEN HEALTHCARE, INC.|||||||||F||||||444-44-4444^HIPPOCRATES^HOWARD H^^^^MD\r'
 >>> message += 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
 
-We call the hl7.parse() command with string message:
+We call the `hl7.parse()` command with string message:
 
 >>> h = parse(message)
 
-We get a n-dimensional list back:
+We get a hl7.Message object, wrapping a series of hl7.Segment
+objects.
 
 >>> type(h)
-<type 'list'>
+<class 'hl7.Message'>
+
+We can always get the HL7 message back.
+
+>>> str(h) == message.strip()
+True
+
+Interestingly, this hl7.Message can be accessed as a list.
+
+>>> isinstance(h, list)
+True
 
 There were 4 segments (MSH, PID, OBR, OBX):
 
 >>> len(h)
 4
+
+We can extract the hl7.Segment from the hl7.Message instance.
+
+>>> h[3]
+[['OBX'], ['1'], ['SN'], ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN'], [''], ['', '182'], ['mg/dl'], ['70_105'], ['H'], [''], [''], ['F']]
+
+We can easily reconstitute this segment as HL7, using the
+appopriate separators.
+
+>>> str(h[3])
+'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
 
 We can extract individual elements of the message:
 
@@ -65,6 +96,8 @@ HL7 References:
  * http://en.wikipedia.org/wiki/HL7
  * http://nule.org/wp/?page_id=99
  * http://www.hl7.org/
+ * http://openmrs.org/wiki/HL7
+ * http://comstock-software.com/blogs/ifaces/2007/01/hl7-message-wrappers.html 
 """
 
 __version__ = '0.1.0a'
@@ -107,9 +140,11 @@ def segments(segment_id, message):
 def parse(line):
     """Returns a instance of the Message class that allows indexed access
     to the data elements. 
-    
-    >>> parse('a|b^4|c\re|f|')
-    [[['a'], ['b', '4'], ['c']], [['e'], ['f'], ['']]]
+
+    >>> message = 'MSH|^~\&|GHH LAB|ELAB-3|'
+    >>> h = parse(message)
+    >>> str(h) == message
+    True
     """
     ## Strip out unnecessary whitespace
     strmsg = line.strip()

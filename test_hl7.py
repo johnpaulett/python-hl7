@@ -52,7 +52,6 @@ def test_segment():
     s = hl7.segment('OBX', hl7.parse(sample_hl7))
     assert s[0:3] == [['OBX'], ['1'], ['SN']]
 
-#####################
 def test_container_str():
     c = hl7.Container('|')
     c.extend(['1', 'b', 'data'])
@@ -103,7 +102,10 @@ def test_nonstandard_separators():
     assert len(msg) == 2
     assert msg[1][5] == ['EVERYWOMAN', 'EVE', 'E', '', '', 'L']
 
-        
+def test_parse_then_reconstitute():
+    msg = hl7.parse(sample_hl7)
+    assert str(msg) == sample_hl7.strip()
+    
 if __name__ == '__main__':
     import doctest
     import nose
