@@ -223,7 +223,7 @@ class _ParsePlan(object):
     should be created via :func:`hl7.create_parse_plan`
     """
     # field, component, repetition, escape, subcomponent
-    # TODO implement component, repetition, escape, and subcomponent
+    # TODO implement escape, and subcomponent
 
     def __init__(self, separators, containers):
         # TODO test to see performance implications of the assertion
