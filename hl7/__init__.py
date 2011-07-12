@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2009 John Paulett (john -at- 7oars.com)
-# All rights reserved.
-#
-# This software is licensed as described in the file COPYING, which
-# you should have received as part of this distribution.
-
 """Simple library for parsing messages of Health Level 7 (HL7)
 version 2.x. 
 
@@ -102,9 +95,9 @@ HL7 References:
 
 __version__ = '0.1.1'
 __author__ = 'John Paulett'
-__email__ = 'john -at- 7oars.com'
+__email__ = 'john -at- paulett.org'
 __license__ = 'BSD'
-__copyright__ = 'Copyright 2009, John Paulett <john -at- 7oars.com>'
+__copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
 __url__ = 'http://www.bitbucket.org/johnpaulett/python-hl7/wiki/Home'
 
 def ishl7(line):
