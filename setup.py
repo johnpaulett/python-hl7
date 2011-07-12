@@ -37,7 +37,7 @@ setup(
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    py_modules = ['hl7'],
+    packages = ['hl7'],
     test_suite = 'nose.collector',
     zip_safe=True,
 )
