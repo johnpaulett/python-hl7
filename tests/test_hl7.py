@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import hl7
-from hl7 import *
+from hl7 import Message, Segment, Field
 
 ## Sample message from HL7 Normative Edition
 ## http://healthinfo.med.dal.ca/hl7intro/CDA_R2_normativewebedition/help/v3guide/v3guide.htm#v3gexamples
