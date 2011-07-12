@@ -89,9 +89,6 @@ We can look up segments by the segment identifier::
     '555-44-4444'
 
 
-
-Project site: http://www.bitbucket.org/johnpaulett/python-hl7/wiki/Home
-
 Contents
 --------
 
