@@ -32,62 +32,96 @@ the HL7 specification.
 Usage
 -----
 
-As an example, let's create a HL7 message::
+As an example, let's create a HL7 message:
+
+.. doctest::
 
     >>> message = 'MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4\r'
     >>> message += 'PID|||555-44-4444||EVERYWOMAN^EVE^E^^^^L|JONES|196203520|F|||153 FERNWOOD DR.^^STATESVILLE^OH^35292||(206)3345232|(206)752-121||||AC555444444||67-A4335^OH^20030520\r'
     >>> message += 'OBR|1|845439^GHH OE|1045813^GHH LAB|1554-5^GLUCOSE|||200202150730||||||||555-55-5555^PRIMARY^PATRICIA P^^^^MD^^LEVEL SEVEN HEALTHCARE, INC.|||||||||F||||||444-44-4444^HIPPOCRATES^HOWARD H^^^^MD\r'
-    >>> message += 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
+    >>> message += 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
 
-We call the `hl7.parse()` command with string message::
+We call the :py:func:`hl7.parse` command with string message:
 
-    >>> h = parse(message)
+.. doctest::
 
-We get a hl7.Message object, wrapping a series of hl7.Segment
-objects::
+    >>> import hl7
+    >>> h = hl7.parse(message)
+
+We get a :py:class:`hl7.Message` object, wrapping a series of 
+:py:class:`hl7.Segment` objects:
+
+.. doctest::
 
     >>> type(h)
     <class 'hl7.Message'>
 
-We can always get the HL7 message back::
+We can always get the HL7 message back:
 
-    >>> str(h) == message.strip()
+.. doctest::
+
+    >>> str(h) == message
     True
 
-Interestingly, this hl7.Message can be accessed as a list::
+Interestingly, :py:class:`hl7.Message` can be accessed as a list:
+
+.. doctest::
 
     >>> isinstance(h, list)
     True
 
 There were 4 segments (MSH, PID, OBR, OBX):
 
+.. doctest::
+
     >>> len(h)
     4
 
-We can extract the hl7.Segment from the hl7.Message instance::
+We can extract the :py:class:`hl7.Segment` from the 
+:py:class:`hl7.Message` instance:
+
+.. doctest::
 
     >>> h[3]
     [['OBX'], ['1'], ['SN'], ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN'], [''], ['', '182'], ['mg/dl'], ['70_105'], ['H'], [''], [''], ['F']]
 
 We can easily reconstitute this segment as HL7, using the
-appopriate separators::
+appropriate separators:
+
+.. doctest::
 
     >>> str(h[3])
     'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
 
-We can extract individual elements of the message::
+We can extract individual elements of the message:
+
+.. doctest::
 
     >>> h[3][3][1]
     'GLUCOSE'
     >>> h[3][5][1]
     '182'
 
-We can look up segments by the segment identifier::
+We can look up segments by the segment identifier, either via
+:py:meth:`hl7.Message.segments` or via the traditional dictionary
+syntax:
 
-    >>> pid = segment('PID', h)
-    >>> pid[3][0]
+.. doctest::
+
+    >>> h.segments('OBX')[0][3][1]
+    'GLUCOSE'
+    >>> h['OBX'][0][3][1]
+    'GLUCOSE'
+
+Since many many types of segments only have a single instance in a message
+(e.g. PID or MSH), :py:meth:`hl7.Message.segment` provides a convienance
+wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
+:py:class:`hl7.Segment`:
+
+.. doctest::
+
+    >>> h.segment('PID')[3][0]
     '555-44-4444'
-
 
 Contents
 --------

@@ -17,18 +17,19 @@ def ishl7(line):
     """Determines whether a *line* looks like an HL7 message.
     This method only does a cursory check and does not fully 
     validate the message.
+
+    :rtype: bool
     """
     ## Prevent issues if the line is empty
     return line.strip().startswith('MSH') if line else False
 
 def parse(line):
-    """Returns a instance of the :py:class:`hl7.Message` that allows indexed access
-    to the data elements. 
+    """Returns a instance of the :py:class:`hl7.Message` that allows
+    indexed access to the data elements. 
 
-    >>> message = 'MSH|^~\&|GHH LAB|ELAB-3|'
-    >>> h = parse(message)
-    >>> str(h) == message
-    True
+    >>> h = hl7.parse(message)
+
+    :rtype: :py:class:`hl7.Message`
     """
     ## Strip out unnecessary whitespace
     strmsg = line.strip()
