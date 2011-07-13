@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-import hl7
 from hl7 import Message, Segment, Field
+
+import hl7
+import unittest
 
 ## Sample message from HL7 Normative Edition
 ## http://healthinfo.med.dal.ca/hl7intro/CDA_R2_normativewebedition/help/v3guide/v3guide.htm#v3gexamples
@@ -10,122 +12,121 @@ sample_hl7 = '\r'.join(['MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^
                         'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F',
                         'OBX|2|FN|1553-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'])
 
-def test_parse():
-    msg = hl7.parse(sample_hl7)
-    assert len(msg) == 5
-    assert msg[0][0][0] == 'MSH'
-    assert msg[3][0][0] == 'OBX'
-    assert msg[3][3] == ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
+class ParseTest(unittest.TestCase):
     
-def test_parse_str():
-    msg = hl7.parse(sample_hl7)
-    assert str(msg) == sample_hl7.strip()
-    assert str(msg[3][3]) == '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
-         
-def test_ishl7():
-    assert hl7.ishl7(sample_hl7)
+    def test_parse(self):
+        msg = hl7.parse(sample_hl7)
+        self.assertEqual(len(msg), 5)
+        self.assertEqual(msg[0][0][0], 'MSH')
+        self.assertEqual(msg[3][0][0], 'OBX')
+        self.assertEqual(
+            msg[3][3],
+            ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
+        )
+        
+    def test_parsing_classes(self):
+        msg = hl7.parse(sample_hl7)
+        
+        self.assertTrue(isinstance(msg, hl7.Message))
+        self.assertTrue(isinstance(msg[3], hl7.Segment))
+        self.assertTrue(isinstance(msg[3][0], hl7.Field))
+        self.assertTrue(isinstance(msg[3][0][0], str))
 
-def test_ishl7_empty():
-    assert not hl7.ishl7('')
+    def test_nonstandard_separators(self):
+        nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
+        msg = hl7.parse(nonstd)
 
-def test_ishl7_None():
-    assert not hl7.ishl7(None)
+        self.assertEqual(str(msg), nonstd)
+        self.assertEqual(len(msg), 2)
+        self.assertEqual(msg[1][5], ['EVERYWOMAN', 'EVE', 'E', '', '', 'L'])
 
-def test_ishl7_wrongsegment():
-    message = 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
-    assert not hl7.ishl7(message)
 
-def test_segments():
-    msg = hl7.parse(sample_hl7)
-    s = msg.segments('OBX')
-    assert len(s) == 2 
-    assert s[0][0:3] == [['OBX'], ['1'], ['SN']]
-    assert s[1][0:3] == [['OBX'], ['2'], ['FN']]
+class IsHL7Test(unittest.TestCase):
+    def test_ishl7(self):
+        self.assertTrue(hl7.ishl7(sample_hl7))
 
-def test_segments_does_not_exist():
-    msg = hl7.parse(sample_hl7)
-    try:
-        msg.segments('BAD')
-        assert False
-    except KeyError:
-        pass
+    def test_ishl7_empty(self):
+        self.assertFalse(hl7.ishl7(''))
 
-def test_segment():
-    msg = hl7.parse(sample_hl7)
-    s = msg.segment('OBX')
-    assert s[0:3] == [['OBX'], ['1'], ['SN']]
+    def test_ishl7_None(self):
+        self.assertFalse(hl7.ishl7(None))
+
+    def test_ishl7_wrongsegment(self):
+        message = 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
+        self.assertFalse(hl7.ishl7(message))
+
+class ContainerTest(unittest.TestCase):
+    def test_str(self):
+        msg = hl7.parse(sample_hl7)
+        self.assertEqual(str(msg), sample_hl7.strip())
+        self.assertEqual(
+            str(msg[3][3]),
+            '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
+        )
+
+    def test_container_str(self):
+        c = hl7.Container('|')
+        c.extend(['1', 'b', 'data'])
+        self.assertEqual(str(c), '1|b|data')
     
-def test_segment_does_not_exist():
-    msg = hl7.parse(sample_hl7)
-    try:
-        msg.segment('BAD')
-        assert False
-    except KeyError:
-        pass
+class MessageTest(unittest.TestCase):
+        
+    def test_segments(self):
+        msg = hl7.parse(sample_hl7)
+        s = msg.segments('OBX')
+        self.assertEqual(len(s), 2)
+        self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
+        self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
 
-def test_segments_dict_key():
-    msg = hl7.parse(sample_hl7)
-    s = msg['OBX']
-    assert len(s) == 2 
-    assert s[0][0:3] == [['OBX'], ['1'], ['SN']]
-    assert s[1][0:3] == [['OBX'], ['2'], ['FN']]
+    def test_segments_does_not_exist(self):
+        msg = hl7.parse(sample_hl7)
+        self.assertRaises(KeyError, msg.segments, 'BAD')
 
-def test_container_str():
-    c = hl7.Container('|')
-    c.extend(['1', 'b', 'data'])
-    assert str(c) == '1|b|data'
-
-def test_parsing_classes():
-    msg = hl7.parse(sample_hl7)
+    def test_segment(self):
+        msg = hl7.parse(sample_hl7)
+        s = msg.segment('OBX')
+        self.assertEqual(s[0:3], [['OBX'], ['1'], ['SN']])
     
-    assert isinstance(msg, hl7.Message)
-    assert isinstance(msg[3], hl7.Segment)
-    assert isinstance(msg[3][0], hl7.Field)
-    assert isinstance(msg[3][0][0], str)
+    def test_segment_does_not_exist(self):
+        msg = hl7.parse(sample_hl7)
+        self.assertRaises(KeyError, msg.segment, 'BAD')
 
-def test_create_parse_plan():
-    plan = hl7.create_parse_plan(sample_hl7)
+    def test_segments_dict_key(self):
+        msg = hl7.parse(sample_hl7)
+        s = msg['OBX']
+        self.assertEqual(len(s), 2)
+        self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
+        self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
 
-    assert plan.separators == ['\r', '|', '^']
-    assert plan.containers == [Message, Segment, Field]
+class ParsePlanTest(unittest.TestCase):
+    def test_create_parse_plan(self):
+        plan = hl7.create_parse_plan(sample_hl7)
 
-def test_parse_plan():
-    plan = hl7.create_parse_plan(sample_hl7)
+        self.assertEqual(plan.separators, ['\r', '|', '^'])
+        self.assertEqual(plan.containers, [Message, Segment, Field])
 
-    assert plan.separator == '\r'
-    con = plan.container([1, 2])
-    assert isinstance(con, Message)
-    assert con == [1, 2]
-    assert con.separator == '\r'
+    def test_parse_plan(self):
+        plan = hl7.create_parse_plan(sample_hl7)
 
-def test_parse_plan_next():
-    plan = hl7.create_parse_plan(sample_hl7)
+        self.assertEqual(plan.separator, '\r')
+        con = plan.container([1, 2])
+        self.assertTrue(isinstance(con, Message))
+        self.assertEqual(con, [1, 2])
+        self.assertEqual(con.separator, '\r')
 
-    n1 = plan.next()
-    assert n1.separators == ['|', '^']
-    assert n1.containers == [Segment, Field]
+    def test_parse_plan_next(self):
+        plan = hl7.create_parse_plan(sample_hl7)
+
+        n1 = plan.next()
+        self.assertEqual(n1.separators, ['|', '^'])
+        self.assertEqual(n1.containers, [Segment, Field])
     
-    n2 = n1.next()
-    assert n2.separators == ['^']
-    assert n2.containers == [Field]
+        n2 = n1.next()
+        self.assertEqual(n2.separators, ['^'])
+        self.assertEqual(n2.containers, [Field])
 
-    n3 = n2.next()
-    assert n3 is None
-    
-def test_nonstandard_separators():
-    nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
-    msg = hl7.parse(nonstd)
-
-    assert str(msg) == nonstd
-    assert len(msg) == 2
-    assert msg[1][5] == ['EVERYWOMAN', 'EVE', 'E', '', '', 'L']
-
-def test_parse_then_reconstitute():
-    msg = hl7.parse(sample_hl7)
-    assert str(msg) == sample_hl7.strip()
-    
+        n3 = n2.next()
+        self.assertTrue(n3 is None)
+        
 if __name__ == '__main__':
-    import doctest
-    import nose
-    #doctest.testmod(hl7)
-    nose.main()
+    unittest.main()

@@ -1,18 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# Copyright (C) 2009 John Paulett (john -at- 7oars.com)
-# All rights reserved.
-#
-# This software is licensed as described in the file COPYING, which
-# you should have received as part of this distribution.
+
+from setuptools import setup
 
 import hl7 as _hl7
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
     
 setup(
     name = 'hl7',
@@ -38,6 +29,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages = ['hl7'],
-    test_suite = 'nose.collector',
+    test_suite = 'tests',
     zip_safe=True,
 )
