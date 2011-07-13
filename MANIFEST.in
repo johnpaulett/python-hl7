@@ -1,0 +1,6 @@
+include LICENSE README.rst
+include *.py
+include tests/*.py
+include docs/**
+exclude docs/_build
+global-exclude *~
