@@ -17,7 +17,7 @@ Data Types
 ----------
 
 .. autoclass:: hl7.Container
-   :members: __str__
+   :members: __unicode__
 
 .. autoclass:: hl7.Message
    :members: segments, segment, __getitem__

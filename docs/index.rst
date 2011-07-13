@@ -60,7 +60,7 @@ We can always get the HL7 message back:
 
 .. doctest::
 
-    >>> str(h) == message
+    >>> unicode(h) == message
     True
 
 Interestingly, :py:class:`hl7.Message` can be accessed as a list:
@@ -83,24 +83,24 @@ We can extract the :py:class:`hl7.Segment` from the
 .. doctest::
 
     >>> h[3]
-    [['OBX'], ['1'], ['SN'], ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN'], [''], ['', '182'], ['mg/dl'], ['70_105'], ['H'], [''], [''], ['F']]
+    [[u'OBX'], [u'1'], [u'SN'], [u'1554-5', u'GLUCOSE', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN'], [u''], [u'', u'182'], [u'mg/dl'], [u'70_105'], [u'H'], [u''], [u''], [u'F']]
 
 We can easily reconstitute this segment as HL7, using the
 appropriate separators:
 
 .. doctest::
 
-    >>> str(h[3])
-    'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
+    >>> unicode(h[3])
+    u'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
 
 We can extract individual elements of the message:
 
 .. doctest::
 
     >>> h[3][3][1]
-    'GLUCOSE'
+    u'GLUCOSE'
     >>> h[3][5][1]
-    '182'
+    u'182'
 
 We can look up segments by the segment identifier, either via
 :py:meth:`hl7.Message.segments` or via the traditional dictionary
@@ -109,9 +109,9 @@ syntax:
 .. doctest::
 
     >>> h.segments('OBX')[0][3][1]
-    'GLUCOSE'
+    u'GLUCOSE'
     >>> h['OBX'][0][3][1]
-    'GLUCOSE'
+    u'GLUCOSE'
 
 Since many many types of segments only have a single instance in a message
 (e.g. PID or MSH), :py:meth:`hl7.Message.segment` provides a convienance
@@ -121,7 +121,7 @@ wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
 .. doctest::
 
     >>> h.segment('PID')[3][0]
-    '555-44-4444'
+    u'555-44-4444'
 
 Contents
 --------

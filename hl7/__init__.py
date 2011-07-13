@@ -27,10 +27,25 @@ def parse(line):
     """Returns a instance of the :py:class:`hl7.Message` that allows
     indexed access to the data elements. 
 
+    .. note::
+
+        HL7 usually contains only ASCII, but can use other character
+        sets (HL7 Standards Document, Section 1.7.1). Therefore,
+        python-hl7 works on Python unicode strings. :py:func:`hl7.parse`
+        will accept ASCII-only strings and automatically convert them
+        into unicode.  However, if the message contains non-ASCII
+        characters, it is the responsibility of the caller of
+        :py:func:`hl7.parse` to properly convert the message string
+        to unicode first.
+
     >>> h = hl7.parse(message)
 
     :rtype: :py:class:`hl7.Message`
     """
+    ## ensure that we get unicode input. For regular ASCII, the conversion
+    ## will occur seamlessly, but for non-ASCII strings, parse must receive
+    ## a unicode string or it will error out
+    line = unicode(line)
     ## Strip out unnecessary whitespace
     strmsg = line.strip()
     ## The method for parsing the message
@@ -62,18 +77,18 @@ class Container(list):
         super(Container, self).__init__(sequence)
         self.separator = separator            
     
-    def __str__(self):
+    def __unicode__(self):
         """Join a the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
-        the children's __str__ method.  Thus ``str()`` is the approriate
-        method for turning the python-hl7 representation of HL7 into
-        a standard string
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
 
-        >>> str(h) == message
+        >>> unicode(h) == message
         True
         
         """
-        return self.separator.join((str(x) for x in self))
+        return self.separator.join((unicode(x) for x in self))
     
 class Message(Container):
     """Representation of an HL7 message. It contains a list
@@ -87,14 +102,14 @@ class Message(Container):
         the :py:class:`hl7.Segment` held at that index:
 
         >>> h[1]
-        [['PID'], ...]
+        [[u'PID'], ...]
 
         If the key is a string, ``__getitem__`` acts like a dictionary,
         returning all segments whose *segment_id* is *key*
         (alias of :py:meth:`hl7.Message.segments`).
 
         >>> h['OBX']
-        [[['OBX'], ['1'], ...]]
+        [[[u'OBX'], [u'1'], ...]]
 
         :rtype: :py:class:`hl7.Segment` or list of :py:class:`hl7.Segment`
         """
@@ -106,7 +121,7 @@ class Message(Container):
         """Gets the first segment with the *segment_id* from the parsed *message*.
 
         >>> h.segment('PID')
-        [['PID'], ...]
+        [[u'PID'], ...]
         
         :rtype: :py:class:`hl7.Segment`
         """
@@ -121,7 +136,7 @@ class Message(Container):
         by the *segment_id* (e.g. OBR, MSH, ORC, OBX).
 
         >>> h.segments('OBX')
-        [[['OBX'], ['1'], ...]]
+        [[[u'OBX'], [u'1'], ...]]
 
         :rtype: list of :py:class:`hl7.Segment`
         """
