@@ -21,28 +21,6 @@ def ishl7(line):
     ## Prevent issues if the line is empty
     return line.strip().startswith('MSH') if line else False
 
-def segment(segment_id, message):
-    """Gets the first segment with the *segment_id* from the parsed *message*.
-
-    >>> segment('OBX', [[['OBR'],['1']], [['OBX'], ['1']], [['OBX'], ['2']]])
-    [['OBX'], ['1']]
-    """
-    ## Get the list of all the segments and pull out the first one if possible
-    match = segments(segment_id, message)
-    ## Make sure we won't get an IndexError
-    return match[0] if match else None
-    
-def segments(segment_id, message):
-    """Returns the requested segments from the parsed *message* that are identified
-    by the *segment_id* (e.g. OBR, MSH, ORC, OBX).
-    
-    >>> segments('OBX', [[['OBR'], ['1']], [['OBX'], ['1']], [['OBX'], ['2']]])
-    [[['OBX'], ['1']], [['OBX'], ['2']]]
-    """
-    ## Compare segment_id to the very first string in each segment, returning
-    ## all segments that match
-    return [segment for segment in message if segment[0][0] == segment_id]
-
 def parse(line):
     """Returns a instance of the :py:class:`hl7.Message` that allows indexed access
     to the data elements. 
@@ -84,19 +62,74 @@ class Container(list):
         self.separator = separator            
     
     def __str__(self):
-        ## Join a the child containers into a single string, separated
-        ## by the self.separator.  This method acts recursively, calling
-        ## the children's __str__ method.  Thus str() is the approriate
-        ## method for turning the python-hl7 representation of HL7 into
-        ## a standard string
+        """Join a the child containers into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __str__ method.  Thus ``str()`` is the approriate
+        method for turning the python-hl7 representation of HL7 into
+        a standard string
+
+        >>> str(h) == message
+        True
+        
+        """
         return self.separator.join((str(x) for x in self))
     
 class Message(Container):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
-    #def __getitem__(self, key):
-    #    return None
+    
+    def __getitem__(self, key):
+        """Index or segment-based lookup.
+
+        If key is an integer, ``__getitem__`` acts list a list, returning
+        the :py:class:`hl7.Segment` held at that index:
+
+        >>> h[1]
+        [['PID'], ...]
+
+        If the key is a string, ``__getitem__`` acts like a dictionary,
+        returning all segments whose *segment_id* is *key*
+        (alias of :py:meth:`hl7.Message.segments`).
+
+        >>> h['OBX']
+        [[['OBX'], ['1'], ...]]
+
+        :rtype: :py:class:`hl7.Segment` or list of :py:class:`hl7.Segment`
+        """
+        if isinstance(key, basestring):
+            return self.segments(key)
+        return list.__getitem__(self, key)
+
+    def segment(self, segment_id):
+        """Gets the first segment with the *segment_id* from the parsed *message*.
+
+        >>> h.segment('PID')
+        [['PID'], ...]
+        
+        :rtype: :py:class:`hl7.Segment`
+        """
+        ## Get the list of all the segments and pull out the first one if possible
+        match = self.segments(segment_id)
+        ## We should never get an IndexError, since segments will instead
+        ## throw an KeyError
+        return match[0]
+        
+    def segments(self, segment_id):
+        """Returns the requested segments from the parsed *message* that are identified
+        by the *segment_id* (e.g. OBR, MSH, ORC, OBX).
+
+        >>> h.segments('OBX')
+        [[['OBX'], ['1'], ...]]
+
+        :rtype: list of :py:class:`hl7.Segment`
+        """
+        ## Compare segment_id to the very first string in each segment, returning
+        ## all segments that match
+        matches = [segment for segment in self if segment[0][0] == segment_id]
+        if len(matches) == 0:
+            raise KeyError('No %s segments' % segment_id)
+        return matches
 
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.

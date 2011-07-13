@@ -36,14 +36,39 @@ def test_ishl7_wrongsegment():
     assert not hl7.ishl7(message)
 
 def test_segments():
-    s = hl7.segments('OBX', hl7.parse(sample_hl7))
+    msg = hl7.parse(sample_hl7)
+    s = msg.segments('OBX')
     assert len(s) == 2 
     assert s[0][0:3] == [['OBX'], ['1'], ['SN']]
     assert s[1][0:3] == [['OBX'], ['2'], ['FN']]
 
+def test_segments_does_not_exist():
+    msg = hl7.parse(sample_hl7)
+    try:
+        msg.segments('BAD')
+        assert False
+    except KeyError:
+        pass
+
 def test_segment():
-    s = hl7.segment('OBX', hl7.parse(sample_hl7))
+    msg = hl7.parse(sample_hl7)
+    s = msg.segment('OBX')
     assert s[0:3] == [['OBX'], ['1'], ['SN']]
+    
+def test_segment_does_not_exist():
+    msg = hl7.parse(sample_hl7)
+    try:
+        msg.segment('BAD')
+        assert False
+    except KeyError:
+        pass
+
+def test_segments_dict_key():
+    msg = hl7.parse(sample_hl7)
+    s = msg['OBX']
+    assert len(s) == 2 
+    assert s[0][0:3] == [['OBX'], ['1'], ['SN']]
+    assert s[1][0:3] == [['OBX'], ['2'], ['FN']]
 
 def test_container_str():
     c = hl7.Container('|')
