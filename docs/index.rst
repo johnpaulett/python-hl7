@@ -132,7 +132,21 @@ Contents
    api
    contribute
    changelog
+   authors
    license
+
+Install
+-------
+
+python-hl7 is available on `PyPi <http://pypi.python.org/pypi/hl7>`_ 
+via ``pip`` or ``easy_install``::
+
+    pip install -U hl7
+
+For recent versions of Debian and Ubuntu, the *python-hl7* package is 
+available::
+
+    sudo apt-get install python-hl7
 
 Links
 -----
