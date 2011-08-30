@@ -25,7 +25,7 @@ def ishl7(line):
 
 def parse(line):
     """Returns a instance of the :py:class:`hl7.Message` that allows
-    indexed access to the data elements. 
+    indexed access to the data elements.
 
     .. note::
 
@@ -55,12 +55,12 @@ def parse(line):
 
 def _split(text, plan):
     """Recursive function to split the *text* into an n-deep list,
-    according to the :py:class:`hl7._ParsePlan`. 
+    according to the :py:class:`hl7._ParsePlan`.
     """
     ## Base condition, if we have used up all the plans
     if not plan:
         return text
-    
+
     ## Recurse so that the sub plans are used in order to split the data
     ## into the approriate type as defined by the current plan.
     data = [_split(x, plan.next()) for x in text.split(plan.separator)]
@@ -75,8 +75,8 @@ class Container(list):
         ## sequence.  Since list([]) == [], using the default
         ## parameter will not cause any issues.
         super(Container, self).__init__(sequence)
-        self.separator = separator            
-    
+        self.separator = separator
+
     def __unicode__(self):
         """Join a the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
@@ -86,15 +86,15 @@ class Container(list):
 
         >>> unicode(h) == message
         True
-        
+
         """
         return self.separator.join((unicode(x) for x in self))
-    
+
 class Message(Container):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
-    
+
     def __getitem__(self, key):
         """Index or segment-based lookup.
 
@@ -118,30 +118,32 @@ class Message(Container):
         return list.__getitem__(self, key)
 
     def segment(self, segment_id):
-        """Gets the first segment with the *segment_id* from the parsed *message*.
+        """Gets the first segment with the *segment_id* from the parsed
+        *message*.
 
         >>> h.segment('PID')
         [[u'PID'], ...]
-        
+
         :rtype: :py:class:`hl7.Segment`
         """
-        ## Get the list of all the segments and pull out the first one if possible
+        ## Get the list of all the segments and pull out the first one,
+        ## if possible
         match = self.segments(segment_id)
         ## We should never get an IndexError, since segments will instead
         ## throw an KeyError
         return match[0]
-        
+
     def segments(self, segment_id):
-        """Returns the requested segments from the parsed *message* that are identified
-        by the *segment_id* (e.g. OBR, MSH, ORC, OBX).
+        """Returns the requested segments from the parsed *message* that are
+        identified by the *segment_id* (e.g. OBR, MSH, ORC, OBX).
 
         >>> h.segments('OBX')
         [[[u'OBX'], [u'1'], ...]]
 
         :rtype: list of :py:class:`hl7.Segment`
         """
-        ## Compare segment_id to the very first string in each segment, returning
-        ## all segments that match
+        ## Compare segment_id to the very first string in each segment,
+        ## returning all segments that match
         matches = [segment for segment in self if segment[0][0] == segment_id]
         if len(matches) == 0:
             raise KeyError('No %s segments' % segment_id)
@@ -158,7 +160,7 @@ class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
     by pipes and separated by carets. It contains a list of strings.
     """
-   
+
 def create_parse_plan(strmsg):
     """Creates a plan on how to parse the HL7 message according to
     the details stored within the message.
@@ -172,7 +174,7 @@ def create_parse_plan(strmsg):
     ## The ordered list of containers to create
     containers = [Message, Segment, Field]
     return _ParsePlan(separators, containers)
-    
+
 class _ParsePlan(object):
     """Details on how to parse an HL7 message. Typically this object
     should be created via :func:`hl7.create_parse_plan`
@@ -187,7 +189,7 @@ class _ParsePlan(object):
         assert len(containers) == len(separators)
         self.separators = separators
         self.containers = containers
-        
+
     @property
     def separator(self):
         """Return the current separator to use based on the plan."""
@@ -198,7 +200,7 @@ class _ParsePlan(object):
         as specified by the current plan.
         """
         return self.containers[0](self.separator, data)
-    
+
     def next(self):
         """Generate the next level of the plan (essentially generates
         a copy of this plan with the level of the container and the

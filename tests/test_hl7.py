@@ -25,7 +25,7 @@ class ParseTest(unittest.TestCase):
             msg[3][3],
             [u'1554-5', u'GLUCOSE', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
         )
-        
+
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
         self.assertEqual(len(msg), 5)
@@ -40,7 +40,7 @@ class ParseTest(unittest.TestCase):
 
     def test_parsing_classes(self):
         msg = hl7.parse(sample_hl7)
-        
+
         self.assertTrue(isinstance(msg, hl7.Message))
         self.assertTrue(isinstance(msg[3], hl7.Segment))
         self.assertTrue(isinstance(msg[3][0], hl7.Field))
@@ -82,9 +82,8 @@ class ContainerTest(unittest.TestCase):
         c = hl7.Container('|')
         c.extend(['1', 'b', 'data'])
         self.assertEqual(unicode(c), '1|b|data')
-    
+
 class MessageTest(unittest.TestCase):
-        
     def test_segments(self):
         msg = hl7.parse(sample_hl7)
         s = msg.segments('OBX')
@@ -100,7 +99,7 @@ class MessageTest(unittest.TestCase):
         msg = hl7.parse(sample_hl7)
         s = msg.segment('OBX')
         self.assertEqual(s[0:3], [['OBX'], ['1'], ['SN']])
-    
+
     def test_segment_does_not_exist(self):
         msg = hl7.parse(sample_hl7)
         self.assertRaises(KeyError, msg.segment, 'BAD')
@@ -134,13 +133,13 @@ class ParsePlanTest(unittest.TestCase):
         n1 = plan.next()
         self.assertEqual(n1.separators, ['|', '^'])
         self.assertEqual(n1.containers, [Segment, Field])
-    
+
         n2 = n1.next()
         self.assertEqual(n2.separators, ['^'])
         self.assertEqual(n2.containers, [Field])
 
         n3 = n2.next()
         self.assertTrue(n3 is None)
-        
+
 if __name__ == '__main__':
     unittest.main()
