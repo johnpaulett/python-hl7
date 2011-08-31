@@ -4,6 +4,9 @@ Change Log
 0.2.1 - unreleased
 ------------------
 
+* Added MLLP client (:py:class:`hl7.client.MLLPClient`) and command line tool,
+  :ref:`mllp_send <mllp-send>`.
+
 0.2.0 - 2011-06-12
 ------------------
 

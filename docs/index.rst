@@ -1,8 +1,10 @@
 python-hl7 - Easy HL7 v2.x Parsing
 ==================================
 
-python-hl7 is a simple library for parsing messages of Health Level 7 
-(HL7) version 2.x into Python objects.
+python-hl7 is a simple library for parsing messages of Health Level 7
+(HL7) version 2.x into Python objects.  python-hl7 includes a simple
+client that can send HL7 messages to a Minimal Lower Level Protocol (MLLP)
+server (:ref:`mllp_send <mllp-send>`).
 
 HL7 is a communication protocol and message format for 
 health care data. It is the de-facto standard for transmitting data
@@ -123,6 +125,27 @@ wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
     >>> h.segment('PID')[3][0]
     u'555-44-4444'
 
+.. _mllp-send:
+
+MLLP network client - ``mllp_send``
+-----------------------------------
+
+python-hl7 features a simple network client, ``mllp_send``, which reads HL7
+messages from a file or ``sys.stdin`` and posts them to an MLLP server.
+``mllp_send`` is a command-line wrapper around 
+:py:class:`hl7.client.MLLPClient`.
+
+::
+
+    Usage: mllp_send [options] <server>
+
+    Options:
+      -h, --help            show this help message and exit
+      -p PORT, --port=PORT  port to connect to
+      -f FILE, --file=FILE  read from FILE instead of stdin
+      -q, --quiet           do not print status messages to stdout
+
+
 Contents
 --------
 
@@ -161,3 +184,4 @@ HL7 References:
 * `nule.org's Introduction to HL7 <http://nule.org/wp/?page_id=99>`_
 * `hl7.org <http://www.hl7.org/>`_
 * `OpenMRS's HL7 documentation <http://openmrs.org/wiki/HL7>`_
+* `Transport Specification: MLLP <http://www.hl7.org/v3ballot/html/infrastructure/transport/transport-mllp.html>`_

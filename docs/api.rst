@@ -25,3 +25,11 @@ Data Types
 .. autoclass:: hl7.Segment
 
 .. autoclass:: hl7.Field
+
+
+MLLP Network Client
+-------------------
+
+.. autoclass:: hl7.client.MLLPClient
+   :members: send_message, send, close
+

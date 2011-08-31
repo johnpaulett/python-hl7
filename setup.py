@@ -30,5 +30,11 @@ setup(
     ],
     packages = ['hl7'],
     test_suite = 'tests',
+    tests_require = ['mock'],
+    entry_points = {
+        'console_scripts': [
+            'mllp_send = hl7.client:mllp_send',
+        ],
+    },
     zip_safe=True,
 )
