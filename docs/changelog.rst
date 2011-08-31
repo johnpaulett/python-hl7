@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-0.2.1 - unreleased
+0.2.1 - 2011-08-30
 ------------------
 
 * Added MLLP client (:py:class:`hl7.client.MLLPClient`) and command line tool,
