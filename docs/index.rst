@@ -132,7 +132,7 @@ MLLP network client - ``mllp_send``
 
 python-hl7 features a simple network client, ``mllp_send``, which reads HL7
 messages from a file or ``sys.stdin`` and posts them to an MLLP server.
-``mllp_send`` is a command-line wrapper around 
+``mllp_send`` is a command-line wrapper around
 :py:class:`hl7.client.MLLPClient`.
 
 ::
@@ -144,7 +144,9 @@ messages from a file or ``sys.stdin`` and posts them to an MLLP server.
       -p PORT, --port=PORT  port to connect to
       -f FILE, --file=FILE  read from FILE instead of stdin
       -q, --quiet           do not print status messages to stdout
-
+      --loose               allow file to be a HL7-like object (\r\n instead of
+                            \r). Can ONLY send 1 message. Requires --file option
+                            (no stdin)
 
 Contents
 --------
@@ -153,6 +155,7 @@ Contents
    :maxdepth: 1
 
    api
+   mllp_send man page <mllp_send>
    contribute
    changelog
    authors

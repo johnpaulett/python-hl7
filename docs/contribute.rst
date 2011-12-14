@@ -22,7 +22,7 @@ The test suite is located in :file:`tests/` and can be run via :file:`setup.py`:
 
 Make sure the documentation is still valid::
 
-   $ pushd docs && make html && make doctest && popd
+   $ pushd docs && make html man doctest && popd
    ...
    Doctest summary
    ===============
