@@ -79,6 +79,9 @@ class MLLPSendTest(unittest.TestCase):
         self.stdin_patch = patch('hl7.client.stdin')
         self.mock_stdin = self.stdin_patch.start()
 
+        self.stderr_patch = patch('hl7.client.stderr')
+        self.mock_stderr = self.stderr_patch.start()
+
         # we need a temporary directory
         self.dir = mkdtemp()
         self.write(SB + 'foobar' + EB + CR)
@@ -87,6 +90,7 @@ class MLLPSendTest(unittest.TestCase):
             'port': 6661,
             'filename': os.path.join(self.dir, 'test.hl7'),
             'verbose': True,
+            'loose': False,
         })
 
         self.options_patch = patch('hl7.client.OptionParser')
@@ -102,6 +106,7 @@ class MLLPSendTest(unittest.TestCase):
         self.options_patch.stop()
         self.stdout_patch.stop()
         self.stdin_patch.stop()
+        self.stderr_patch.stop()
 
         # clean up the temp directory
         rmtree(self.dir)
@@ -151,18 +156,47 @@ class MLLPSendTest(unittest.TestCase):
         self.mock_socket().connect.assert_called_once_with(('localhost', 7890))
 
     def test_stdin(self):
-        class FakeStream(object):
-            count = 0
-            def read(self, buf):
-                self.count += 1
-                if self.count == 1:
-                    return SB + 'hello' + EB + CR
-                else:
-                    return ''
-
         self.option_values.filename = None
         self.mock_stdin.return_value = FakeStream()
 
         mllp_send()
 
         self.mock_socket().send.assert_called_once_with(SB + 'hello' + EB + CR)
+
+    def test_loose_no_stdin(self):
+        self.option_values.loose = True
+        self.option_values.filename = None
+        self.mock_stdin.return_value = FakeStream()
+
+        mllp_send()
+
+        self.assertFalse(self.mock_socket().send.called)
+        self.mock_stderr().write.assert_call_with(
+            '--loose requires --file with a single message\n'
+        )
+
+    def test_loose_windows_newline(self):
+        self.option_values.loose = True
+        self.write(SB + 'foo\r\nbar\r\n' + EB + CR)
+
+        mllp_send()
+
+        self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
+
+    def test_loose_no_mllp_characters(self):
+        self.option_values.loose = True
+        self.write('foo\r\nbar\r\n')
+
+        mllp_send()
+
+        self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
+
+
+class FakeStream(object):
+    count = 0
+    def read(self, buf):
+        self.count += 1
+        if self.count == 1:
+            return SB + 'hello' + EB + CR
+        else:
+            return ''

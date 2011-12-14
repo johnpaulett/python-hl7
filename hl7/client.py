@@ -73,6 +73,8 @@ def stdout(content):
 def stdin():
     return sys.stdin
 
+def stderr():
+    return sys.stderr
 
 def read_stream(stream):
     """Buffer the stream and yield individual, stripped messages"""
@@ -96,6 +98,20 @@ def read_stream(stream):
     if len(_buffer.strip()) > 0:
         raise MLLPException('buffer not terminated: %s' % _buffer)
 
+def read_loose(stream):
+    """Turn a single HL7-like blob of text into a real HL7 message"""
+    # load all the data (should only be 1 message)
+    data = stream.read()
+
+    # Windows new lines to segment separators
+    data = data.replace('\r\n', '\r')
+
+    # take out all the the typical MLLP separators and trailing
+    # whitespace
+    data = data.strip(EB+FF+SB+CR+'\n ')
+
+    yield data
+
 def mllp_send():
     """Command line tool to send messages to an MLLP server"""
     # set up the command line options
@@ -109,6 +125,11 @@ def mllp_send():
     parser.add_option('-q', '--quiet',
                   action='store_true', dest='verbose', default=True,
                   help='do not print status messages to stdout')
+    parser.add_option('--loose',
+                  action='store_true', dest='loose', default=False,
+                  help='allow file to be a HL7-like object (\\r\\n ' \
+                      + 'instead of \\r). Can ONLY send 1 message. Requires ' \
+                      + '--file option (no stdin)')
 
     (options, args) = parser.parse_args()
     if len(args) == 1:
@@ -116,16 +137,23 @@ def mllp_send():
     else:
         # server not present
         parser.print_usage()
-        sys.stderr.write('server required\n')
+        stderr().write('server required\n')
         return
 
     if options.filename is not None:
         stream = open(options.filename, 'rb') #FIXME with_statement
     else:
+        if options.loose:
+            stderr().write('--loose requires --file with a single message\n')
+            return
         stream = stdin()
 
     with MLLPClient(host, options.port) as client:
-        for message in read_stream(stream):
+        message_stream = read_stream(stream) \
+                         if not options.loose \
+                         else read_loose(stream)
+
+        for message in message_stream:
             result = client.send_message(message)
             if options.verbose:
                 stdout(result)
