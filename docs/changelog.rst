@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+0.2.2 - 2011-12-17
+------------------
+
+* :ref:`mllp_send <mllp-send>` now takes the ``--loose`` options, which allows
+  sending HL7 messages that may not exactly meet the standard (Windows newlines
+  separating segments instead of carriage returns).
+
 0.2.1 - 2011-08-30
 ------------------
 

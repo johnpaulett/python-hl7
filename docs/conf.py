@@ -212,7 +212,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'python-hl7', u'python-hl7 Documentation',
+    ('mllp_send', 'mllp_send', 'MLLP network client',
      [u'John Paulett'], 1)
 ]
 
