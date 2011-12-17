@@ -125,28 +125,19 @@ wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
     >>> h.segment('PID')[3][0]
     u'555-44-4444'
 
-.. _mllp-send:
 
 MLLP network client - ``mllp_send``
 -----------------------------------
 
 python-hl7 features a simple network client, ``mllp_send``, which reads HL7
 messages from a file or ``sys.stdin`` and posts them to an MLLP server.
-``mllp_send`` is a command-line wrapper around
-:py:class:`hl7.client.MLLPClient`.
+``mllp_send`` is a command-line wrapper around 
+:py:class:`hl7.client.MLLPClient`.  ``mllp_send`` is a useful tool for
+testing HL7 interfaces or resending logged messages::
 
-::
+    mllp_send --file sample.hl7 --port 6661 mirth.example.com
 
-    Usage: mllp_send [options] <server>
-
-    Options:
-      -h, --help            show this help message and exit
-      -p PORT, --port=PORT  port to connect to
-      -f FILE, --file=FILE  read from FILE instead of stdin
-      -q, --quiet           do not print status messages to stdout
-      --loose               allow file to be a HL7-like object (\r\n instead of
-                            \r). Can ONLY send 1 message. Requires --file option
-                            (no stdin)
+See :doc:`mllp_send` for examples and usage instructions.
 
 Contents
 --------
@@ -155,7 +146,7 @@ Contents
    :maxdepth: 1
 
    api
-   mllp_send man page <mllp_send>
+   mllp_send
    contribute
    changelog
    authors
