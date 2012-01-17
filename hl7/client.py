@@ -103,8 +103,8 @@ def read_loose(stream):
     # load all the data (should only be 1 message)
     data = stream.read()
 
-    # Windows new lines to segment separators
-    data = data.replace('\r\n', '\r')
+    # Windows & Unix new lines to segment separators
+    data = data.replace('\r\n', '\r').replace('\n', '\r')
 
     # take out all the the typical MLLP separators and trailing
     # whitespace

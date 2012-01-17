@@ -183,6 +183,14 @@ class MLLPSendTest(unittest.TestCase):
 
         self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
 
+    def test_loose_unix_newline(self):
+        self.option_values.loose = True
+        self.write(SB + 'foo\nbar\n' + EB + CR)
+
+        mllp_send()
+
+        self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
+
     def test_loose_no_mllp_characters(self):
         self.option_values.loose = True
         self.write('foo\r\nbar\r\n')
