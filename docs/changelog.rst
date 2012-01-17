@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+0.2.3 - 2012-01-17
+------------------
+
+* ``mllp_send --loose`` accepts & converts Unix newlines in addition to
+  Windows newlines
+
 0.2.2 - 2011-12-17
 ------------------
 
