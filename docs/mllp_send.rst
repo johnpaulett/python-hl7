@@ -22,12 +22,13 @@ Usage
 
     Options:
       -h, --help            show this help message and exit
+      --version             print current version and exit
       -p PORT, --port=PORT  port to connect to
       -f FILE, --file=FILE  read from FILE instead of stdin
       -q, --quiet           do not print status messages to stdout
       --loose               allow file to be a HL7-like object (\r\n instead of
-                            \r). Can ONLY send 1 message. Requires --file option
-                            (no stdin)
+                            \r). Requires that messages start with "MSH|^~\&|".
+                            Requires --file option (no stdin)
 
 Input Format
 ============
@@ -41,8 +42,7 @@ certain text editors, that the ASCII control characters will be lost and the
 carriage returns will be replaced with the platform's default line endings.
 In this case, ``mllp_send`` provides the ``--loose`` option, which attempts
 to take something that "looks like HL7" and convert it into a proper HL7
-message. Currently the ``--loose`` option can only handle 1 HL7 message per
-file (it causes ``mllp_send`` to assume the whole file is one HL7 message).
+message..
 
 
 Additional Resources
