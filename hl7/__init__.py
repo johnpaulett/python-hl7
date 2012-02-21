@@ -6,7 +6,7 @@
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 __author__ = 'John Paulett'
 __email__ = 'john -at- paulett.org'
 __license__ = 'BSD'

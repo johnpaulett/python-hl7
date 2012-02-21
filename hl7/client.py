@@ -117,6 +117,9 @@ def mllp_send():
     # set up the command line options
     script_name = os.path.basename(sys.argv[0])
     parser = OptionParser(usage=script_name + ' [options] <server>')
+    parser.add_option('--version',
+                  action='store_true', dest='version', default=False,
+                  help='print current version and exit')
     parser.add_option('-p', '--port',
                   action='store', type='int', dest='port', default=6661,
                   help='port to connect to')
@@ -132,6 +135,12 @@ def mllp_send():
                       + '--file option (no stdin)')
 
     (options, args) = parser.parse_args()
+
+    if options.version:
+        import hl7
+        stdout(hl7.__version__)
+        return
+
     if len(args) == 1:
         host = args[0]
     else:

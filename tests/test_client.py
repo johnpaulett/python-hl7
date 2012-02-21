@@ -1,4 +1,5 @@
 from hl7.client import MLLPClient, MLLPException, mllp_send, CR, SB, EB
+from hl7 import __version__ as hl7_version
 from mock import patch, Mock
 from optparse import Values
 from shutil import rmtree
@@ -91,6 +92,7 @@ class MLLPSendTest(unittest.TestCase):
             'filename': os.path.join(self.dir, 'test.hl7'),
             'verbose': True,
             'loose': False,
+            'version': False,
         })
 
         self.options_patch = patch('hl7.client.OptionParser')
@@ -199,6 +201,13 @@ class MLLPSendTest(unittest.TestCase):
 
         self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
 
+    def test_version(self):
+        self.option_values.version = True
+
+        mllp_send()
+
+        self.assertFalse(self.mock_socket().connect.called)
+        self.mock_stdout.assert_called_once_with(str(hl7_version))
 
 class FakeStream(object):
     count = 0
