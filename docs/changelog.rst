@@ -5,6 +5,9 @@ Change Log
 ------------------
 
 * ``mllp_send --version`` prints version number
+* ``mllp_send --loose`` algorithm modified to allow multiple messages per file.
+  The algorithm now splits messages based upon the presumed start of a message,
+  which must start with ``MSH|^~\&|``
 
 0.2.3 - 2012-01-17
 ------------------

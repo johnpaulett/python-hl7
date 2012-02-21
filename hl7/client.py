@@ -99,18 +99,29 @@ def read_stream(stream):
         raise MLLPException('buffer not terminated: %s' % _buffer)
 
 def read_loose(stream):
-    """Turn a single HL7-like blob of text into a real HL7 message"""
-    # load all the data (should only be 1 message)
+    """Turn a HL7-like blob of text into a real HL7 messages"""
+    # look for the START_BLOCK to delineate messages
+    START_BLOCK = r'MSH|^~\&|'
+
+    # load all the data
     data = stream.read()
+
+    # take out all the the typical MLLP separators
+    data = ''.join([c for c in data if c not in [EB, FF, SB]])
 
     # Windows & Unix new lines to segment separators
     data = data.replace('\r\n', '\r').replace('\n', '\r')
 
-    # take out all the the typical MLLP separators and trailing
-    # whitespace
-    data = data.strip(EB+FF+SB+CR+'\n ')
+    for m in data.split(START_BLOCK):
+        if not m:
+            # the first element will not have any data from the split
+            continue
 
-    yield data
+        # strip any trailing whitespace
+        m = m.strip(CR+'\n ')
+
+        # re-insert the START_BLOCK, which was removed via the split
+        yield START_BLOCK + m
 
 def mllp_send():
     """Command line tool to send messages to an MLLP server"""
@@ -130,9 +141,9 @@ def mllp_send():
                   help='do not print status messages to stdout')
     parser.add_option('--loose',
                   action='store_true', dest='loose', default=False,
-                  help='allow file to be a HL7-like object (\\r\\n ' \
-                      + 'instead of \\r). Can ONLY send 1 message. Requires ' \
-                      + '--file option (no stdin)')
+                  help='allow file to be a HL7-like object (\\r\\n instead ' \
+                          + 'of \\r). Requires that messages start with ' \
+                          + '"MSH|^~\\&|". Requires --file option (no stdin)')
 
     (options, args) = parser.parse_args()
 
@@ -153,7 +164,7 @@ def mllp_send():
         stream = open(options.filename, 'rb') #FIXME with_statement
     else:
         if options.loose:
-            stderr().write('--loose requires --file with a single message\n')
+            stderr().write('--loose requires --file\n')
             return
         stream = stdin()
 

@@ -174,32 +174,47 @@ class MLLPSendTest(unittest.TestCase):
 
         self.assertFalse(self.mock_socket().send.called)
         self.mock_stderr().write.assert_call_with(
-            '--loose requires --file with a single message\n'
+            '--loose requires --file\n'
         )
 
     def test_loose_windows_newline(self):
         self.option_values.loose = True
-        self.write(SB + 'foo\r\nbar\r\n' + EB + CR)
+        self.write(SB + 'MSH|^~\&|foo\r\nbar\r\n' + EB + CR)
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(SB + 'MSH|^~\&|foo\rbar'
+                                                        + EB + CR)
 
     def test_loose_unix_newline(self):
         self.option_values.loose = True
-        self.write(SB + 'foo\nbar\n' + EB + CR)
+        self.write(SB + 'MSH|^~\&|foo\nbar\n' + EB + CR)
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(SB + 'MSH|^~\&|foo\rbar'
+                                                        + EB + CR)
 
     def test_loose_no_mllp_characters(self):
         self.option_values.loose = True
-        self.write('foo\r\nbar\r\n')
+        self.write('MSH|^~\&|foo\r\nbar\r\n')
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'foo\rbar' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(SB + 'MSH|^~\&|foo\rbar'
+                                                        + EB + CR)
+
+    def test_loose_send_mutliple(self):
+        self.option_values.loose = True
+        self.mock_socket().recv.return_value = 'thanks'
+        self.write('MSH|^~\&|1\r\nOBX|1\r\nMSH|^~\&|2\r\nOBX|2\r\n')
+
+        mllp_send()
+
+        self.assertEqual(self.mock_socket().send.call_args_list[0][0][0],
+                         SB + 'MSH|^~\&|1\rOBX|1' + EB + CR)
+        self.assertEqual(self.mock_socket().send.call_args_list[1][0][0],
+                         SB + 'MSH|^~\&|2\rOBX|2' + EB + CR)
 
     def test_version(self):
         self.option_values.version = True
