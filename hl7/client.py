@@ -1,5 +1,6 @@
 from optparse import OptionParser
 
+import hl7
 import os.path
 import socket
 import sys
@@ -51,9 +52,10 @@ class MLLPClient(object):
         """Wraps a str, unicode, or :py:cls:`hl7.Message` in a MLLP container
         and send the message to the server
         """
+        if isinstance(message, hl7.Message):
+            message = unicode(message)
         # wrap in MLLP message container
-        data = SB + unicode(message) + EB + CR
-        # TODO consider encoding (e.g. UTF-8)
+        data = SB + message + EB + CR
         return self.send(data)
 
     def send(self, data):
