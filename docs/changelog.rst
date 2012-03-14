@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+0.2.5 - 2012-03-14
+------------------
+
+* Do not senseless try to convert to unicode in mllp_send. Allows files to
+  contain other encodings.
+
 0.2.4 - 2012-02-21
 ------------------
 
