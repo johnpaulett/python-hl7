@@ -76,6 +76,25 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg[1][3], 
             [[[u'Component1'], [u'Sub-Component1', u'Sub-Component2'], [u'Component3']]])
 
+    def test_extract(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        # Full correct path
+        self.assertEqual(msg['PID.3.1.2.2'], u'Sub-Component2')
+
+        # Shorter Paths
+        self.assertEqual(msg['PID.1.1'], u'Field1')
+        self.assertEqual(msg['PID.1'], u'Field1')
+        self.assertEqual(msg['PID1.1'], u'Field1')
+        self.assertEqual(msg['PID.3.1.2'], u'Sub-Component1')
+
+        # Longer Paths
+        self.assertEqual(msg['PID.1.1.1.1'], u'Field1')
+
+        # Incorrect path
+        self.assertRaises(IndexError, msg.extract_field, 'PID.3.1.4')
+        self.assertRaises(IndexError, msg.extract_field, 'PID.1.1.1.2')
+        
 class IsHL7Test(unittest.TestCase):
     def test_ishl7(self):
         self.assertTrue(hl7.ishl7(sample_hl7))

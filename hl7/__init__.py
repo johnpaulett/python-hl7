@@ -13,6 +13,9 @@ __license__ = 'BSD'
 __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
 __url__ = 'http://python-hl7.readthedocs.org'
 
+# This is the HL7 Null value. It means that a field is present and blank.
+NULL = '""'
+
 def ishl7(line):
     """Determines whether a *line* looks like an HL7 message.
     This method only does a cursory check and does not fully 
@@ -117,7 +120,9 @@ class Message(Container):
         :rtype: :py:class:`hl7.Segment` or list of :py:class:`hl7.Segment`
         """
         if isinstance(key, basestring):
-            return self.segments(key)
+            if len(key) == 3:
+                return self.segments(key)
+            return self.extract_field(key)
         return list.__getitem__(self, key)
 
     def segment(self, segment_id):
@@ -151,6 +156,91 @@ class Message(Container):
         if len(matches) == 0:
             raise KeyError('No %s segments' % segment_id)
         return matches
+
+    def extract_field(self, key):
+        """
+            Extract a field using a future proofed approach, based on rules in:
+            http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+
+            The key is defined as:
+
+                SEG[n]-Fn-Rn-Cn-SCn
+                    F   Field
+                    R   Repeat
+                    C   Component
+                    SC  Sub-Component 
+
+                Indexing is from 1 for compatibility with HL7 spec numbering.
+
+            Example:
+
+                PID.F1.R1.C2.SC2
+
+                PID (default to first PID segment, counting from 1)
+                F1 (first after segment id, HL7 Spec numbering)
+                R1  (repeat counting from 1)
+                C2  (component 2 counting from 1)
+                SC2  (component 2 counting from 1)
+
+            'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
+
+                PID.F3.R1.C2.SC2 = 'Sub-Component2'
+                PID.F4.R2.C1 = 'Repeat1'
+
+            Compatibility Rules:
+
+                If the parse tree is deeper than the specified path continue
+                following the first child branch until a leaf of the tree is
+                encountered and return that value (which could be blank).
+
+                Example:
+
+                    PID.F3.R1.C2 = 'Sub-Component1' (assume .SC1)
+
+                If the parse tree terminates before the full path is satisfied
+                check each of the subsequent paths and if every one is specified
+                at position 1 then the leaf value reached can be returned as the
+                result.
+
+                    PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
+        """
+        SEG, SEGn, Fn, Rn, Cn, SCn = None, 1,1,1,1,1
+        parts = key.split('.')
+        SEG = parts[0][:3]
+        if len(parts[0]) > 3:
+            SEGn = int(parts[0][3:])
+        if len(parts) > 1: Fn = int(parts[1])
+        if len(parts) > 2: Rn = int(parts[2])
+        if len(parts) > 3: Cn = int(parts[3])
+        if len(parts) > 4: SCn = int(parts[4])
+
+        segment = self.segments(SEG)[SEGn-1]
+        if SEG in ['MSH', 'FHS']:
+            field = segment[Fn-1]  # Error in the numbering of the first two fields
+        else:
+            field = segment[Fn]
+        rep = field[Rn-1]
+
+        if type(rep) != Field:
+            # leaf
+            if Cn == 1 and SCn == 1:
+                return self.unescape(rep)
+            raise(IndexError('Field reaches leaf node before completing path: %s' % key))
+
+        component = rep[Cn -1]
+        if type(component) != Field:
+            # leaf
+            if SCn == 1:
+                return self.unescape(component)
+            raise(IndexError('Field reaches leaf node before completing path: %s' % key))
+
+        subcomponent = component[SCn -1]
+
+        return self.unescape(subcomponent)
+
+    def unescape(self, field):
+        # TODO: implement
+        return field
 
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.
