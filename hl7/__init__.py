@@ -61,6 +61,9 @@ def _split(text, plan):
     if not plan:
         return text
 
+    if not plan.applies(text):
+        return plan.container([text])
+
     ## Recurse so that the sub plans are used in order to split the data
     ## into the approriate type as defined by the current plan.
     data = [_split(x, plan.next()) for x in text.split(plan.separator)]
@@ -170,9 +173,28 @@ def create_parse_plan(strmsg):
     ## Parse out the other separators from the characters following
     ## MSH.  Currently we only go two-levels deep and ignore some
     ## details.
-    separators.extend(list(strmsg[3:5]))
+
+    # Extract the rest of the separators. Defaults used if not present.
+    assert strmsg[:3] in ('MSH', 'FHS')
+    sep0 = strmsg[3]
+    seps = list(strmsg[3: strmsg.find(sep0, 4)])
+
+    separators.append(seps[0])
+    if len(seps) > 2:
+        separators.append(seps[2])   # repetition separator
+    else:
+        separators.append('~')       # repetition separator
+    if len(seps) > 1:
+        separators.append(seps[1])   # component separator
+    else:
+        separators.append('^')       # component separator
+    if len(seps) > 4:
+        separators.append(seps[4])   # sub-component separator
+    else:
+        separators.append('&')       # sub-component separator
+
     ## The ordered list of containers to create
-    containers = [Message, Segment, Field]
+    containers = [Message, Segment, Field, Field, Field]
     return _ParsePlan(separators, containers)
 
 class _ParsePlan(object):
@@ -214,3 +236,11 @@ class _ParsePlan(object):
         ## When we have no separators and containers left, return None,
         ## which indicates that we have nothing further.
         return None
+
+    def applies(self, text):
+        """return True if the separator or those if the children are in the text"""
+        for s in self.separators:
+            if text.find(s) >= 0:
+                return True
+        return False
+

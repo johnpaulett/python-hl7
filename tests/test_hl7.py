@@ -14,6 +14,13 @@ sample_hl7 = u'\r'.join([
     'OBX|2|FN|1553-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
 ])
 
+# Example from: http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+rep_sample_hl7 = u'\r'.join([
+    'MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4',
+    'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
+    ''
+    ])
+
 class ParseTest(unittest.TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
@@ -23,7 +30,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg[3][0][0], u'OBX')
         self.assertEqual(
             msg[3][3],
-            [u'1554-5', u'GLUCOSE', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
+           [[[u'1554-5'], [u'GLUCOSE'], [u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]]
         )
 
     def test_bytestring_converted_to_unicode(self):
@@ -52,8 +59,22 @@ class ParseTest(unittest.TestCase):
 
         self.assertEqual(unicode(msg), nonstd)
         self.assertEqual(len(msg), 2)
-        self.assertEqual(msg[1][5], ['EVERYWOMAN', 'EVE', 'E', '', '', 'L'])
+        self.assertEqual(msg[1][5], [[[u'EVERYWOMAN'], [u'EVE'], [u'E'], [u''], [u''], [u'L']]])
 
+    def test_repetition(self):
+        msg = hl7.parse(rep_sample_hl7)
+        self.assertEqual(msg[1][4], [[u'Repeat1'], [u'Repeat2']])
+        self.assertEqual(type(msg[1][4]), Field)
+        self.assertEqual(type(msg[1][4][0]), Field)
+        self.assertEqual(type(msg[1][4][1]), Field)
+        self.assertEqual(str(msg[1][4][0][0]), 'Repeat1')
+        self.assertEqual(str(msg[1][4][1][0]), 'Repeat2')
+        self.assertEqual(type(msg[1][4][1][0]), unicode)
+
+    def test_subcomponent(self):
+        msg = hl7.parse(rep_sample_hl7)
+        self.assertEqual(msg[1][3], 
+            [[[u'Component1'], [u'Sub-Component1', u'Sub-Component2'], [u'Component3']]])
 
 class IsHL7Test(unittest.TestCase):
     def test_ishl7(self):
@@ -115,8 +136,8 @@ class ParsePlanTest(unittest.TestCase):
     def test_create_parse_plan(self):
         plan = hl7.create_parse_plan(sample_hl7)
 
-        self.assertEqual(plan.separators, ['\r', '|', '^'])
-        self.assertEqual(plan.containers, [Message, Segment, Field])
+        self.assertEqual(plan.separators, ['\r', u'|', u'~', u'^', u'&'])
+        self.assertEqual(plan.containers, [Message, Segment, Field, Field, Field])
 
     def test_parse_plan(self):
         plan = hl7.create_parse_plan(sample_hl7)
@@ -131,15 +152,24 @@ class ParsePlanTest(unittest.TestCase):
         plan = hl7.create_parse_plan(sample_hl7)
 
         n1 = plan.next()
-        self.assertEqual(n1.separators, ['|', '^'])
-        self.assertEqual(n1.containers, [Segment, Field])
+        self.assertEqual(n1.separators, [u'|', u'~', u'^', u'&'])
+        self.assertEqual(n1.containers, [Segment, Field, Field, Field])
 
         n2 = n1.next()
-        self.assertEqual(n2.separators, ['^'])
-        self.assertEqual(n2.containers, [Field])
+        self.assertEqual(n2.separators, [u'~', u'^', u'&'])
+        self.assertEqual(n2.containers, [Field, Field, Field])
 
         n3 = n2.next()
-        self.assertTrue(n3 is None)
+        self.assertEqual(n3.separators, [u'^', u'&'])
+        self.assertEqual(n3.containers, [Field, Field])
+
+        n4 = n3.next()
+        self.assertEqual(n4.separators, [u'&'])
+        self.assertEqual(n4.containers, [Field])
+
+        n5 = n4.next()
+        self.assertTrue(n5 is None)
+
 
 if __name__ == '__main__':
     unittest.main()
