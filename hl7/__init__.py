@@ -67,9 +67,20 @@ def _split(text, plan):
     if not plan.applies(text):
         return plan.container([text])
 
-    ## Recurse so that the sub plans are used in order to split the data
-    ## into the approriate type as defined by the current plan.
-    data = [_split(x, plan.next()) for x in text.split(plan.separator)]
+    # Parsing of the first segment is awkward because it contains
+    # the separator characters in a field
+    if plan.containers[0] == Segment and text[:3] in ['MSH']:
+        seg = text[:3]
+        sep0 = text[3]
+        sep_end_off = text.find(sep0, 4)
+        seps = text[4:sep_end_off]
+        text = text[sep_end_off + 1:]
+        data = [Field('', [seg]), Field('', [sep0]), Field(sep0, [seps])]
+    else:
+        data = []
+    
+    if text:
+        data = data + [_split(x, plan.next()) for x in text.split(plan.separator)]
     ## Return the instance of the current message part according
     ## to the plan
     return plan.container(data)
@@ -248,6 +259,11 @@ class Segment(Container):
     return and is separated by pipes. It contains a list of
     :py:class:`hl7.Field` instances.
     """
+    def __unicode__(self):
+        if unicode(self[0]) in [u'MSH']:
+            return unicode(self[0]) + unicode(self[1]) + unicode(self[2]) + unicode(self[1]) + \
+                self.separator.join((unicode(x) for x in self[3:]))
+        return self.separator.join((unicode(x) for x in self))
 
 class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
