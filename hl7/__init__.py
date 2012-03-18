@@ -13,8 +13,13 @@ __license__ = 'BSD'
 __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
 __url__ = 'http://python-hl7.readthedocs.org'
 
+import logging
+
 # This is the HL7 Null value. It means that a field is present and blank.
 NULL = '""'
+
+# Basic Logger
+logger = logging.getLogger(__file__)
 
 def ishl7(line):
     """Determines whether a *line* looks like an HL7 message.
@@ -87,12 +92,14 @@ def _split(text, plan):
 
 class Container(list):
     """Abstract root class for the parts of the HL7 message."""
-    def __init__(self, separator, sequence=[]):
+    def __init__(self, separator, sequence=[], esc='\\', separators='|^~\\&'):
         ## Initialize the list object, optionally passing in the
         ## sequence.  Since list([]) == [], using the default
         ## parameter will not cause any issues.
         super(Container, self).__init__(sequence)
         self.separator = separator
+        self.esc = esc
+        self.separators = separators
 
     def __unicode__(self):
         """Join a the child containers into a single string, separated
@@ -226,20 +233,17 @@ class Message(Container):
         if len(parts) > 4: SCn = int(parts[4])
 
         segment = self.segments(SEG)[SEGn-1]
-        if SEG in ['MSH', 'FHS']:
-            field = segment[Fn-1]  # Error in the numbering of the first two fields
-        else:
-            field = segment[Fn]
+        field = segment[Fn]
         rep = field[Rn-1]
 
-        if type(rep) != Field:
+        if type(rep) != Repetition:
             # leaf
             if Cn == 1 and SCn == 1:
                 return self.unescape(rep)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
         component = rep[Cn -1]
-        if type(component) != Field:
+        if type(component) != Component:
             # leaf
             if SCn == 1:
                 return self.unescape(component)
@@ -249,9 +253,97 @@ class Message(Container):
 
         return self.unescape(subcomponent)
 
-    def unescape(self, field):
-        # TODO: implement
-        return field
+    def unescape(self, field, app_map=None):
+        """
+            # See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+            # To process this correctly, the full set of separators needs to be known.
+
+            This will convert the identifiable sequences. 
+            If the application provides mapping, these are also used.
+            Items which cannot be mapped are removed
+
+            For example, the App Map count provide N, H, Zxxx values
+
+            Chapter 2: Section 2.10
+
+            At the moment, this functionality can:
+                replace the parsing characters (2.10.4)
+                replace highlight characters (2.10.3)
+                replace hex characters. (2.10.5)
+                replace rich text characters (2.10.6)
+                replace application defined characters (2.10.7)
+            It cannot:
+                switch code pages / ISO IR character sets
+        """
+        if not field or field.find(self.esc) == -1:
+            return field
+
+        DEFAULT_MAP = {
+                'H': '_',               # Override using the APP MAP: 2.10.3
+                'N': '_',               # Override using the APP MAP
+                'F': self.separators[1], # 2.10.4
+                'S': self.separators[3],
+                'T': self.separators[4],
+                'R': self.separators[2],
+                'E': self.esc,
+                '.br': '\r',            # 2.10.6
+                '.sp': '\r',
+                '.fi': '',
+                '.nf': '',
+                '.in': '    ',
+                '.ti': '    ',
+                '.sk': ' ',
+                '.ce': '\r',
+                }
+
+        rv = []
+        collecting = []
+        in_seq = False
+        for offset, c in enumerate(field):
+            if in_seq:
+                if c == self.esc:
+                    in_seq = False
+                    value = ''.join(collecting)
+                    collecting = []
+                    if not value:
+                        logger.warn('Error unescaping value [%s], empty sequence found at %d', field, offset)
+                        continue 
+                    if app_map and value in app_map:
+                        rv.append(app_map[value])
+                    elif value in DEFAULT_MAP:
+                        rv.append(DEFAULT_MAP[value])
+                    elif value.startswith('.') and ((app_map and value[:3] in app_map) or value[:3] in DEFAULT_MAP):
+                        # Substitution with a number of repetitions defined (2.10.6)
+                        if app_map and value[:3] in app_map:
+                            ch = app_map[value[:3]]
+                        else:
+                            ch = DEFAULT_MAP[value[:3]]
+                        count = int(value[3:])
+                        rv.append(ch * count)
+                        
+                    elif value[0] == 'C': # Convert to new Single Byte character set : 2.10.2
+                        # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
+                        logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
+                    elif value[0] == 'M': # Switch to new Multi Byte character set : 2.10.2
+                        # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
+                        logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
+                    elif value[0] == 'X': # Hex encoded Bytes: 2.10.5
+                        value = value[1:]
+                        try:
+                            for off in range(0, len(value), 2):
+                                rv.append(unichr(int(value[off:off+2], 16)))
+                        except:
+                            logger.exception('Error decoding hex value [%s], field [%s], offset [%s]', value, field, offset)
+                    else:
+                        logger.exception('Error decoding value [%s], field [%s], offset [%s]', value, field, offset)
+                else:
+                    collecting.append(c)
+            elif c == self.esc:
+                in_seq = True
+            else:
+                rv.append(c)
+                        
+        return ''.join(rv)
 
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.
@@ -307,25 +399,29 @@ def create_parse_plan(strmsg):
         separators.append(seps[4])   # sub-component separator
     else:
         separators.append('&')       # sub-component separator
+    if len(seps) > 3:
+        esc = seps[3]
+    else:
+        esc = '\\'
 
     ## The ordered list of containers to create
     containers = [Message, Segment, Field, Repetition, Component]
-    return _ParsePlan(separators, containers)
+    return _ParsePlan(separators, containers, esc)
 
 class _ParsePlan(object):
     """Details on how to parse an HL7 message. Typically this object
     should be created via :func:`hl7.create_parse_plan`
     """
     # field, component, repetition, escape, subcomponent
-    # TODO implement escape, and subcomponent
 
-    def __init__(self, separators, containers):
+    def __init__(self, separators, containers, esc):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
         assert len(containers) == len(separators)
         self.separators = separators
         self.containers = containers
+        self.esc = esc
 
     @property
     def separator(self):
@@ -336,7 +432,7 @@ class _ParsePlan(object):
         """Return an instance of the approriate container for the *data*
         as specified by the current plan.
         """
-        return self.containers[0](self.separator, data)
+        return self.containers[0](self.separator, data, self.esc, self.separators)
 
     def next(self):
         """Generate the next level of the plan (essentially generates
@@ -347,7 +443,7 @@ class _ParsePlan(object):
             ## Return a new instance of this class using the tails of
             ## the separators and containers lists. Use self.__class__()
             ## in case :class:`hl7.ParsePlan` is subclassed
-            return  self.__class__(self.separators[1:], self.containers[1:])
+            return  self.__class__(self.separators[1:], self.containers[1:], self.esc)
         ## When we have no separators and containers left, return None,
         ## which indicates that we have nothing further.
         return None

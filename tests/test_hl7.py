@@ -94,6 +94,26 @@ class ParseTest(unittest.TestCase):
         # Incorrect path
         self.assertRaises(IndexError, msg.extract_field, 'PID.3.1.4')
         self.assertRaises(IndexError, msg.extract_field, 'PID.1.1.1.2')
+
+    def test_unescape(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        # Replace Separators
+        self.assertEqual(msg.unescape('\\E\\'), u'\\')
+        self.assertEqual(msg.unescape('\\F\\'), u'|')
+        self.assertEqual(msg.unescape('\\S\\'), u'^')
+        self.assertEqual(msg.unescape('\\T\\'), u'&')
+        self.assertEqual(msg.unescape('\\R\\'), u'~')
+
+        # Replace Highlighting
+        self.assertEqual(msg.unescape('\\H\\text\\N\\'), u'_text_')
+
+        # Application Overrides
+        self.assertEqual(msg.unescape('\\H\\text\\N\\', {'H': '*', 'N': '*'}), u'*text*')
+
+        # Hex Codes
+        self.assertEqual(msg.unescape('\\X20202020\\'), u'    ')
+        
         
 class IsHL7Test(unittest.TestCase):
     def test_ishl7(self):
