@@ -24,7 +24,7 @@ def ishl7(line):
     :rtype: bool
     """
     ## Prevent issues if the line is empty
-    return line.strip().startswith('MSH') if line else False
+    return line.strip()[:3] in [u'MSH', u'FHS'] if line else False
 
 def parse(line):
     """Returns a instance of the :py:class:`hl7.Message` that allows
@@ -69,7 +69,7 @@ def _split(text, plan):
 
     # Parsing of the first segment is awkward because it contains
     # the separator characters in a field
-    if plan.containers[0] == Segment and text[:3] in ['MSH']:
+    if plan.containers[0] == Segment and text[:3] in [u'MSH', u'FHS']:
         seg = text[:3]
         sep0 = text[3]
         sep_end_off = text.find(sep0, 4)
@@ -260,7 +260,7 @@ class Segment(Container):
     :py:class:`hl7.Field` instances.
     """
     def __unicode__(self):
-        if unicode(self[0]) in [u'MSH']:
+        if unicode(self[0]) in [u'MSH', u'FHS']:
             return unicode(self[0]) + unicode(self[1]) + unicode(self[2]) + unicode(self[1]) + \
                 self.separator.join((unicode(x) for x in self[3:]))
         return self.separator.join((unicode(x) for x in self))
