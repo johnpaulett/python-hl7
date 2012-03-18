@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from hl7 import Message, Segment, Field
+from hl7 import Message, Segment, Field, Repetition, Component
 
 import hl7
 import unittest
@@ -65,8 +65,8 @@ class ParseTest(unittest.TestCase):
         msg = hl7.parse(rep_sample_hl7)
         self.assertEqual(msg[1][4], [[u'Repeat1'], [u'Repeat2']])
         self.assertEqual(type(msg[1][4]), Field)
-        self.assertEqual(type(msg[1][4][0]), Field)
-        self.assertEqual(type(msg[1][4][1]), Field)
+        self.assertEqual(type(msg[1][4][0]), Repetition)
+        self.assertEqual(type(msg[1][4][1]), Repetition)
         self.assertEqual(str(msg[1][4][0][0]), 'Repeat1')
         self.assertEqual(str(msg[1][4][1][0]), 'Repeat2')
         self.assertEqual(type(msg[1][4][1][0]), unicode)
@@ -156,7 +156,7 @@ class ParsePlanTest(unittest.TestCase):
         plan = hl7.create_parse_plan(sample_hl7)
 
         self.assertEqual(plan.separators, ['\r', u'|', u'~', u'^', u'&'])
-        self.assertEqual(plan.containers, [Message, Segment, Field, Field, Field])
+        self.assertEqual(plan.containers, [Message, Segment, Field, Repetition, Component])
 
     def test_parse_plan(self):
         plan = hl7.create_parse_plan(sample_hl7)
@@ -172,19 +172,19 @@ class ParsePlanTest(unittest.TestCase):
 
         n1 = plan.next()
         self.assertEqual(n1.separators, [u'|', u'~', u'^', u'&'])
-        self.assertEqual(n1.containers, [Segment, Field, Field, Field])
+        self.assertEqual(n1.containers, [Segment, Field, Repetition, Component])
 
         n2 = n1.next()
         self.assertEqual(n2.separators, [u'~', u'^', u'&'])
-        self.assertEqual(n2.containers, [Field, Field, Field])
+        self.assertEqual(n2.containers, [Field, Repetition, Component])
 
         n3 = n2.next()
         self.assertEqual(n3.separators, [u'^', u'&'])
-        self.assertEqual(n3.containers, [Field, Field])
+        self.assertEqual(n3.containers, [Repetition, Component])
 
         n4 = n3.next()
         self.assertEqual(n4.separators, [u'&'])
-        self.assertEqual(n4.containers, [Field])
+        self.assertEqual(n4.containers, [Component])
 
         n5 = n4.next()
         self.assertTrue(n5 is None)
