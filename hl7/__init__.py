@@ -177,6 +177,14 @@ class Message(Container):
             return self.extract_field(key)
         return list.__getitem__(self, key)
 
+    def __setitem__(self, key, value):
+        """
+        """
+        if isinstance(key, basestring) and len(key) > 3 and isinstance(value, basestring): 
+            return self.assign_field(key, value)
+        return list.__setitem__(self, key, value)
+
+
     def segment(self, segment_id):
         """Gets the first segment with the *segment_id* from the parsed
         *message*.
@@ -299,6 +307,57 @@ class Message(Container):
             return self.unescape(subcomponent)
         else:
             return u''  # Assume non-present optional value
+
+    def assign_field(self, key, value):
+        """
+            Assign a value into a message using the tree based assignment notation.
+            The segment must exist.
+
+            Extract a field using a future proofed approach, based on rules in:
+            http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+
+            The key is defined as:
+
+                SEG[n]-Fn-Rn-Cn-SCn
+                    F   Field
+                    R   Repeat
+                    C   Component
+                    SC  Sub-Component 
+        """
+        SEG, SEGn, Fn, Rn, Cn, SCn = None, 1,None,None,None,None
+        parts = key.split('.')
+        SEG = parts[0][:3]
+        if len(parts[0]) > 3:
+            SEGn = int(parts[0][3:])
+        if len(parts) > 1: Fn = int(parts[1])
+        if len(parts) > 2: Rn = int(parts[2])
+        if len(parts) > 3: Cn = int(parts[3])
+        if len(parts) > 4: SCn = int(parts[4])
+
+        segment = self.segments(SEG)[SEGn-1]
+
+        while len(segment) <= Fn:
+            segment.append(Field(self.separators[2], []))
+        field = segment[Fn]
+        if Rn == None:
+            field[:] = [value]
+            return
+        while len(field) < Rn:
+            field.append(Repetition(self.separators[3], []))
+        rep = field[Rn-1]
+        if Cn == None:
+            rep[:] = [value]
+            return
+        while len(rep) < Cn:
+            rep.append(Component(self.separators[4], []))
+        component = rep[Cn-1]
+        if SCn == None:
+            component[:] = [value]
+            return
+        while len(component) < SCn:
+            component.append(u'')
+        component[SCn-1] = value
+
 
     def escape(self, field, app_map=None):
         """

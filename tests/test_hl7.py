@@ -118,6 +118,28 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg['PID.3.1.3'], u'Component3')
         self.assertEqual(msg['PID.3.1.4'], u'')
 
+    def test_assign(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        # Field
+        msg['MSH.20'] =  u'FIELD 20'
+        self.assertEqual(msg['MSH.20'], u'FIELD 20')
+
+        # Component
+        msg['MSH.21.1.1'] =  u'COMPONENT 21.1.1'
+        self.assertEqual(msg['MSH.21.1.1'], u'COMPONENT 21.1.1')
+
+        # Sub-Component
+        msg['MSH.21.1.2.4'] =  u'SUBCOMPONENT 21.1.2.4'
+        self.assertEqual(msg['MSH.21.1.2.4'], u'SUBCOMPONENT 21.1.2.4')
+
+        # Verify round-tripping (i.e. that separators are correct)
+        msg2 = hl7.parse(unicode(msg))
+        self.assertEqual(msg2['MSH.20'], u'FIELD 20')
+        self.assertEqual(msg2['MSH.21.1.1'], u'COMPONENT 21.1.1')
+        self.assertEqual(msg2['MSH.21.1.2.4'], u'SUBCOMPONENT 21.1.2.4')
+
+
     def test_unescape(self):
         msg = hl7.parse(rep_sample_hl7)
 
