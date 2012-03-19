@@ -282,6 +282,11 @@ class Message(Container):
                 return self.unescape(rep)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
+        if (Cn -1) >= len(rep):
+            if SCn == 1:
+                return u''  # Assume non-present optional value
+            raise(IndexError('Component not present: %s' % key))
+
         component = rep[Cn -1]
         if type(component) != Component:
             # leaf
@@ -289,7 +294,7 @@ class Message(Container):
                 return self.unescape(component)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
-        if type(component) == Component and (SCn -1) < len(component):
+        if (SCn -1) < len(component):
             subcomponent = component[SCn -1]
             return self.unescape(subcomponent)
         else:

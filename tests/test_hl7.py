@@ -108,7 +108,6 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg['PID.1.1.1.1'], u'Field1')
 
         # Incorrect path
-        self.assertRaises(IndexError, msg.extract_field, 'PID.3.1.4')
         self.assertRaises(IndexError, msg.extract_field, 'PID.1.1.1.2')
 
         # Optional field, not included in message
@@ -116,6 +115,8 @@ class ParseTest(unittest.TestCase):
 
         # Optional sub-component, not included in message
         self.assertEqual(msg['PID.3.1.2.3'], u'')
+        self.assertEqual(msg['PID.3.1.3'], u'Component3')
+        self.assertEqual(msg['PID.3.1.4'], u'')
 
     def test_unescape(self):
         msg = hl7.parse(rep_sample_hl7)
