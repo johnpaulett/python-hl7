@@ -21,6 +21,22 @@ rep_sample_hl7 = u'\r'.join([
     ''
     ])
 
+# Source: http://www.health.vic.gov.au/hdss/vinah/2006-07/appendix-a-sample-messages.pdf
+sample_file = u'\r'.join([
+    'FHS|^~\&||ABCHS||AUSDHSV|20070101123401|||abchs20070101123401.hl7|',
+    'BHS|^~\&||ABCHS||AUSDHSV|20070101123401||||abchs20070101123401-1',
+    'MSH|^~\&||ABCHS||AUSDHSV|20070101112951||ADT^A04^ADT_A01|12334456778890|P|2.5|||NE|NE|AU|ASCII',
+    'EVN|A04|20060705000000',
+    'PID|1||0000112234^^^100^A||XXXXXXXXXX^^^^^^S||10131113|1||4|^^RICHMOND^^3121||||1201||||||||1100|||||||||AAA',
+    'PD1||2',
+    'NK1|1||1||||||||||||||||||2',
+    'PV1|1|O||||^^^^^1',
+    'BTS|1',
+    'FTS|1',
+    ''
+    ])
+
+
 class ParseTest(unittest.TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
@@ -113,7 +129,18 @@ class ParseTest(unittest.TestCase):
 
         # Hex Codes
         self.assertEqual(msg.unescape('\\X20202020\\'), u'    ')
-        
+
+    def test_file(self):
+        # Extract message from file
+        self.assertTrue(hl7.isfile(sample_file))
+        messages = hl7.split_file(sample_file)
+        self.assertEqual(len(messages), 1)
+
+        # message can be parsed
+        msg = hl7.parse(messages[0])
+
+        # message has expected content
+        self.assertEqual([s[0][0] for s in msg], [u'MSH', u'EVN', u'PID', u'PD1', u'NK1', u'PV1'])
         
 class IsHL7Test(unittest.TestCase):
     def test_ishl7(self):
@@ -128,6 +155,10 @@ class IsHL7Test(unittest.TestCase):
     def test_ishl7_wrongsegment(self):
         message = 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
         self.assertFalse(hl7.ishl7(message))
+
+    def test_isfile(self):
+        self.assertFalse(hl7.ishl7(sample_file))
+        self.assertTrue(hl7.isfile(sample_file))
 
 class ContainerTest(unittest.TestCase):
     def test_unicode(self):

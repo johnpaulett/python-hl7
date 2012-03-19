@@ -29,7 +29,41 @@ def ishl7(line):
     :rtype: bool
     """
     ## Prevent issues if the line is empty
-    return line.strip()[:3] in [u'MSH', u'FHS'] if line else False
+    return line.strip()[:3] in ['MSH'] if line else False
+
+def isfile(line):
+    """
+        Files are wrapped in FHS / FTS 
+        FHS = file header segment
+        FTS = file trailer segment
+    """
+    return line.strip()[:3] in ['FHS'] if line else False
+
+def split_file(hl7file):
+    """
+        Given a file, split out the messages.
+        Does not do any validation on the message.
+        Throws away batch and file segments.
+    """
+    rv = []
+    for line in hl7file.split('\r'):
+        line = line.strip()
+        if line[:3] in ['FHS', 'BHS', 'FTS', 'BTS']:
+            continue
+        if line[:3] == 'MSH':
+            newmsg = [line]
+            rv.append(newmsg)
+        else:
+            if len(rv) == 0:
+                logger.error('Segment received before message header [%s]', line)
+                continue
+            rv[-1].append(line)
+    rv = ['\r'.join(msg) for msg in rv]
+    for i, msg in enumerate(rv):
+        if not msg[-1] == '\r':
+            rv[i] = msg + '\r'
+    return rv
+
 
 def parse(line):
     """Returns a instance of the :py:class:`hl7.Message` that allows
@@ -382,7 +416,7 @@ def create_parse_plan(strmsg):
     ## details.
 
     # Extract the rest of the separators. Defaults used if not present.
-    assert strmsg[:3] in ('MSH', 'FHS')
+    assert strmsg[:3] in ('MSH')
     sep0 = strmsg[3]
     seps = list(strmsg[3: strmsg.find(sep0, 4)])
 
