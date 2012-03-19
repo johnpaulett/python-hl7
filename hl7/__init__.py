@@ -267,7 +267,13 @@ class Message(Container):
         if len(parts) > 4: SCn = int(parts[4])
 
         segment = self.segments(SEG)[SEGn-1]
-        field = segment[Fn]
+        if Fn < len(segment):
+            field = segment[Fn]
+        else:
+            if Rn == 1 and Cn == 1 and SCn == 1:
+                return u''  # Assume non-present optional value
+            raise(IndexError('Field not present: %s' % key))
+
         rep = field[Rn-1]
 
         if type(rep) != Repetition:
@@ -283,9 +289,57 @@ class Message(Container):
                 return self.unescape(component)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
-        subcomponent = component[SCn -1]
+        if type(component) == Component and (SCn -1) < len(component):
+            subcomponent = component[SCn -1]
+            return self.unescape(subcomponent)
+        else:
+            return u''  # Assume non-present optional value
 
-        return self.unescape(subcomponent)
+    def escape(self, field, app_map=None):
+        """
+            # See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+            # To process this correctly, the full set of separators needs to be known.
+
+            Pass through the message. Replace recognised characters with their escaped
+            version. Return an ascii encoded string.
+
+            Functionality:
+                Replace separator characters (2.10.4)
+                replace application defined characters (2.10.7)
+                Replace non-ascii values with hex versions using HL7 conventions.
+
+            Todo:
+                replace highlight characters (2.10.3)
+                How to handle the rich text substitutions.
+                Merge contiguous hex values
+        """
+        if not field:
+            return field
+
+        esc = str(self.esc)
+
+        DEFAULT_MAP = {
+                self.separators[1]: 'F', # 2.10.4
+                self.separators[3]: 'S',
+                self.separators[4]: 'T',
+                self.separators[2]: 'R',
+                self.esc: 'E',
+                '\r': '.br',            # 2.10.6
+                }
+
+        rv = []
+        for offset, c in enumerate(field):
+            if app_map and c in app_map:
+                rv.append(esc + app_map[c] + esc)
+            elif c in DEFAULT_MAP:
+                rv.append(esc + DEFAULT_MAP[c] + esc)
+            elif ord(c) >= 0x20  and ord(c) <= 0x7E:
+                rv.append(c.encode('ascii'))
+            else:
+                rv.append('%sX%2x%s' % (esc, ord(c), esc))
+
+        return ''.join(rv)
+
 
     def unescape(self, field, app_map=None):
         """
@@ -313,21 +367,21 @@ class Message(Container):
             return field
 
         DEFAULT_MAP = {
-                'H': '_',               # Override using the APP MAP: 2.10.3
-                'N': '_',               # Override using the APP MAP
+                'H': u'_',               # Override using the APP MAP: 2.10.3
+                'N': u'_',               # Override using the APP MAP
                 'F': self.separators[1], # 2.10.4
                 'S': self.separators[3],
                 'T': self.separators[4],
                 'R': self.separators[2],
                 'E': self.esc,
-                '.br': '\r',            # 2.10.6
-                '.sp': '\r',
-                '.fi': '',
-                '.nf': '',
-                '.in': '    ',
-                '.ti': '    ',
-                '.sk': ' ',
-                '.ce': '\r',
+                '.br': u'\r',            # 2.10.6
+                '.sp': u'\r',
+                '.fi': u'',
+                '.nf': u'',
+                '.in': u'    ',
+                '.ti': u'    ',
+                '.sk': u' ',
+                '.ce': u'\r',
                 }
 
         rv = []
@@ -375,7 +429,7 @@ class Message(Container):
             elif c == self.esc:
                 in_seq = True
             else:
-                rv.append(c)
+                rv.append(unicode(c))
                         
         return ''.join(rv)
 

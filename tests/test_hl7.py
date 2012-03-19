@@ -111,6 +111,12 @@ class ParseTest(unittest.TestCase):
         self.assertRaises(IndexError, msg.extract_field, 'PID.3.1.4')
         self.assertRaises(IndexError, msg.extract_field, 'PID.1.1.1.2')
 
+        # Optional field, not included in message
+        self.assertEqual(msg['MSH.20'], u'')
+
+        # Optional sub-component, not included in message
+        self.assertEqual(msg['PID.3.1.2.3'], u'')
+
     def test_unescape(self):
         msg = hl7.parse(rep_sample_hl7)
 
@@ -129,6 +135,17 @@ class ParseTest(unittest.TestCase):
 
         # Hex Codes
         self.assertEqual(msg.unescape('\\X20202020\\'), u'    ')
+
+    def test_escape(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        self.assertEqual(msg.escape(u'\\'), '\\E\\')
+        self.assertEqual(msg.escape(u'|'), '\\F\\')
+        self.assertEqual(msg.escape(u'^'), '\\S\\')
+        self.assertEqual(msg.escape(u'&'), '\\T\\')
+        self.assertEqual(msg.escape(u'~'), '\\R\\')
+
+        self.assertEqual(msg.escape(u'áéíóú'), '\\Xe1\\\\Xe9\\\\Xed\\\\Xf3\\\\Xfa\\')
 
     def test_file(self):
         # Extract message from file
