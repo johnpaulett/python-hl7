@@ -126,7 +126,7 @@ def _split(text, plan):
 
 class Container(list):
     """Abstract root class for the parts of the HL7 message."""
-    def __init__(self, separator, sequence=[], esc='\\', separators='|^~\\&'):
+    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
         ## Initialize the list object, optionally passing in the
         ## sequence.  Since list([]) == [], using the default
         ## parameter will not cause any issues.
@@ -224,28 +224,28 @@ class Message(Container):
 
             The key is defined as:
 
-                SEG[n]-Fn-Rn-Cn-SCn
-                    F   Field
-                    R   Repeat
-                    C   Component
-                    SC  Sub-Component 
-
-                Indexing is from 1 for compatibility with HL7 spec numbering.
+                |   SEG[n]-Fn-Rn-Cn-Sn
+                |       F   Field
+                |       R   Repeat
+                |       C   Component
+                |       S  Sub-Component 
+                |
+                |   *Indexing is from 1 for compatibility with HL7 spec numbering.*
 
             Example:
 
-                PID.F1.R1.C2.SC2
-
-                PID (default to first PID segment, counting from 1)
-                F1 (first after segment id, HL7 Spec numbering)
-                R1  (repeat counting from 1)
-                C2  (component 2 counting from 1)
-                SC2  (component 2 counting from 1)
+                |   PID.F1.R1.C2.S2
+                |
+                |   PID (default to first PID segment, counting from 1)
+                |   F1 (first after segment id, HL7 Spec numbering)
+                |   R1  (repeat counting from 1)
+                |   C2  (component 2 counting from 1)
+                |   S2  (component 2 counting from 1)
 
             'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
 
-                PID.F3.R1.C2.SC2 = 'Sub-Component2'
-                PID.F4.R2.C1 = 'Repeat1'
+                |   PID.F3.R1.C2.S2 = 'Sub-Component2'
+                |   PID.F4.R2.C1 = 'Repeat1'
 
             Compatibility Rules:
 
@@ -255,24 +255,36 @@ class Message(Container):
 
                 Example:
 
-                    PID.F3.R1.C2 = 'Sub-Component1' (assume .SC1)
+                    |   PID.F3.R1.C2 = 'Sub-Component1' (assume .SC1)
 
                 If the parse tree terminates before the full path is satisfied
                 check each of the subsequent paths and if every one is specified
                 at position 1 then the leaf value reached can be returned as the
                 result.
 
-                    PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
+                    |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
         SEG, SEGn, Fn, Rn, Cn, SCn = None, 1,1,1,1,1
         parts = key.split('.')
         SEG = parts[0][:3]
         if len(parts[0]) > 3:
             SEGn = int(parts[0][3:])
-        if len(parts) > 1: Fn = int(parts[1])
-        if len(parts) > 2: Rn = int(parts[2])
-        if len(parts) > 3: Cn = int(parts[3])
-        if len(parts) > 4: SCn = int(parts[4])
+        if len(parts) > 1:
+            if parts[1][0].upper() == 'F':
+                parts[1] = parts[1][1:]
+            Fn = int(parts[1])
+        if len(parts) > 2:
+            if parts[2][0].upper() == 'R':
+                parts[2] = parts[2][1:]
+            Rn = int(parts[2])
+        if len(parts) > 3:
+            if parts[3][0].upper() == 'C':
+                parts[3] = parts[3][1:]
+            Cn = int(parts[3])
+        if len(parts) > 4:
+            if parts[4][0].upper() == 'S':
+                parts[4] = parts[4][1:]
+            SCn = int(parts[4])
 
         segment = self.segments(SEG)[SEGn-1]
         if Fn < len(segment):
@@ -318,21 +330,33 @@ class Message(Container):
 
             The key is defined as:
 
-                SEG[n]-Fn-Rn-Cn-SCn
-                    F   Field
-                    R   Repeat
-                    C   Component
-                    SC  Sub-Component 
+            |   SEG[n]-Fn-Rn-Cn-Sn
+            |       F   Field
+            |       R   Repeat
+            |       C   Component
+            |       S  Sub-Component 
         """
         SEG, SEGn, Fn, Rn, Cn, SCn = None, 1,None,None,None,None
         parts = key.split('.')
         SEG = parts[0][:3]
         if len(parts[0]) > 3:
             SEGn = int(parts[0][3:])
-        if len(parts) > 1: Fn = int(parts[1])
-        if len(parts) > 2: Rn = int(parts[2])
-        if len(parts) > 3: Cn = int(parts[3])
-        if len(parts) > 4: SCn = int(parts[4])
+        if len(parts) > 1:
+            if parts[1][0].upper() == 'F':
+                parts[1] = parts[1][1:]
+            Fn = int(parts[1])
+        if len(parts) > 2:
+            if parts[2][0].upper() == 'R':
+                parts[2] = parts[2][1:]
+            Rn = int(parts[2])
+        if len(parts) > 3:
+            if parts[3][0].upper() == 'C':
+                parts[3] = parts[3][1:]
+            Cn = int(parts[3])
+        if len(parts) > 4:
+            if parts[4][0].upper() == 'S':
+                parts[4] = parts[4][1:]
+            SCn = int(parts[4])
 
         segment = self.segments(SEG)[SEGn-1]
 
@@ -361,21 +385,24 @@ class Message(Container):
 
     def escape(self, field, app_map=None):
         """
-            # See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
-            # To process this correctly, the full set of separators needs to be known.
+            See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+
+            To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
 
             Pass through the message. Replace recognised characters with their escaped
             version. Return an ascii encoded string.
 
             Functionality:
-                Replace separator characters (2.10.4)
-                replace application defined characters (2.10.7)
-                Replace non-ascii values with hex versions using HL7 conventions.
 
-            Todo:
-                replace highlight characters (2.10.3)
-                How to handle the rich text substitutions.
-                Merge contiguous hex values
+            *   Replace separator characters (2.10.4)
+            *   replace application defined characters (2.10.7)
+            *   Replace non-ascii values with hex versions using HL7 conventions.
+
+            Incomplete:
+
+            *   replace highlight characters (2.10.3)
+            *   How to handle the rich text substitutions.
+            *   Merge contiguous hex values
         """
         if not field:
             return field
@@ -384,9 +411,9 @@ class Message(Container):
 
         DEFAULT_MAP = {
                 self.separators[1]: 'F', # 2.10.4
+                self.separators[2]: 'R',
                 self.separators[3]: 'S',
                 self.separators[4]: 'T',
-                self.separators[2]: 'R',
                 self.esc: 'E',
                 '\r': '.br',            # 2.10.6
                 }
@@ -407,8 +434,9 @@ class Message(Container):
 
     def unescape(self, field, app_map=None):
         """
-            # See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
-            # To process this correctly, the full set of separators needs to be known.
+            See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+
+            To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
 
             This will convert the identifiable sequences. 
             If the application provides mapping, these are also used.
@@ -419,13 +447,16 @@ class Message(Container):
             Chapter 2: Section 2.10
 
             At the moment, this functionality can:
-                replace the parsing characters (2.10.4)
-                replace highlight characters (2.10.3)
-                replace hex characters. (2.10.5)
-                replace rich text characters (2.10.6)
-                replace application defined characters (2.10.7)
+
+            *   replace the parsing characters (2.10.4)
+            *   replace highlight characters (2.10.3)
+            *   replace hex characters. (2.10.5)
+            *   replace rich text characters (2.10.6)
+            *   replace application defined characters (2.10.7)
+
             It cannot:
-                switch code pages / ISO IR character sets
+
+            *   switch code pages / ISO IR character sets
         """
         if not field or field.find(self.esc) == -1:
             return field
@@ -434,9 +465,9 @@ class Message(Container):
                 'H': u'_',               # Override using the APP MAP: 2.10.3
                 'N': u'_',               # Override using the APP MAP
                 'F': self.separators[1], # 2.10.4
+                'R': self.separators[2],
                 'S': self.separators[3],
                 'T': self.separators[4],
-                'R': self.separators[2],
                 'E': self.esc,
                 '.br': u'\r',            # 2.10.6
                 '.sp': u'\r',
