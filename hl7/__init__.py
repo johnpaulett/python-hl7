@@ -29,7 +29,7 @@ def ishl7(line):
     :rtype: bool
     """
     ## Prevent issues if the line is empty
-    return line.strip()[:3] in ['MSH'] if line else False
+    return line and (line.strip()[:3] in ['MSH']) or False
 
 def isfile(line):
     """
@@ -37,7 +37,7 @@ def isfile(line):
         FHS = file header segment
         FTS = file trailer segment
     """
-    return line.strip()[:3] in ['FHS'] if line else False
+    return line and (line.strip()[:3] in ['FHS']) or False
 
 def split_file(hl7file):
     """
