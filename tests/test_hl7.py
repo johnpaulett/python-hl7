@@ -48,7 +48,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg[3][0][0], u'OBX')
         self.assertEqual(
             msg[3][3],
-           [[[u'', u'1554-5'], [u'', u'GLUCOSE'], [u'', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]]
+           [[u'', [u'', u'1554-5'], [u'', u'GLUCOSE'], [u'', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]]
         )
         ## Make sure MSH-1 and MSH-2 are valid
         self.assertEqual(msg[0][1][0], u'|')
@@ -56,7 +56,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg[0][2][0], u'^~\&')
         self.assertTrue(isinstance(msg[0][2], hl7.Field))
         ## MSH-9 is the message type
-        self.assertEqual(msg[0][9], [[[u'', u'ORU'], [u'', u'R01']]])
+        self.assertEqual(msg[0][9], [[u'', [u'', u'ORU'], [u'', u'R01']]])
         ## Do it twice to make sure the call to unicode() is idempotent
         self.assertEqual(unicode(msg), sample_hl7.strip())
         self.assertEqual(unicode(msg), sample_hl7.strip())
@@ -87,29 +87,30 @@ class ParseTest(unittest.TestCase):
 
         self.assertEqual(unicode(msg), nonstd)
         self.assertEqual(len(msg), 2)
-        self.assertEqual(msg[1][5], [[[u'', u'EVERYWOMAN'], [u'', u'EVE'], [u'', u'E'], [u'', u''], [u'', u''], [u'', u'L']]])
+        self.assertEqual(msg[1][5], [[u'', [u'', u'EVERYWOMAN'], [u'', u'EVE'], [u'', u'E'], [u'', u''], [u'', u''], [u'', u'L']]])
 
     def test_repetition(self):
         msg = hl7.parse(rep_sample_hl7)
-        self.assertEqual(msg[1][4], [[u'Repeat1'], [u'Repeat2']])
+        self.assertEqual(msg[1][4], [[u'', u'Repeat1'], [u'', u'Repeat2']])
         self.assertEqual(type(msg[1][4]), Field)
         self.assertEqual(type(msg[1][4][0]), Repetition)
         self.assertEqual(type(msg[1][4][1]), Repetition)
-        self.assertEqual(str(msg[1][4][0][0]), 'Repeat1')
-        self.assertEqual(str(msg[1][4][1][0]), 'Repeat2')
-        self.assertEqual(type(msg[1][4][1][0]), unicode)
+        self.assertEqual(str(msg[1][4][0][1]), 'Repeat1')
+        self.assertEqual(str(msg[1][4][1][1]), 'Repeat2')
+        self.assertEqual(type(msg[1][4][1][1]), unicode)
 
     def test_subcomponent(self):
         msg = hl7.parse(rep_sample_hl7)
         self.assertEqual(msg[1][3],
-            [[[u'', u'Component1'], [u'', u'Sub-Component1', u'Sub-Component2'], [u'', u'Component3']]])
+            [[u'', [u'', u'Component1'], [u'', u'Sub-Component1', u'Sub-Component2'], [u'', u'Component3']]])
 
     def test_elementnumbering(self):
         ## Make sure that the numbering of repetitions. components and
         ## sub-components is indexed from 1 (for compatibility with HL7 spec
         ## numbering) and not 0-based (default for Python list)
         msg = hl7.parse(rep_sample_hl7)
-        self.assertEqual(msg[1][3][0][1][2], msg["PID.3.1.2.2"])
+        self.assertEqual(msg[1][3][0][2][2], msg["PID.3.1.2.2"])
+        self.assertEqual(msg[1][4][1][1], msg["PID.4.2.1"])
 
     def test_extract(self):
         msg = hl7.parse(rep_sample_hl7)

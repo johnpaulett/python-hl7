@@ -147,7 +147,7 @@ class Container(list):
         True
 
         """
-        if isinstance(self, Component):
+        if isinstance(self, (Repetition, Component)):
             ## Remove the empty element in position 0 used to index from 1
             ## for compatibility with HL7 spec numbering
             temp = deepcopy(self)
@@ -310,12 +310,12 @@ class Message(Container):
                 return self.unescape(rep)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
-        if (Cn - 1) >= len(rep):
+        if (Cn) >= len(rep):
             if SCn == 1:
                 return u''  # Assume non-present optional value
             raise(IndexError('Component not present: %s' % key))
 
-        component = rep[Cn - 1]
+        component = rep[Cn]
         if type(component) != Component:
             # leaf
             if SCn == 1:
@@ -378,11 +378,11 @@ class Message(Container):
             field.append(Repetition(self.separators[3], []))
         rep = field[Rn - 1]
         if Cn == None:
-            rep[:] = [value]
+            rep[:] = [u"", value]
             return
-        while len(rep) < Cn:
+        while len(rep) < Cn + 1:
             rep.append(Component(self.separators[4], []))
-        component = rep[Cn - 1]
+        component = rep[Cn]
         if SCn == None:
             component[:] = [u"", value]
             return
@@ -556,6 +556,11 @@ class Field(Container):
 class Repetition(Container):
     """Fourth level of an HL7 message. A field can repeat.
     """
+    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
+        super(Repetition, self).__init__(separator, sequence, esc, separators)
+        ## Add an empty element in position 0 to index from 1 for
+        ## compatibility with HL7 spec numbering
+        self.insert(0, u"")
 
 class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
