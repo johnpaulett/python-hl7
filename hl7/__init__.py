@@ -5,6 +5,7 @@
 * Documentation: http://python-hl7.readthedocs.org
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
+from copy import deepcopy
 
 __version__ = '0.3.0a1'
 __author__ = 'John Paulett'
@@ -146,7 +147,14 @@ class Container(list):
         True
 
         """
-        return self.separator.join((unicode(x) for x in self))
+        if isinstance(self, Component):
+            ## Remove the empty element in position 0 used to index from 1
+            ## for compatibility with HL7 spec numbering
+            temp = deepcopy(self)
+            temp.pop(0)
+        else:
+            temp = self
+        return temp.separator.join((unicode(x) for x in temp))
 
 class Message(Container):
     """Representation of an HL7 message. It contains a list
@@ -314,8 +322,8 @@ class Message(Container):
                 return self.unescape(component)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
-        if (SCn - 1) < len(component):
-            subcomponent = component[SCn - 1]
+        if (SCn) < len(component):
+            subcomponent = component[SCn]
             return self.unescape(subcomponent)
         else:
             return u''  # Assume non-present optional value
@@ -376,11 +384,11 @@ class Message(Container):
             rep.append(Component(self.separators[4], []))
         component = rep[Cn - 1]
         if SCn == None:
-            component[:] = [value]
+            component[:] = [u"", value]
             return
-        while len(component) < SCn:
+        while len(component) < SCn + 1:
             component.append(u'')
-        component[SCn - 1] = value
+        component[SCn] = value
 
 
     def escape(self, field, app_map=None):
@@ -553,6 +561,11 @@ class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
     Contains sub-components
     """
+    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
+        super(Component, self).__init__(separator, sequence, esc, separators)
+        ## Add an empty element in position 0 to index from 1 for
+        ## compatibility with HL7 spec numbering
+        self.insert(0, u"")
 
 def create_parse_plan(strmsg):
     """Creates a plan on how to parse the HL7 message according to
