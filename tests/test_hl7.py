@@ -91,7 +91,7 @@ class ParseTest(unittest.TestCase):
 
     def test_subcomponent(self):
         msg = hl7.parse(rep_sample_hl7)
-        self.assertEqual(msg[1][3], 
+        self.assertEqual(msg[1][3],
             [[[u'Component1'], [u'Sub-Component1', u'Sub-Component2'], [u'Component3']]])
 
     def test_extract(self):
@@ -124,15 +124,15 @@ class ParseTest(unittest.TestCase):
         msg = hl7.parse(rep_sample_hl7)
 
         # Field
-        msg['MSH.20'] =  u'FIELD 20'
+        msg['MSH.20'] = u'FIELD 20'
         self.assertEqual(msg['MSH.20'], u'FIELD 20')
 
         # Component
-        msg['MSH.21.1.1'] =  u'COMPONENT 21.1.1'
+        msg['MSH.21.1.1'] = u'COMPONENT 21.1.1'
         self.assertEqual(msg['MSH.21.1.1'], u'COMPONENT 21.1.1')
 
         # Sub-Component
-        msg['MSH.21.1.2.4'] =  u'SUBCOMPONENT 21.1.2.4'
+        msg['MSH.21.1.2.4'] = u'SUBCOMPONENT 21.1.2.4'
         self.assertEqual(msg['MSH.21.1.2.4'], u'SUBCOMPONENT 21.1.2.4')
 
         # Verify round-tripping (i.e. that separators are correct)
@@ -183,7 +183,7 @@ class ParseTest(unittest.TestCase):
 
         # message has expected content
         self.assertEqual([s[0][0] for s in msg], [u'MSH', u'EVN', u'PID', u'PD1', u'NK1', u'PV1'])
-        
+
 class IsHL7Test(unittest.TestCase):
     def test_ishl7(self):
         self.assertTrue(hl7.ishl7(sample_hl7))

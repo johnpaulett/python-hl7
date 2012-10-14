@@ -117,7 +117,7 @@ def _split(text, plan):
         data = [Field('', [seg]), Field('', [sep0]), Field(sep0, [seps])]
     else:
         data = []
-    
+
     if text:
         data = data + [_split(x, plan.next()) for x in text.split(plan.separator)]
     ## Return the instance of the current message part according
@@ -180,7 +180,7 @@ class Message(Container):
     def __setitem__(self, key, value):
         """
         """
-        if isinstance(key, basestring) and len(key) > 3 and isinstance(value, basestring): 
+        if isinstance(key, basestring) and len(key) > 3 and isinstance(value, basestring):
             return self.assign_field(key, value)
         return list.__setitem__(self, key, value)
 
@@ -264,7 +264,7 @@ class Message(Container):
 
                     |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
-        SEG, SEGn, Fn, Rn, Cn, SCn = None, 1,1,1,1,1
+        SEG, SEGn, Fn, Rn, Cn, SCn = None, 1, 1, 1, 1, 1
         parts = key.split('.')
         SEG = parts[0][:3]
         if len(parts[0]) > 3:
@@ -286,7 +286,7 @@ class Message(Container):
                 parts[4] = parts[4][1:]
             SCn = int(parts[4])
 
-        segment = self.segments(SEG)[SEGn-1]
+        segment = self.segments(SEG)[SEGn - 1]
         if Fn < len(segment):
             field = segment[Fn]
         else:
@@ -294,7 +294,7 @@ class Message(Container):
                 return u''  # Assume non-present optional value
             raise(IndexError('Field not present: %s' % key))
 
-        rep = field[Rn-1]
+        rep = field[Rn - 1]
 
         if type(rep) != Repetition:
             # leaf
@@ -302,20 +302,20 @@ class Message(Container):
                 return self.unescape(rep)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
-        if (Cn -1) >= len(rep):
+        if (Cn - 1) >= len(rep):
             if SCn == 1:
                 return u''  # Assume non-present optional value
             raise(IndexError('Component not present: %s' % key))
 
-        component = rep[Cn -1]
+        component = rep[Cn - 1]
         if type(component) != Component:
             # leaf
             if SCn == 1:
                 return self.unescape(component)
             raise(IndexError('Field reaches leaf node before completing path: %s' % key))
 
-        if (SCn -1) < len(component):
-            subcomponent = component[SCn -1]
+        if (SCn - 1) < len(component):
+            subcomponent = component[SCn - 1]
             return self.unescape(subcomponent)
         else:
             return u''  # Assume non-present optional value
@@ -336,7 +336,7 @@ class Message(Container):
             |       C   Component
             |       S  Sub-Component 
         """
-        SEG, SEGn, Fn, Rn, Cn, SCn = None, 1,None,None,None,None
+        SEG, SEGn, Fn, Rn, Cn, SCn = None, 1, None, None, None, None
         parts = key.split('.')
         SEG = parts[0][:3]
         if len(parts[0]) > 3:
@@ -358,7 +358,7 @@ class Message(Container):
                 parts[4] = parts[4][1:]
             SCn = int(parts[4])
 
-        segment = self.segments(SEG)[SEGn-1]
+        segment = self.segments(SEG)[SEGn - 1]
 
         while len(segment) <= Fn:
             segment.append(Field(self.separators[2], []))
@@ -368,19 +368,19 @@ class Message(Container):
             return
         while len(field) < Rn:
             field.append(Repetition(self.separators[3], []))
-        rep = field[Rn-1]
+        rep = field[Rn - 1]
         if Cn == None:
             rep[:] = [value]
             return
         while len(rep) < Cn:
             rep.append(Component(self.separators[4], []))
-        component = rep[Cn-1]
+        component = rep[Cn - 1]
         if SCn == None:
             component[:] = [value]
             return
         while len(component) < SCn:
             component.append(u'')
-        component[SCn-1] = value
+        component[SCn - 1] = value
 
 
     def escape(self, field, app_map=None):
@@ -415,7 +415,7 @@ class Message(Container):
                 self.separators[3]: 'S',
                 self.separators[4]: 'T',
                 self.esc: 'E',
-                '\r': '.br',            # 2.10.6
+                '\r': '.br', # 2.10.6
                 }
 
         rv = []
@@ -462,14 +462,14 @@ class Message(Container):
             return field
 
         DEFAULT_MAP = {
-                'H': u'_',               # Override using the APP MAP: 2.10.3
-                'N': u'_',               # Override using the APP MAP
+                'H': u'_', # Override using the APP MAP: 2.10.3
+                'N': u'_', # Override using the APP MAP
                 'F': self.separators[1], # 2.10.4
                 'R': self.separators[2],
                 'S': self.separators[3],
                 'T': self.separators[4],
                 'E': self.esc,
-                '.br': u'\r',            # 2.10.6
+                '.br': u'\r', # 2.10.6
                 '.sp': u'\r',
                 '.fi': u'',
                 '.nf': u'',
@@ -490,7 +490,7 @@ class Message(Container):
                     collecting = []
                     if not value:
                         logger.warn('Error unescaping value [%s], empty sequence found at %d', field, offset)
-                        continue 
+                        continue
                     if app_map and value in app_map:
                         rv.append(app_map[value])
                     elif value in DEFAULT_MAP:
@@ -503,7 +503,7 @@ class Message(Container):
                             ch = DEFAULT_MAP[value[:3]]
                         count = int(value[3:])
                         rv.append(ch * count)
-                        
+
                     elif value[0] == 'C': # Convert to new Single Byte character set : 2.10.2
                         # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
                         logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
@@ -514,7 +514,7 @@ class Message(Container):
                         value = value[1:]
                         try:
                             for off in range(0, len(value), 2):
-                                rv.append(unichr(int(value[off:off+2], 16)))
+                                rv.append(unichr(int(value[off:off + 2], 16)))
                         except:
                             logger.exception('Error decoding hex value [%s], field [%s], offset [%s]', value, field, offset)
                     else:
@@ -525,7 +525,7 @@ class Message(Container):
                 in_seq = True
             else:
                 rv.append(unicode(c))
-                        
+
         return ''.join(rv)
 
 class Segment(Container):
