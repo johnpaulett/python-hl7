@@ -50,6 +50,16 @@ class ParseTest(unittest.TestCase):
             msg[3][3],
            [[[u'1554-5'], [u'GLUCOSE'], [u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]]
         )
+        ## Make sure MSH-1 and MSH-2 are valid
+        self.assertEqual(msg[0][1][0], u'|')
+        self.assertTrue(isinstance(msg[0][1], hl7.Field))
+        self.assertEqual(msg[0][2][0], u'^~\&')
+        self.assertTrue(isinstance(msg[0][2], hl7.Field))
+        ## MSH-9 is the message type
+        self.assertEqual(msg[0][9], [[[u'ORU'], [u'R01']]])
+        ## Do it twice to make sure the call to unicode() is idempotent
+        self.assertEqual(unicode(msg), sample_hl7.strip())
+        self.assertEqual(unicode(msg), sample_hl7.strip())
 
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
