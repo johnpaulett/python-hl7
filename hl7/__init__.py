@@ -135,6 +135,10 @@ class Container(list):
         self.separator = separator
         self.esc = esc
         self.separators = separators
+        if isinstance(self, (Field, Repetition, Component)):
+            ## Add an empty element in position 0 to index from 1 for
+            ## compatibility with HL7 spec numbering
+            self.insert(0, u"")
 
     def __unicode__(self):
         """Join a the child containers into a single string, separated
@@ -552,30 +556,15 @@ class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
     by pipes and separated by carets. It contains a list of strings.
     """
-    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
-        super(Field, self).__init__(separator, sequence, esc, separators)
-        ## Add an empty element in position 0 to index from 1 for
-        ## compatibility with HL7 spec numbering
-        self.insert(0, u"")
 
 class Repetition(Container):
     """Fourth level of an HL7 message. A field can repeat.
     """
-    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
-        super(Repetition, self).__init__(separator, sequence, esc, separators)
-        ## Add an empty element in position 0 to index from 1 for
-        ## compatibility with HL7 spec numbering
-        self.insert(0, u"")
 
 class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
     Contains sub-components
     """
-    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
-        super(Component, self).__init__(separator, sequence, esc, separators)
-        ## Add an empty element in position 0 to index from 1 for
-        ## compatibility with HL7 spec numbering
-        self.insert(0, u"")
 
 def create_parse_plan(strmsg):
     """Creates a plan on how to parse the HL7 message according to
