@@ -44,19 +44,19 @@ class ParseTest(unittest.TestCase):
         msg = hl7.parse(sample_hl7)
         self.assertEqual(len(msg), 5)
         self.assertTrue(isinstance(msg[0][0][0], unicode))
-        self.assertEqual(msg[0][0][0], u'MSH')
-        self.assertEqual(msg[3][0][0], u'OBX')
+        self.assertEqual(msg[0][0][1], u'MSH')
+        self.assertEqual(msg[3][0][1], u'OBX')
         self.assertEqual(
             msg[3][3],
-           [[u'', [u'', u'1554-5'], [u'', u'GLUCOSE'], [u'', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]]
+           [u'', [u'', [u'', u'1554-5'], [u'', u'GLUCOSE'], [u'', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]]
         )
         ## Make sure MSH-1 and MSH-2 are valid
-        self.assertEqual(msg[0][1][0], u'|')
+        self.assertEqual(msg[0][1][1], u'|')
         self.assertTrue(isinstance(msg[0][1], hl7.Field))
-        self.assertEqual(msg[0][2][0], u'^~\&')
+        self.assertEqual(msg[0][2][1], u'^~\&')
         self.assertTrue(isinstance(msg[0][2], hl7.Field))
         ## MSH-9 is the message type
-        self.assertEqual(msg[0][9], [[u'', [u'', u'ORU'], [u'', u'R01']]])
+        self.assertEqual(msg[0][9], [u'', [u'', [u'', u'ORU'], [u'', u'R01']]])
         ## Do it twice to make sure the call to unicode() is idempotent
         self.assertEqual(unicode(msg), sample_hl7.strip())
         self.assertEqual(unicode(msg), sample_hl7.strip())
@@ -64,8 +64,8 @@ class ParseTest(unittest.TestCase):
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
         self.assertEqual(len(msg), 5)
-        self.assertTrue(isinstance(msg[0][0][0], unicode))
-        self.assertEqual(msg[0][0][0], u'MSH')
+        self.assertTrue(isinstance(msg[0][0][1], unicode))
+        self.assertEqual(msg[0][0][1], u'MSH')
 
     def test_non_ascii_bytestring(self):
         # \x96 - valid cp1252, not valid utf8
@@ -87,30 +87,33 @@ class ParseTest(unittest.TestCase):
 
         self.assertEqual(unicode(msg), nonstd)
         self.assertEqual(len(msg), 2)
-        self.assertEqual(msg[1][5], [[u'', [u'', u'EVERYWOMAN'], [u'', u'EVE'], [u'', u'E'], [u'', u''], [u'', u''], [u'', u'L']]])
+        self.assertEqual(msg[1][5], [u'', [u'', [u'', u'EVERYWOMAN'], [u'', u'EVE'], [u'', u'E'], [u'', u''], [u'', u''], [u'', u'L']]])
 
     def test_repetition(self):
         msg = hl7.parse(rep_sample_hl7)
-        self.assertEqual(msg[1][4], [[u'', u'Repeat1'], [u'', u'Repeat2']])
+        self.assertEqual(msg[1][4], [u'', [u'', u'Repeat1'], [u'', u'Repeat2']])
         self.assertEqual(type(msg[1][4]), Field)
-        self.assertEqual(type(msg[1][4][0]), Repetition)
         self.assertEqual(type(msg[1][4][1]), Repetition)
-        self.assertEqual(str(msg[1][4][0][1]), 'Repeat1')
-        self.assertEqual(str(msg[1][4][1][1]), 'Repeat2')
+        self.assertEqual(type(msg[1][4][2]), Repetition)
+        self.assertEqual(str(msg[1][4][1][1]), 'Repeat1')
         self.assertEqual(type(msg[1][4][1][1]), unicode)
+        self.assertEqual(str(msg[1][4][2][1]), 'Repeat2')
+        self.assertEqual(type(msg[1][4][2][1]), unicode)
 
     def test_subcomponent(self):
         msg = hl7.parse(rep_sample_hl7)
         self.assertEqual(msg[1][3],
-            [[u'', [u'', u'Component1'], [u'', u'Sub-Component1', u'Sub-Component2'], [u'', u'Component3']]])
+            [u'', [u'', [u'', u'Component1'], [u'', u'Sub-Component1', u'Sub-Component2'], [u'', u'Component3']]])
 
     def test_elementnumbering(self):
         ## Make sure that the numbering of repetitions. components and
         ## sub-components is indexed from 1 (for compatibility with HL7 spec
         ## numbering) and not 0-based (default for Python list)
         msg = hl7.parse(rep_sample_hl7)
-        self.assertEqual(msg[1][3][0][2][2], msg["PID.3.1.2.2"])
-        self.assertEqual(msg[1][4][1][1], msg["PID.4.2.1"])
+        self.assertEqual(msg[1][3][1][2][2], msg["PID.3.1.2.2"])
+        self.assertEqual(msg[1][4][2][1], msg["PID.4.2.1"])
+        ## Repetition level accessed in list-form doesn't make much sense...
+        self.assertEqual(msg[1][4][2][1], msg["PID.4.2"])
 
     def test_extract(self):
         msg = hl7.parse(rep_sample_hl7)
@@ -200,7 +203,7 @@ class ParseTest(unittest.TestCase):
         msg = hl7.parse(messages[0])
 
         # message has expected content
-        self.assertEqual([s[0][0] for s in msg], [u'MSH', u'EVN', u'PID', u'PD1', u'NK1', u'PV1'])
+        self.assertEqual([s[0][1] for s in msg], [u'MSH', u'EVN', u'PID', u'PD1', u'NK1', u'PV1'])
 
 class IsHL7Test(unittest.TestCase):
     def test_ishl7(self):
@@ -239,8 +242,8 @@ class MessageTest(unittest.TestCase):
         msg = hl7.parse(sample_hl7)
         s = msg.segments('OBX')
         self.assertEqual(len(s), 2)
-        self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
-        self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
+        self.assertEqual(s[0][0:3], [[u'', 'OBX'], [u'', '1'], [u'', 'SN']])
+        self.assertEqual(s[1][0:3], [[u'', 'OBX'], [u'', '2'], [u'', 'FN']])
 
     def test_segments_does_not_exist(self):
         msg = hl7.parse(sample_hl7)
@@ -249,7 +252,7 @@ class MessageTest(unittest.TestCase):
     def test_segment(self):
         msg = hl7.parse(sample_hl7)
         s = msg.segment('OBX')
-        self.assertEqual(s[0:3], [['OBX'], ['1'], ['SN']])
+        self.assertEqual(s[0:3], [[u'', 'OBX'], [u'', '1'], [u'', 'SN']])
 
     def test_segment_does_not_exist(self):
         msg = hl7.parse(sample_hl7)
@@ -259,8 +262,8 @@ class MessageTest(unittest.TestCase):
         msg = hl7.parse(sample_hl7)
         s = msg['OBX']
         self.assertEqual(len(s), 2)
-        self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
-        self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
+        self.assertEqual(s[0][0:3], [[u'', 'OBX'], [u'', '1'], [u'', 'SN']])
+        self.assertEqual(s[1][0:3], [[u'', 'OBX'], [u'', '2'], [u'', 'FN']])
 
 class ParsePlanTest(unittest.TestCase):
     def test_create_parse_plan(self):

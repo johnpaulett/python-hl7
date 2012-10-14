@@ -147,7 +147,7 @@ class Container(list):
         True
 
         """
-        if isinstance(self, (Repetition, Component)):
+        if isinstance(self, (Field, Repetition, Component)):
             ## Remove the empty element in position 0 used to index from 1
             ## for compatibility with HL7 spec numbering
             temp = deepcopy(self)
@@ -220,7 +220,7 @@ class Message(Container):
         """
         ## Compare segment_id to the very first string in each segment,
         ## returning all segments that match
-        matches = [segment for segment in self if segment[0][0] == segment_id]
+        matches = [segment for segment in self if segment[0][1] == segment_id]
         if len(matches) == 0:
             raise KeyError('No %s segments' % segment_id)
         return matches
@@ -302,7 +302,7 @@ class Message(Container):
                 return u''  # Assume non-present optional value
             raise(IndexError('Field not present: %s' % key))
 
-        rep = field[Rn - 1]
+        rep = field[Rn]
 
         if type(rep) != Repetition:
             # leaf
@@ -372,11 +372,11 @@ class Message(Container):
             segment.append(Field(self.separators[2], []))
         field = segment[Fn]
         if Rn == None:
-            field[:] = [value]
+            field[:] = [u"", value]
             return
-        while len(field) < Rn:
+        while len(field) < Rn + 1:
             field.append(Repetition(self.separators[3], []))
-        rep = field[Rn - 1]
+        rep = field[Rn]
         if Cn == None:
             rep[:] = [u"", value]
             return
@@ -552,6 +552,11 @@ class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
     by pipes and separated by carets. It contains a list of strings.
     """
+    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
+        super(Field, self).__init__(separator, sequence, esc, separators)
+        ## Add an empty element in position 0 to index from 1 for
+        ## compatibility with HL7 spec numbering
+        self.insert(0, u"")
 
 class Repetition(Container):
     """Fourth level of an HL7 message. A field can repeat.
