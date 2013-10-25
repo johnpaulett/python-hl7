@@ -10,16 +10,12 @@ HL7 is a communication protocol and message format for
 health care data. It is the de-facto standard for transmitting data
 between clinical information systems and between clinical devices.
 The version 2.x series, which is often is a pipe delimited format
-is currently the most widely accepted version of HL7 (version 3.0
-is an XML-based format).
+is currently the most widely accepted version of HL7 (there 
+is an alternative XML-based format).
 
 python-hl7 currently only parses HL7 version 2.x messages into
-an easy to access data structure. The current implementation
-does not completely follow the HL7 specification, but is good enough
-to parse the most commonly seen HL7 messages. The library could 
-potentially evolve into being fully complainant with the spec.
-The library could eventually also contain the ability to create
-HL7 v2.x messages.
+an easy to access data structure. The library could eventually
+also contain the ability to create HL7 v2.x messages.
 
 python-hl7 parses HL7 into a series of wrapped :py:class:`hl7.Container` objects.
 The there are specific subclasses of :py:class:`hl7.Container` depending on
@@ -27,9 +23,22 @@ the part of the HL7 message. The :py:class:`hl7.Container` message itself
 is a subclass of a Python list, thus we can easily access the
 HL7 message as an n-dimensional list. Specifically, the subclasses of
 :py:class:`hl7.Container`, in order, are :py:class:`hl7.Message`, 
-:py:class:`hl7.Segment`, and :py:class:`hl7.Field`.
-Eventually additional containers will be added to fully support
-the HL7 specification.
+:py:class:`hl7.Segment`, :py:class:`hl7.Field`, :py:class:`hl7.Repetition`.
+and :py:class:`hl7.Component`.
+
+Result Tree
+-----------
+
+HL7 Messages have a limited number of levels. The top level is a Message.
+A Message is comprised of a number of Fields (:py:class:`hl7.Field`).
+Fields can repeat (:py:class:`hl7.Repetition`). The content of a field
+is either a primitive data type (such as a string) or a composite 
+data type comprised of one or more Components (:py:class:`hl7.Component`). Components
+are in turn comprised of Sub-Components (primitive data types).
+
+The result of parsing is accessed as a tree using python list conventions:
+
+    Message[segment][field][repetition][component][sub-component]
 
 Usage
 -----
@@ -85,7 +94,7 @@ We can extract the :py:class:`hl7.Segment` from the
 .. doctest::
 
     >>> h[3]
-    [[u'OBX'], [u'1'], [u'SN'], [u'1554-5', u'GLUCOSE', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN'], [u''], [u'', u'182'], [u'mg/dl'], [u'70_105'], [u'H'], [u''], [u''], [u'F']]
+    [[u'OBX'], [u'1'], [u'SN'], [[[u'1554-5'], [u'GLUCOSE'], [u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]], [u''], [[[u''], [u'182']]], [u'mg/dl'], [u'70_105'], [u'H'], [u''], [u''], [u'F']]
 
 We can easily reconstitute this segment as HL7, using the
 appropriate separators:
@@ -99,9 +108,9 @@ We can extract individual elements of the message:
 
 .. doctest::
 
-    >>> h[3][3][1]
+    >>> h[3][3][0][1][0]
     u'GLUCOSE'
-    >>> h[3][5][1]
+    >>> h[3][5][0][1][0]
     u'182'
 
 We can look up segments by the segment identifier, either via
@@ -110,9 +119,9 @@ syntax:
 
 .. doctest::
 
-    >>> h.segments('OBX')[0][3][1]
+    >>> h.segments('OBX')[0][3][0][1][0]
     u'GLUCOSE'
-    >>> h['OBX'][0][3][1]
+    >>> h['OBX'][0][3][0][1][0]
     u'GLUCOSE'
 
 Since many many types of segments only have a single instance in a message
@@ -125,6 +134,38 @@ wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
     >>> h.segment('PID')[3][0]
     u'555-44-4444'
 
+The result of parsing contains up to 5 levels. The last level is a non-container
+type.
+
+.. doctest::
+
+    >>> type(h)
+    <class 'hl7.Message'>
+
+    >>> type(h[3])
+    <class 'hl7.Segment'>
+
+    >>> type(h[3][3])
+    <class 'hl7.Field'>
+
+    >>> type(h[3][3][0])
+    <class 'hl7.Repetition'>
+
+    >>> type(h[3][3][0][1])
+    <class 'hl7.Component'>
+
+    >>> type(h[3][3][0][1][0])
+    <type 'unicode'>
+
+The parser only generates the levels which are present in the message.
+
+.. doctest::
+
+    >>> type(h[3][1])
+    <class 'hl7.Field'>
+
+    >>> type(h[3][1][0])
+    <type 'unicode'>
 
 MLLP network client - ``mllp_send``
 -----------------------------------
@@ -147,6 +188,7 @@ Contents
 
    api
    mllp_send
+   accessors
    contribute
    changelog
    authors
@@ -179,3 +221,5 @@ HL7 References:
 * `hl7.org <http://www.hl7.org/>`_
 * `OpenMRS's HL7 documentation <http://openmrs.org/wiki/HL7>`_
 * `Transport Specification: MLLP <http://www.hl7.org/v3ballot/html/infrastructure/transport/transport-mllp.html>`_
+* `HL7v2 Parsing <http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing>`_
+* `HL7 Book <http://hl7book.net/index.php?title=HL7_version_2>`_
