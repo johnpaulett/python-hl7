@@ -49,7 +49,7 @@ class MLLPClient(object):
         self.socket.close()
 
     def send_message(self, message):
-        """Wraps a str, unicode, or :py:cls:`hl7.Message` in a MLLP container
+        """Wraps a str, unicode, or :py:class:`hl7.Message` in a MLLP container
         and send the message to the server
         """
         if isinstance(message, hl7.Message):
