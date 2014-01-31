@@ -40,6 +40,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=['hl7'],
+    install_requires=['six'],
     test_suite='tests',
     tests_require=['mock>=1.0.1'],
     entry_points={

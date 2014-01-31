@@ -6,7 +6,11 @@
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
 
+from .compat import python_2_unicode_compatible
 from .version import get_version
+
+import six
+
 
 __version__ = get_version()
 __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
@@ -23,29 +27,38 @@ def ishl7(line):
     return line.strip().startswith('MSH') if line else False
 
 
-def parse(line):
+def parse(line, encoding='utf-8'):
     """Returns a instance of the :py:class:`hl7.Message` that allows
     indexed access to the data elements.
 
     .. note::
 
         HL7 usually contains only ASCII, but can use other character
-        sets (HL7 Standards Document, Section 1.7.1). Therefore,
+        sets (HL7 Standards Document, Section 1.7.1), however as of v2.8,
+        UTF-8 is the preferred character set [#]_.
+
         python-hl7 works on Python unicode strings. :py:func:`hl7.parse`
-        will accept ASCII-only strings and automatically convert them
-        into unicode.  However, if the message contains non-ASCII
-        characters, it is the responsibility of the caller of
-        :py:func:`hl7.parse` to properly convert the message string
-        to unicode first.
+        will accept unicode string or will attempt to convert bytestrings
+        into unicode strings using the optional ``encoding`` parameter.
+        ``encoding`` defaults to UTF-8, so no work is needed for bytestrings
+        in UTF-8, but for other character sets like 'cp1252' or 'latin1',
+        ``encoding`` must be set appropriately.
 
     >>> h = hl7.parse(message)
 
+    To decode a non-UTF-8 byte string::
+
+       hl7.parse(message, encoding='latin1')
+
     :rtype: :py:class:`hl7.Message`
+
+    .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
+
     """
-    ## ensure that we get unicode input. For regular ASCII, the conversion
-    ## will occur seamlessly, but for non-ASCII strings, parse must receive
-    ## a unicode string or it will error out
-    line = unicode(line)
+    ## Ensure we are working with unicode data, decode the bytestring
+    ## if needed
+    if isinstance(line, six.binary_type):
+        line = line.decode(encoding)
     ## Strip out unnecessary whitespace
     strmsg = line.strip()
     ## The method for parsing the message
@@ -70,6 +83,7 @@ def _split(text, plan):
     return plan.container(data)
 
 
+@python_2_unicode_compatible
 class Container(list):
     """Abstract root class for the parts of the HL7 message."""
     def __init__(self, separator, sequence=[]):
@@ -79,7 +93,7 @@ class Container(list):
         super(Container, self).__init__(sequence)
         self.separator = separator
 
-    def __unicode__(self):
+    def __str__(self):
         """Join a the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
@@ -89,8 +103,12 @@ class Container(list):
         >>> unicode(h) == message
         True
 
+        .. note::
+           For Python 2.x use ``unicode()``, but for Python 3.x, use
+           ``str()``
+
         """
-        return self.separator.join((unicode(x) for x in self))
+        return self.separator.join((six.text_type(x) for x in self))
 
 
 class Message(Container):
@@ -116,7 +134,7 @@ class Message(Container):
 
         :rtype: :py:class:`hl7.Segment` or list of :py:class:`hl7.Segment`
         """
-        if isinstance(key, basestring):
+        if isinstance(key, six.string_types):
             return self.segments(key)
         return list.__getitem__(self, key)
 

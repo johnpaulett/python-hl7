@@ -139,6 +139,25 @@ testing HL7 interfaces or resending logged messages::
 
 See :doc:`mllp_send` for examples and usage instructions.
 
+Python 2 vs Python 3 and Unicode vs Byte strings
+-------------------------------------------------
+
+python-hl7 supports both Python 2.6+ and Python 3.3+. The library primarily
+deals in unicode (the ``str`` type in Python 3).
+
+Passing a byte string to :py:func:`hl7.parse`, requires setting the
+``encoding`` parameter, if using anything other than UTF-8. :py:func:`hl7.parse`
+will always return a datastructure containing unicode.
+
+:py:class:`hl7.Message` can be forced back into a string using
+``unicode(message)`` in Python 2 and ``str(message)`` in Python 3.
+
+:doc:`mllp_send` assumes the stream is already in the correct encoding.
+
+:py:class:`hl7.client.MLLPClient`, if given a unicode string or
+:py:class:`hl7.Message` instance, will use its ``encoding`` method
+to encode the unicode data to a byte string.
+
 Contents
 --------
 

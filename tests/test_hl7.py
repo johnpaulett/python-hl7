@@ -2,7 +2,9 @@
 from hl7 import Message, Segment, Field
 
 import hl7
+import six
 import unittest
+
 
 ## Sample message from HL7 Normative Edition
 ## http://healthinfo.med.dal.ca/hl7intro/CDA_R2_normativewebedition/help/v3guide/v3guide.htm#v3gexamples
@@ -19,25 +21,31 @@ class ParseTest(unittest.TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
         self.assertEqual(len(msg), 5)
-        self.assertTrue(isinstance(msg[0][0][0], unicode))
-        self.assertEqual(msg[0][0][0], u'MSH')
-        self.assertEqual(msg[3][0][0], u'OBX')
+        self.assertTrue(isinstance(msg[0][0][0], six.text_type))
+        self.assertEqual(msg[0][0][0], 'MSH')
+        self.assertEqual(msg[3][0][0], 'OBX')
         self.assertEqual(
             msg[3][3],
-            [u'1554-5', u'GLUCOSE', u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
+            ['1554-5', 'GLUCOSE', 'POST 12H CFST:MCNC:PT:SER/PLAS:QN']
         )
 
     def test_bytestring_converted_to_unicode(self):
-        msg = hl7.parse(str(sample_hl7))
+        msg = hl7.parse(six.text_type(sample_hl7))
         self.assertEqual(len(msg), 5)
-        self.assertTrue(isinstance(msg[0][0][0], unicode))
-        self.assertEqual(msg[0][0][0], u'MSH')
+        self.assertTrue(isinstance(msg[0][0][0], six.text_type))
+        self.assertEqual(msg[0][0][0], 'MSH')
 
     def test_non_ascii_bytestring(self):
         # \x96 - valid cp1252, not valid utf8
         # it is the responsibility of the caller to convert to unicode
+        msg = hl7.parse(b'MSH|^~\&|GHH LAB|ELAB\x963', encoding='cp1252')
+        self.assertEqual(msg[0][3][0], u'ELAB\u20133')
+
+    def test_non_ascii_bytestring_no_encoding(self):
+        # \x96 - valid cp1252, not valid utf8
+        # it is the responsibility of the caller to convert to unicode
         self.assertRaises(UnicodeDecodeError, hl7.parse,
-                          'MSH|^~\&|GHH LAB|ELAB\x963')
+                          b'MSH|^~\&|GHH LAB|ELAB\x963')
 
     def test_parsing_classes(self):
         msg = hl7.parse(sample_hl7)
@@ -45,13 +53,13 @@ class ParseTest(unittest.TestCase):
         self.assertTrue(isinstance(msg, hl7.Message))
         self.assertTrue(isinstance(msg[3], hl7.Segment))
         self.assertTrue(isinstance(msg[3][0], hl7.Field))
-        self.assertTrue(isinstance(msg[3][0][0], unicode))
+        self.assertTrue(isinstance(msg[3][0][0], six.text_type))
 
     def test_nonstandard_separators(self):
         nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
         msg = hl7.parse(nonstd)
 
-        self.assertEqual(unicode(msg), nonstd)
+        self.assertEqual(six.text_type(msg), nonstd)
         self.assertEqual(len(msg), 2)
         self.assertEqual(msg[1][5], ['EVERYWOMAN', 'EVE', 'E', '', '', 'L'])
 
@@ -74,16 +82,16 @@ class IsHL7Test(unittest.TestCase):
 class ContainerTest(unittest.TestCase):
     def test_unicode(self):
         msg = hl7.parse(sample_hl7)
-        self.assertEqual(unicode(msg), sample_hl7.strip())
+        self.assertEqual(six.text_type(msg), sample_hl7.strip())
         self.assertEqual(
-            unicode(msg[3][3]),
+            six.text_type(msg[3][3]),
             '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
         )
 
     def test_container_unicode(self):
         c = hl7.Container('|')
         c.extend(['1', 'b', 'data'])
-        self.assertEqual(unicode(c), '1|b|data')
+        self.assertEqual(six.text_type(c), '1|b|data')
 
 
 class MessageTest(unittest.TestCase):

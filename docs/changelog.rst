@@ -1,10 +1,18 @@
 Change Log
 ==========
 
+0.3.0 - unreleased
+------------------
+
+* Added Python 3 support
+* :py:func:`hl7.parse` can now decode byte strings, using the ``encoding``
+  parameter. :py:class:`hl7.client.MLLPClient` can now encode unicode input
+  using the ``encoding`` parameter.
+
 0.2.5 - 2012-03-14
 ------------------
 
-* Do not senseless try to convert to unicode in mllp_send. Allows files to
+* Do not senselessly try to convert to unicode in mllp_send. Allows files to
   contain other encodings.
 
 0.2.4 - 2012-02-21
