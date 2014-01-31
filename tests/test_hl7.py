@@ -14,6 +14,7 @@ sample_hl7 = u'\r'.join([
     'OBX|2|FN|1553-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
 ])
 
+
 class ParseTest(unittest.TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
@@ -69,6 +70,7 @@ class IsHL7Test(unittest.TestCase):
         message = 'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F\r'
         self.assertFalse(hl7.ishl7(message))
 
+
 class ContainerTest(unittest.TestCase):
     def test_unicode(self):
         msg = hl7.parse(sample_hl7)
@@ -82,6 +84,7 @@ class ContainerTest(unittest.TestCase):
         c = hl7.Container('|')
         c.extend(['1', 'b', 'data'])
         self.assertEqual(unicode(c), '1|b|data')
+
 
 class MessageTest(unittest.TestCase):
     def test_segments(self):
@@ -110,6 +113,7 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(len(s), 2)
         self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
         self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
+
 
 class ParsePlanTest(unittest.TestCase):
     def test_create_parse_plan(self):
@@ -140,6 +144,7 @@ class ParsePlanTest(unittest.TestCase):
 
         n3 = n2.next()
         self.assertTrue(n3 is None)
+
 
 if __name__ == '__main__':
     unittest.main()

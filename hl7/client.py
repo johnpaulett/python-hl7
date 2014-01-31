@@ -6,15 +6,18 @@ import socket
 import sys
 
 
-SB = '\x0b' #<SB>, vertical tab
-EB = '\x1c' #<EB>, file separator
-CR = '\x0d' #<CR>, \r
+SB = '\x0b'  # <SB>, vertical tab
+EB = '\x1c'  # <EB>, file separator
+CR = '\x0d'  # <CR>, \r
 
-FF = '\x0c' # <FF>, new page form feed
+FF = '\x0c'  # <FF>, new page form feed
 
 RECV_BUFFER = 4096
 
-class MLLPException(Exception): pass
+
+class MLLPException(Exception):
+    pass
+
 
 class MLLPClient(object):
     """
@@ -72,11 +75,14 @@ class MLLPClient(object):
 def stdout(content):
     sys.stdout.write(content + '\n')
 
+
 def stdin():
     return sys.stdin
 
+
 def stderr():
     return sys.stderr
+
 
 def read_stream(stream):
     """Buffer the stream and yield individual, stripped messages"""
@@ -95,10 +101,11 @@ def read_stream(stream):
         _buffer = messages.pop(-1)
 
         for m in messages:
-            yield m.strip(SB+CR)
+            yield m.strip(SB + CR)
 
     if len(_buffer.strip()) > 0:
         raise MLLPException('buffer not terminated: %s' % _buffer)
+
 
 def read_loose(stream):
     """Turn a HL7-like blob of text into a real HL7 messages"""
@@ -120,32 +127,45 @@ def read_loose(stream):
             continue
 
         # strip any trailing whitespace
-        m = m.strip(CR+'\n ')
+        m = m.strip(CR + '\n ')
 
         # re-insert the START_BLOCK, which was removed via the split
         yield START_BLOCK + m
+
 
 def mllp_send():
     """Command line tool to send messages to an MLLP server"""
     # set up the command line options
     script_name = os.path.basename(sys.argv[0])
     parser = OptionParser(usage=script_name + ' [options] <server>')
-    parser.add_option('--version',
-                  action='store_true', dest='version', default=False,
-                  help='print current version and exit')
-    parser.add_option('-p', '--port',
-                  action='store', type='int', dest='port', default=6661,
-                  help='port to connect to')
-    parser.add_option('-f', '--file', dest='filename',
-                  help='read from FILE instead of stdin', metavar='FILE')
-    parser.add_option('-q', '--quiet',
-                  action='store_true', dest='verbose', default=True,
-                  help='do not print status messages to stdout')
-    parser.add_option('--loose',
-                  action='store_true', dest='loose', default=False,
-                  help='allow file to be a HL7-like object (\\r\\n instead ' \
-                          + 'of \\r). Requires that messages start with ' \
-                          + '"MSH|^~\\&|". Requires --file option (no stdin)')
+    parser.add_option(
+        '--version',
+        action='store_true', dest='version', default=False,
+        help='print current version and exit'
+    )
+    parser.add_option(
+        '-p', '--port',
+        action='store', type='int', dest='port', default=6661,
+        help='port to connect to'
+    )
+    parser.add_option(
+        '-f', '--file', dest='filename',
+        help='read from FILE instead of stdin', metavar='FILE'
+    )
+    parser.add_option(
+        '-q', '--quiet',
+        action='store_true', dest='verbose', default=True,
+        help='do not print status messages to stdout'
+    )
+    parser.add_option(
+        '--loose',
+        action='store_true', dest='loose', default=False,
+        help=(
+            'allow file to be a HL7-like object (\\r\\n instead '
+            'of \\r). Requires that messages start with '
+            '"MSH|^~\\&|". Requires --file option (no stdin)'
+        )
+    )
 
     (options, args) = parser.parse_args()
 
@@ -163,7 +183,7 @@ def mllp_send():
         return
 
     if options.filename is not None:
-        stream = open(options.filename, 'rb') #FIXME with_statement
+        stream = open(options.filename, 'rb')  # FIXME with_statement
     else:
         if options.loose:
             stderr().write('--loose requires --file\n')
@@ -171,9 +191,11 @@ def mllp_send():
         stream = stdin()
 
     with MLLPClient(host, options.port) as client:
-        message_stream = read_stream(stream) \
-                         if not options.loose \
-                         else read_loose(stream)
+        message_stream = (
+            read_stream(stream)
+            if not options.loose
+            else read_loose(stream)
+        )
 
         for message in message_stream:
             result = client.send_message(message)

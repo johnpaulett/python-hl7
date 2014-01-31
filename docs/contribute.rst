@@ -38,3 +38,8 @@ To documentation is built by tox, but you can manually build via::
        0 failures in tests
        0 failures in setup code
    ...
+
+It is also recommended to run the flake8 checks for PEP8 and PyFlake
+violations.  Commits should be free of warnings::
+
+    $ make lint

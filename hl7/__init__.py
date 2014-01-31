@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""python-hl7 is a simple library for parsing messages of Health Level 7 
+"""python-hl7 is a simple library for parsing messages of Health Level 7
 (HL7) version 2.x into Python objects.
 
 * Documentation: http://python-hl7.readthedocs.org
@@ -13,15 +13,17 @@ __license__ = 'BSD'
 __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
 __url__ = 'http://python-hl7.readthedocs.org'
 
+
 def ishl7(line):
     """Determines whether a *line* looks like an HL7 message.
-    This method only does a cursory check and does not fully 
+    This method only does a cursory check and does not fully
     validate the message.
 
     :rtype: bool
     """
     ## Prevent issues if the line is empty
     return line.strip().startswith('MSH') if line else False
+
 
 def parse(line):
     """Returns a instance of the :py:class:`hl7.Message` that allows
@@ -53,6 +55,7 @@ def parse(line):
     ## Start spliting the methods based upon the ParsePlan
     return _split(strmsg, plan)
 
+
 def _split(text, plan):
     """Recursive function to split the *text* into an n-deep list,
     according to the :py:class:`hl7._ParsePlan`.
@@ -67,6 +70,7 @@ def _split(text, plan):
     ## Return the instance of the current message part according
     ## to the plan
     return plan.container(data)
+
 
 class Container(list):
     """Abstract root class for the parts of the HL7 message."""
@@ -89,6 +93,7 @@ class Container(list):
 
         """
         return self.separator.join((unicode(x) for x in self))
+
 
 class Message(Container):
     """Representation of an HL7 message. It contains a list
@@ -149,6 +154,7 @@ class Message(Container):
             raise KeyError('No %s segments' % segment_id)
         return matches
 
+
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.
     Traditionally this is a line of a message that ends with a carriage
@@ -156,10 +162,12 @@ class Segment(Container):
     :py:class:`hl7.Field` instances.
     """
 
+
 class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
     by pipes and separated by carets. It contains a list of strings.
     """
+
 
 def create_parse_plan(strmsg):
     """Creates a plan on how to parse the HL7 message according to
@@ -174,6 +182,7 @@ def create_parse_plan(strmsg):
     ## The ordered list of containers to create
     containers = [Message, Segment, Field]
     return _ParsePlan(separators, containers)
+
 
 class _ParsePlan(object):
     """Details on how to parse an HL7 message. Typically this object
@@ -210,7 +219,7 @@ class _ParsePlan(object):
             ## Return a new instance of this class using the tails of
             ## the separators and containers lists. Use self.__class__()
             ## in case :class:`hl7.ParsePlan` is subclassed
-            return  self.__class__(self.separators[1:], self.containers[1:])
+            return self.__class__(self.separators[1:], self.containers[1:])
         ## When we have no separators and containers left, return None,
         ## which indicates that we have nothing further.
         return None

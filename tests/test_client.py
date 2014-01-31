@@ -67,6 +67,7 @@ class MLLPClientTest(unittest.TestCase):
         # socket.close should be called via the with statement
         self.client.socket.close.assert_called_once_with()
 
+
 class MLLPSendTest(unittest.TestCase):
     def setUp(self):
         # patch to avoid touching sys and socket
@@ -224,8 +225,10 @@ class MLLPSendTest(unittest.TestCase):
         self.assertFalse(self.mock_socket().connect.called)
         self.mock_stdout.assert_called_once_with(str(hl7_version))
 
+
 class FakeStream(object):
     count = 0
+
     def read(self, buf):
         self.count += 1
         if self.count == 1:
