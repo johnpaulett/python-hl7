@@ -4,3 +4,7 @@ python-hl7 is a simple library for parsing messages of Health Level 7
 * Source Code: http://github.com/johnpaulett/python-hl7
 * Documentation: http://python-hl7.readthedocs.org
 * PyPi: http://pypi.python.org/pypi/hl7
+
+.. image::
+   https://travis-ci.org/johnpaulett/python-hl7.png
+   :target: https://travis-ci.org/johnpaulett/python-hl7

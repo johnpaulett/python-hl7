@@ -31,6 +31,10 @@ HL7 message as an n-dimensional list. Specifically, the subclasses of
 Eventually additional containers will be added to fully support
 the HL7 specification.
 
+.. image::
+   https://travis-ci.org/johnpaulett/python-hl7.png
+   :target: https://travis-ci.org/johnpaulett/python-hl7
+
 Usage
 -----
 
