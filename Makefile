@@ -2,7 +2,7 @@
 
 init:
 	virtualenv --no-site-packages env
-	env/bin/pip install -r requirements.txt
+	env/bin/pip install -U -r requirements.txt
 
 test: init
 	env/bin/tox
