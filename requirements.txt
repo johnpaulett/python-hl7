@@ -1,4 +1,4 @@
 # pip Requirements for developing python-hl7 (not required to use as a library)
-tox==1.4.3
+tox==1.7.0
 flake8==2.1.0
 Sphinx==1.2.1
