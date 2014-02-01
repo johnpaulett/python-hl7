@@ -3,17 +3,26 @@
 
 from setuptools import setup
 
-import hl7 as _hl7
+# Avoid directly importing the module. Prevents potential circular
+# references when dependency needs to be installed via setup.py, so it
+# is not yet available to setup.py
+exec(open('hl7/version.py').read())
 
 setup(
     name='hl7',
-    version=_hl7.__version__,
+    version=get_version(),  # noqa
     description='Python library parsing HL7 v2.x messages',
-    long_description=_hl7.__doc__,
-    author=_hl7.__author__,
-    author_email=_hl7.__email__,
-    url=_hl7.__url__,
-    license=_hl7.__license__,
+    long_description="""
+    python-hl7 is a simple library for parsing messages of Health Level 7
+    (HL7) version 2.x into Python objects.
+
+    * Documentation: http://python-hl7.readthedocs.org
+    * Source Code: http://github.com/johnpaulett/python-hl7
+    """,
+    author='John Paulett',
+    author_email='john -at- paulett.org',
+    url='http://python-hl7.readthedocs.org',
+    license='BSD',
     platforms=['POSIX', 'Windows'],
     keywords=[
         'HL7', 'Health Level 7', 'healthcare', 'health care', 'medical record'
