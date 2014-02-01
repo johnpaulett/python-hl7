@@ -1,4 +1,6 @@
-.PHONY: test build upload
+.PHONY: init test build docs lint upload
+
+SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
 
 init:
 	virtualenv --no-site-packages env
@@ -9,6 +11,12 @@ test: init
 
 build:
 	python setup.py sdist
+
+clean-docs:
+	cd docs; make clean
+
+docs:
+	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
 
 lint:
 	# F821 -- Ignore doctest examples
