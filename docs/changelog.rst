@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+0.3.1 - unreleased
+------------------
+
+Non-backward compatible changes:
+
+* Changed the numbering of fields in the MSH segment. This breaks older code.
+* Parse all the elements of the message (i.e. down to sub-component). The
+  inclusion of repetitions will break older code.
+
+Others:
+
+* implemented a basic escaping mechanism
+* new constant 'NULL' which maps to '""'
+* new isfile() / splitfile() functions to identify file (FHS/FTS wrapped messages)
+
 0.3.0 - unreleased
 ------------------
 

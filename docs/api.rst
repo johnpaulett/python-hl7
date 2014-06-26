@@ -13,6 +13,11 @@ python-hl7 API
 
 .. autofunction:: hl7.ishl7
 
+.. autofunction:: hl7.isfile
+
+.. autofunction:: hl7.split_file
+
+
 Data Types
 ----------
 
@@ -20,11 +25,15 @@ Data Types
    :members: __unicode__
 
 .. autoclass:: hl7.Message
-   :members: segments, segment, __getitem__
+   :members: segments, segment, __getitem__, __setitem__, escape, unescape
 
 .. autoclass:: hl7.Segment
 
 .. autoclass:: hl7.Field
+
+.. autoclass:: hl7.Repetition
+
+.. autoclass:: hl7.Component
 
 
 MLLP Network Client

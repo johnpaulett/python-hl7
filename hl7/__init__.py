@@ -5,6 +5,8 @@
 * Documentation: http://python-hl7.readthedocs.org
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
+from __future__ import unicode_literals
+from copy import deepcopy
 
 from .compat import python_2_unicode_compatible
 from .version import get_version
@@ -13,7 +15,19 @@ import six
 
 
 __version__ = get_version()
+__author__ = 'John Paulett'
+__email__ = 'john -at- paulett.org'
+__license__ = 'BSD'
 __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
+
+
+import logging
+
+# This is the HL7 Null value. It means that a field is present and blank.
+NULL = '""'
+
+# Basic Logger
+logger = logging.getLogger(__file__)
 
 
 def ishl7(line):
@@ -24,7 +38,42 @@ def ishl7(line):
     :rtype: bool
     """
     ## Prevent issues if the line is empty
-    return line.strip().startswith('MSH') if line else False
+    return line and (line.strip()[:3] in ['MSH']) or False
+
+
+def isfile(line):
+    """
+        Files are wrapped in FHS / FTS
+        FHS = file header segment
+        FTS = file trailer segment
+    """
+    return line and (line.strip()[:3] in ['FHS']) or False
+
+
+def split_file(hl7file):
+    """
+        Given a file, split out the messages.
+        Does not do any validation on the message.
+        Throws away batch and file segments.
+    """
+    rv = []
+    for line in hl7file.split('\r'):
+        line = line.strip()
+        if line[:3] in ['FHS', 'BHS', 'FTS', 'BTS']:
+            continue
+        if line[:3] == 'MSH':
+            newmsg = [line]
+            rv.append(newmsg)
+        else:
+            if len(rv) == 0:
+                logger.error('Segment received before message header [%s]', line)
+                continue
+            rv[-1].append(line)
+    rv = ['\r'.join(msg) for msg in rv]
+    for i, msg in enumerate(rv):
+        if not msg[-1] == '\r':
+            rv[i] = msg + '\r'
+    return rv
 
 
 def parse(line, encoding='utf-8'):
@@ -75,9 +124,23 @@ def _split(text, plan):
     if not plan:
         return text
 
-    ## Recurse so that the sub plans are used in order to split the data
-    ## into the approriate type as defined by the current plan.
-    data = [_split(x, plan.next()) for x in text.split(plan.separator)]
+    if not plan.applies(text):
+        return plan.container([text])
+
+    # Parsing of the first segment is awkward because it contains
+    # the separator characters in a field
+    if plan.containers[0] == Segment and text[:3] in ['MSH', 'FHS']:
+        seg = text[:3]
+        sep0 = text[3]
+        sep_end_off = text.find(sep0, 4)
+        seps = text[4:sep_end_off]
+        text = text[sep_end_off + 1:]
+        data = [Field('', [seg]), Field('', [sep0]), Field(sep0, [seps])]
+    else:
+        data = []
+
+    if text:
+        data = data + [_split(x, plan.next()) for x in text.split(plan.separator)]
     ## Return the instance of the current message part according
     ## to the plan
     return plan.container(data)
@@ -86,12 +149,14 @@ def _split(text, plan):
 @python_2_unicode_compatible
 class Container(list):
     """Abstract root class for the parts of the HL7 message."""
-    def __init__(self, separator, sequence=[]):
+    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
         ## Initialize the list object, optionally passing in the
         ## sequence.  Since list([]) == [], using the default
         ## parameter will not cause any issues.
         super(Container, self).__init__(sequence)
         self.separator = separator
+        self.esc = esc
+        self.separators = separators
 
     def __str__(self):
         """Join a the child containers into a single string, separated
@@ -170,18 +235,179 @@ class Message(Container):
             raise KeyError('No %s segments' % segment_id)
         return matches
 
+    def escape(self, field, app_map=None):
+        """
+            See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
+            To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
+
+            Pass through the message. Replace recognised characters with their escaped
+            version. Return an ascii encoded string.
+
+            Functionality:
+
+            *   Replace separator characters (2.10.4)
+            *   replace application defined characters (2.10.7)
+            *   Replace non-ascii values with hex versions using HL7 conventions.
+
+            Incomplete:
+
+            *   replace highlight characters (2.10.3)
+            *   How to handle the rich text substitutions.
+            *   Merge contiguous hex values
+        """
+        if not field:
+            return field
+
+        esc = str(self.esc)
+
+        DEFAULT_MAP = {
+            self.separators[1]: 'F',  # 2.10.4
+            self.separators[2]: 'R',
+            self.separators[3]: 'S',
+            self.separators[4]: 'T',
+            self.esc: 'E',
+            '\r': '.br',  # 2.10.6
+        }
+
+        rv = []
+        for offset, c in enumerate(field):
+            if app_map and c in app_map:
+                rv.append(esc + app_map[c] + esc)
+            elif c in DEFAULT_MAP:
+                rv.append(esc + DEFAULT_MAP[c] + esc)
+            elif ord(c) >= 0x20 and ord(c) <= 0x7E:
+                rv.append(c.encode('ascii'))
+            else:
+                rv.append('%sX%2x%s' % (esc, ord(c), esc))
+
+        return ''.join(rv)
+
+    def unescape(self, field, app_map=None):
+        """
+            See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+
+            To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
+
+            This will convert the identifiable sequences.
+            If the application provides mapping, these are also used.
+            Items which cannot be mapped are removed
+
+            For example, the App Map count provide N, H, Zxxx values
+
+            Chapter 2: Section 2.10
+
+            At the moment, this functionality can:
+
+            *   replace the parsing characters (2.10.4)
+            *   replace highlight characters (2.10.3)
+            *   replace hex characters. (2.10.5)
+            *   replace rich text characters (2.10.6)
+            *   replace application defined characters (2.10.7)
+
+            It cannot:
+
+            *   switch code pages / ISO IR character sets
+        """
+        if not field or field.find(self.esc) == -1:
+            return field
+
+        DEFAULT_MAP = {
+            'H': '_',  # Override using the APP MAP: 2.10.3
+            'N': '_',  # Override using the APP MAP
+            'F': self.separators[1],  # 2.10.4
+            'R': self.separators[2],
+            'S': self.separators[3],
+            'T': self.separators[4],
+            'E': self.esc,
+            '.br': '\r',  # 2.10.6
+            '.sp': '\r',
+            '.fi': '',
+            '.nf': '',
+            '.in': '    ',
+            '.ti': '    ',
+            '.sk': ' ',
+            '.ce': '\r',
+        }
+
+        rv = []
+        collecting = []
+        in_seq = False
+        for offset, c in enumerate(field):
+            if in_seq:
+                if c == self.esc:
+                    in_seq = False
+                    value = ''.join(collecting)
+                    collecting = []
+                    if not value:
+                        logger.warn('Error unescaping value [%s], empty sequence found at %d', field, offset)
+                        continue
+                    if app_map and value in app_map:
+                        rv.append(app_map[value])
+                    elif value in DEFAULT_MAP:
+                        rv.append(DEFAULT_MAP[value])
+                    elif value.startswith('.') and ((app_map and value[:3] in app_map) or value[:3] in DEFAULT_MAP):
+                        # Substitution with a number of repetitions defined (2.10.6)
+                        if app_map and value[:3] in app_map:
+                            ch = app_map[value[:3]]
+                        else:
+                            ch = DEFAULT_MAP[value[:3]]
+                        count = int(value[3:])
+                        rv.append(ch * count)
+
+                    elif value[0] == 'C':  # Convert to new Single Byte character set : 2.10.2
+                        # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
+                        logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
+                    elif value[0] == 'M':  # Switch to new Multi Byte character set : 2.10.2
+                        # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
+                        logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
+                    elif value[0] == 'X':  # Hex encoded Bytes: 2.10.5
+                        value = value[1:]
+                        try:
+                            for off in range(0, len(value), 2):
+                                rv.append(six.unichr(int(value[off:off + 2], 16)))
+                        except:
+                            logger.exception('Error decoding hex value [%s], field [%s], offset [%s]', value, field, offset)
+                    else:
+                        logger.exception('Error decoding value [%s], field [%s], offset [%s]', value, field, offset)
+                else:
+                    collecting.append(c)
+            elif c == self.esc:
+                in_seq = True
+            else:
+                rv.append(six.text_type(c))
+
+        return ''.join(rv)
+
+
+@python_2_unicode_compatible
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.
     Traditionally this is a line of a message that ends with a carriage
     return and is separated by pipes. It contains a list of
     :py:class:`hl7.Field` instances.
     """
+    def __str__(self):
+        if six.text_type(self[0]) in ['MSH', 'FHS']:
+            return six.text_type(self[0]) + six.text_type(self[1]) + six.text_type(self[2]) + six.text_type(self[1]) + \
+                self.separator.join((six.text_type(x) for x in self[3:]))
+        return self.separator.join((six.text_type(x) for x in self))
 
 
 class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
     by pipes and separated by carets. It contains a list of strings.
+    """
+
+
+class Repetition(Container):
+    """Fourth level of an HL7 message. A field can repeat.
+    """
+
+
+class Component(Container):
+    """Fifth level of an HL7 message. A component is a composite datatypes.
+    Contains sub-components
     """
 
 
@@ -191,13 +417,33 @@ def create_parse_plan(strmsg):
     """
     ## We will always use a carriage return to separate segments
     separators = ['\r']
-    ## Parse out the other separators from the characters following
-    ## MSH.  Currently we only go two-levels deep and ignore some
-    ## details.
-    separators.extend(list(strmsg[3:5]))
+
+    # Extract the rest of the separators. Defaults used if not present.
+    assert strmsg[:3] in ('MSH')
+    sep0 = strmsg[3]
+    seps = list(strmsg[3: strmsg.find(sep0, 4)])
+
+    separators.append(seps[0])
+    if len(seps) > 2:
+        separators.append(seps[2])   # repetition separator
+    else:
+        separators.append('~')       # repetition separator
+    if len(seps) > 1:
+        separators.append(seps[1])   # component separator
+    else:
+        separators.append('^')       # component separator
+    if len(seps) > 4:
+        separators.append(seps[4])   # sub-component separator
+    else:
+        separators.append('&')       # sub-component separator
+    if len(seps) > 3:
+        esc = seps[3]
+    else:
+        esc = '\\'
+
     ## The ordered list of containers to create
-    containers = [Message, Segment, Field]
-    return _ParsePlan(separators, containers)
+    containers = [Message, Segment, Field, Repetition, Component]
+    return _ParsePlan(separators, containers, esc)
 
 
 class _ParsePlan(object):
@@ -205,15 +451,15 @@ class _ParsePlan(object):
     should be created via :func:`hl7.create_parse_plan`
     """
     # field, component, repetition, escape, subcomponent
-    # TODO implement escape, and subcomponent
 
-    def __init__(self, separators, containers):
+    def __init__(self, separators, containers, esc):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
         assert len(containers) == len(separators)
         self.separators = separators
         self.containers = containers
+        self.esc = esc
 
     @property
     def separator(self):
@@ -224,7 +470,7 @@ class _ParsePlan(object):
         """Return an instance of the approriate container for the *data*
         as specified by the current plan.
         """
-        return self.containers[0](self.separator, data)
+        return self.containers[0](self.separator, data, self.esc, self.separators)
 
     def next(self):
         """Generate the next level of the plan (essentially generates
@@ -235,7 +481,14 @@ class _ParsePlan(object):
             ## Return a new instance of this class using the tails of
             ## the separators and containers lists. Use self.__class__()
             ## in case :class:`hl7.ParsePlan` is subclassed
-            return self.__class__(self.separators[1:], self.containers[1:])
+            return self.__class__(self.separators[1:], self.containers[1:], self.esc)
         ## When we have no separators and containers left, return None,
         ## which indicates that we have nothing further.
         return None
+
+    def applies(self, text):
+        """return True if the separator or those if the children are in the text"""
+        for s in self.separators:
+            if text.find(s) >= 0:
+                return True
+        return False
