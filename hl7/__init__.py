@@ -423,7 +423,7 @@ class Message(Container):
 
         rep = field(repeat_num)
 
-        if type(rep) != Repetition:
+        if not isinstance(rep, Repetition):
             # leaf
             if component_num == 1 and subcomponent_num == 1:
                 return self.unescape(rep)
@@ -435,7 +435,7 @@ class Message(Container):
             raise IndexError('Component not present: {0}'.format(accessor.key))
 
         component = rep(component_num)
-        if type(component) != Component:
+        if not isinstance(component, Component):
             # leaf
             if subcomponent_num == 1:
                 return self.unescape(component)
