@@ -21,11 +21,17 @@ python-hl7 API
 Data Types
 ----------
 
+.. autoclass:: hl7.Sequence
+   :members: __call__
+
 .. autoclass:: hl7.Container
    :members: __unicode__
 
+.. autoclass:: hl7.Accessor
+   :members: parse_key, key
+
 .. autoclass:: hl7.Message
-   :members: segments, segment, __getitem__, __setitem__, escape, unescape
+   :members: segments, segment, __getitem__, __setitem__, escape, unescape, extract_field, assign_field
 
 .. autoclass:: hl7.Segment
 

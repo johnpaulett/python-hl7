@@ -38,7 +38,13 @@ are in turn comprised of Sub-Components (primitive data types).
 
 The result of parsing is accessed as a tree using python list conventions:
 
-    Message[segment][field][repetition][component][sub-component]
+    ``Message[segment][field][repetition][component][sub-component]``
+
+The result can also be accessed using HL7 1-based indexing conventions by treating
+each element as a callable:
+
+    ``Message(segment)(field)(repetition)(component)(sub-component)``
+
 
 Usage
 -----
@@ -95,6 +101,23 @@ We can extract the :py:class:`hl7.Segment` from the
 
     >>> h[3]
     [[u'OBX'], [u'1'], [u'SN'], [[[u'1554-5'], [u'GLUCOSE'], [u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]], [u''], [[[u''], [u'182']]], [u'mg/dl'], [u'70_105'], [u'H'], [u''], [u''], [u'F']]
+    >>> h[3] is h(4)
+    True
+
+Note that since the first element of the segment is the segment name,
+segments are effectively 1-based in python as well (because the HL7 spec does
+not count the segment name as part of the segment itself):
+
+.. doctest::
+
+    >>> h[3][0]
+    [u'OBX']
+    >>> h[3][1]
+    [u'1']
+    >>> h[3][2]
+    [u'SN']
+    >>> h(4)(2)
+    [u'SN']
 
 We can easily reconstitute this segment as HL7, using the
 appropriate separators:
@@ -110,8 +133,12 @@ We can extract individual elements of the message:
 
     >>> h[3][3][0][1][0]
     u'GLUCOSE'
+    >>> h[3][3][0][1][0] is h(4)(3)(1)(2)(1)
+    True
     >>> h[3][5][0][1][0]
     u'182'
+    >>> h[3][5][0][1][0] is h(4)(5)(1)(2)(1)
+    True
 
 We can look up segments by the segment identifier, either via
 :py:meth:`hl7.Message.segments` or via the traditional dictionary
@@ -123,6 +150,8 @@ syntax:
     u'GLUCOSE'
     >>> h['OBX'][0][3][0][1][0]
     u'GLUCOSE'
+    >>> h['OBX'][0][3][0][1][0] is h['OBX'](1)(3)(1)(2)(1)
+    True
 
 Since many many types of segments only have a single instance in a message
 (e.g. PID or MSH), :py:meth:`hl7.Message.segment` provides a convienance
@@ -133,6 +162,8 @@ wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
 
     >>> h.segment('PID')[3][0]
     u'555-44-4444'
+    >>> h.segment('PID')[3][0] is h.segment('PID')(3)(1)
+    True
 
 The result of parsing contains up to 5 levels. The last level is a non-container
 type.
@@ -207,6 +238,7 @@ Contents
 
    api
    mllp_send
+   accessors
    contribute
    changelog
    authors

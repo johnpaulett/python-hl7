@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from hl7 import Message, Segment, Field, Repetition, Component
+from hl7 import Accessor, Message, Segment, Field, Repetition, Component
 
 import hl7
 import six
@@ -38,6 +38,9 @@ sample_file = '\r'.join([
     'FTS|1',
     ''
     ])
+
+SEP = '|^~\&'
+CR_SEP = '\r'
 
 
 class ParseTest(unittest.TestCase):
@@ -114,6 +117,70 @@ class ParseTest(unittest.TestCase):
             [[['Component1'], ['Sub-Component1', 'Sub-Component2'], ['Component3']]]
         )
 
+    def test_elementnumbering(self):
+        ## Make sure that the numbering of repetitions. components and
+        ## sub-components is indexed from 1 when invoked as callable
+        ## (for compatibility with HL7 spec numbering)
+        ## and not 0-based (default for Python list)
+        msg = hl7.parse(rep_sample_hl7)
+        f = msg(2)(3)(1)(2)(2)
+        self.assertIs(f, msg["PID.3.1.2.2"])
+        self.assertIs(f, msg[1][3][0][1][1])
+        f = msg(2)(4)(2)(1)
+        self.assertIs(f, msg["PID.4.2.1"])
+        self.assertIs(f, msg[1][4][1][0])
+        ## Repetition level accessed in list-form doesn't make much sense...
+        self.assertIs(f, msg["PID.4.2"])
+
+    def test_extract(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        # Full correct path
+        self.assertEqual(msg['PID.3.1.2.2'], 'Sub-Component2')
+        self.assertEqual(msg[Accessor('PID', 1, 3, 1, 2, 2)], 'Sub-Component2')
+
+        # Shorter Paths
+        self.assertEqual(msg['PID.1.1'], 'Field1')
+        self.assertEqual(msg[Accessor('PID', 1, 1, 1)], 'Field1')
+        self.assertEqual(msg['PID.1'], 'Field1')
+        self.assertEqual(msg['PID1.1'], 'Field1')
+        self.assertEqual(msg['PID.3.1.2'], 'Sub-Component1')
+
+        # Longer Paths
+        self.assertEqual(msg['PID.1.1.1.1'], 'Field1')
+
+        # Incorrect path
+        self.assertRaises(IndexError, msg.extract_field, Accessor.parse_key('PID.1.1.1.2'))
+
+        # Optional field, not included in message
+        self.assertEqual(msg['MSH.20'], '')
+
+        # Optional sub-component, not included in message
+        self.assertEqual(msg['PID.3.1.2.3'], '')
+        self.assertEqual(msg['PID.3.1.3'], 'Component3')
+        self.assertEqual(msg['PID.3.1.4'], '')
+
+    def test_assign(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        # Field
+        msg['MSH.20'] = 'FIELD 20'
+        self.assertEqual(msg['MSH.20'], 'FIELD 20')
+
+        # Component
+        msg['MSH.21.1.1'] = 'COMPONENT 21.1.1'
+        self.assertEqual(msg['MSH.21.1.1'], 'COMPONENT 21.1.1')
+
+        # Sub-Component
+        msg['MSH.21.1.2.4'] = 'SUBCOMPONENT 21.1.2.4'
+        self.assertEqual(msg['MSH.21.1.2.4'], 'SUBCOMPONENT 21.1.2.4')
+
+        # Verify round-tripping (i.e. that separators are correct)
+        msg2 = hl7.parse(six.text_type(msg))
+        self.assertEqual(msg2['MSH.20'], 'FIELD 20')
+        self.assertEqual(msg2['MSH.21.1.1'], 'COMPONENT 21.1.1')
+        self.assertEqual(msg2['MSH.21.1.2.4'], 'SUBCOMPONENT 21.1.2.4')
+
     def test_unescape(self):
         msg = hl7.parse(rep_sample_hl7)
 
@@ -174,6 +241,22 @@ class IsHL7Test(unittest.TestCase):
     def test_isfile(self):
         self.assertFalse(hl7.ishl7(sample_file))
         self.assertTrue(hl7.isfile(sample_file))
+
+
+class AccessorTest(unittest.TestCase):
+    def test_key(self):
+        self.assertEqual("FOO", Accessor("FOO").key)
+        self.assertEqual("FOO2", Accessor("FOO", 2).key)
+        self.assertEqual("FOO2.3", Accessor("FOO", 2, 3).key)
+        self.assertEqual("FOO2.3.1.4.6", Accessor("FOO", 2, 3, 1, 4, 6).key)
+
+    def test_parse(self):
+        self.assertEqual(Accessor("FOO"), Accessor.parse_key("FOO"))
+        self.assertEqual(Accessor("FOO", 2, 3, 1, 4, 6), Accessor.parse_key("FOO2.3.1.4.6"))
+
+    def test_equality(self):
+        self.assertEqual(Accessor("FOO", 1, 3, 4), Accessor("FOO", 1, 3, 4))
+        self.assertNotEqual(Accessor("FOO", 1), Accessor("FOO", 2))
 
 
 class ContainerTest(unittest.TestCase):
@@ -257,6 +340,41 @@ class ParsePlanTest(unittest.TestCase):
 
         n5 = n4.next()
         self.assertTrue(n5 is None)
+
+
+class ConstructionTest(unittest.TestCase):
+    def test_create_msg(self):
+        # Create a message
+        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSH'])])
+        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSA'])])
+        response = hl7.Message(CR_SEP, [MSH, MSA])
+        response['MSH.F1.R1'] = SEP[0]
+        response['MSH.F2.R1'] = SEP[1:]
+        self.assertEqual(six.text_type(response), 'MSH|^~\\&|\rMSA')
+
+    def test_append(self):
+        # Append a segment to a message
+        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSH'])])
+        response = hl7.Message(CR_SEP, [MSH])
+        response['MSH.F1.R1'] = SEP[0]
+        response['MSH.F2.R1'] = SEP[1:]
+        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSA'])])
+        response.append(MSA)
+        self.assertEqual(six.text_type(response), 'MSH|^~\\&|\rMSA')
+
+    def test_append_from_source(self):
+        # Copy a segment between messages
+        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSH'])])
+        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSA'])])
+        response = hl7.Message(CR_SEP, [MSH, MSA])
+        response['MSH.F1.R1'] = SEP[0]
+        response['MSH.F2.R1'] = SEP[1:]
+        self.assertEqual(six.text_type(response), 'MSH|^~\\&|\rMSA')
+        src_msg = hl7.parse(rep_sample_hl7)
+        PID = src_msg['PID'][0]
+        self.assertEqual(six.text_type(PID), 'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2')
+        response.append(PID)
+        self.assertEqual(six.text_type(response), 'MSH|^~\\&|\rMSA\rPID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2')
 
 
 if __name__ == '__main__':

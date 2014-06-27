@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+0.3.2 - unreleased
+------------------
+
+* new mechanism to address message parts via a symbolic accessor name
+* Message (and Message.segments), Field, Repetition and Component can be
+  accessed using 1-based indices by using them as a callable.
+
 0.3.1 - unreleased
 ------------------
 

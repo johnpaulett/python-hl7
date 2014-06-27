@@ -6,7 +6,6 @@
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
 from __future__ import unicode_literals
-from copy import deepcopy
 
 from .compat import python_2_unicode_compatible
 from .version import get_version
@@ -146,8 +145,38 @@ def _split(text, plan):
     return plan.container(data)
 
 
+_SENTINEL = object()
+
+
+class Sequence(list):
+    """Base class for sequences that can be indexed using 1-based index"""
+    def __call__(self, index, value=_SENTINEL):
+        """Support list access using HL7 compatible 1-based indices.
+        Can be used to get and set values.
+
+        >>> s = Sequence([1, 2, 3, 4])
+        >>> s(1) == s[0]
+        True
+        >>> s(2, "new")
+        >>> s
+        [1, 'new', 3, 4]
+        """
+        index = self._adjust_index(int(index))
+        if value is _SENTINEL:
+            return self[index]
+        else:
+            self[index] = value
+
+    def _adjust_index(self, index):
+        """Subclasses can override if they do not want HL7 1-based indexing when used as callable"""
+        if index >= 1:
+            return index - 1
+        else:
+            return index
+
+
 @python_2_unicode_compatible
-class Container(list):
+class Container(Sequence):
     """Abstract root class for the parts of the HL7 message."""
     def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
         ## Initialize the list object, optionally passing in the
@@ -176,13 +205,94 @@ class Container(list):
         return self.separator.join((six.text_type(x) for x in self))
 
 
+@python_2_unicode_compatible
+class Accessor(object):
+    def __init__(self, segment, segment_num=1, field_num=None, repeat_num=None, component_num=None, subcomponent_num=None):
+        self.segment = segment
+        self.segment_num = segment_num
+        self.field_num = field_num
+        self.repeat_num = repeat_num
+        self.component_num = component_num
+        self.subcomponent_num = subcomponent_num
+
+    def __eq__(self, other):
+        return (self.segment == other.segment and
+                self.segment_num == other.segment_num and
+                self.field_num == other.field_num and
+                self.repeat_num == other.repeat_num and
+                self.component_num == other.component_num and
+                self.subcomponent_num == other.subcomponent_num)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash(self.key)
+
+    @property
+    def key(self):
+        """Return the string accessor key that represents this instance"""
+        seg = self.segment if self.segment_num == 1 else self.segment + six.text_type(self.segment_num)
+        return ".".join(six.text_type(f) for f in [seg, self.field_num, self.repeat_num, self.component_num, self.subcomponent_num] if f is not None)
+
+    def __str__(self):
+        return self.key
+
+    def __repr__(self):
+        return '{0}(segment="{1}", segment_num={2}, field_num={3}, repeat_num={4}, component_num={5}, subcomponent_num={6})'.format(self.__class__.__name__, self.segment, self.segment_num, self.field_num, self.repeat_num, self.component_num, self.subcomponent_num)
+
+    @classmethod
+    def parse_key(cls, key):
+        """Create an Accessor by parsing an accessor key.
+
+        The key is defined as:
+
+            |   SEG[n]-Fn-Rn-Cn-Sn
+            |       F   Field
+            |       R   Repeat
+            |       C   Component
+            |       S   Sub-Component
+            |
+            |   *Indexing is from 1 for compatibility with HL7 spec numbering.*
+
+        Example:
+
+            |   PID.F1.R1.C2.S2 or PID.1.1.2.2
+            |
+            |   PID (default to first PID segment, counting from 1)
+            |   F1  (first after segment id, HL7 Spec numbering)
+            |   R1  (repeat counting from 1)
+            |   C2  (component 2 counting from 1)
+            |   S2  (component 2 counting from 1)
+        """
+        def parse_part(keyparts, index, prefix):
+            if len(keyparts) > index:
+                num = keyparts[index]
+                if num[0].upper() == prefix:
+                    num = num[1:]
+                return int(num)
+            else:
+                return None
+
+        parts = key.split('.')
+        segment = parts[0][:3]
+        if len(parts[0]) > 3:
+            segment_num = int(parts[0][3:])
+        else:
+            segment_num = 1
+        field_num = parse_part(parts, 1, 'F')
+        repeat_num = parse_part(parts, 2, 'R')
+        component_num = parse_part(parts, 3, 'C')
+        subcomponent_num = parse_part(parts, 4, 'S')
+        return cls(segment, segment_num, field_num, repeat_num, component_num, subcomponent_num)
+
+
 class Message(Container):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
-
     def __getitem__(self, key):
-        """Index or segment-based lookup.
+        """Index, segment-based or accessor lookup.
 
         If key is an integer, ``__getitem__`` acts list a list, returning
         the :py:class:`hl7.Segment` held at that index:
@@ -190,18 +300,50 @@ class Message(Container):
         >>> h[1]
         [[u'PID'], ...]
 
-        If the key is a string, ``__getitem__`` acts like a dictionary,
+        If the key is a string of length 3, ``__getitem__`` acts like a dictionary,
         returning all segments whose *segment_id* is *key*
         (alias of :py:meth:`hl7.Message.segments`).
 
         >>> h['OBX']
         [[[u'OBX'], [u'1'], ...]]
 
-        :rtype: :py:class:`hl7.Segment` or list of :py:class:`hl7.Segment`
+        If the key is a string of length greater than 3,
+        the key is parsed into an :py:class:`hl7.Accessor` and passed
+        to :py:meth:`hl7.Message.extract_field`.
+
+        If the key is an :py:class:`hl7.Accessor`, it is passed to
+        :py:meth:`hl7.Message.extract_field`.
         """
         if isinstance(key, six.string_types):
-            return self.segments(key)
-        return list.__getitem__(self, key)
+            if len(key) == 3:
+                return self.segments(key)
+            return self.extract_field(Accessor.parse_key(key))
+        elif isinstance(key, Accessor):
+            return self.extract_field(key)
+        return super(Message, self).__getitem__(key)
+
+    def __setitem__(self, key, value):
+        """Index or accessor assignment.
+
+        If key is an integer, ``__setitem__`` acts list a list, setting
+        the :py:class:`hl7.Segment` held at that index:
+
+        >>> h[1] = Segment("|", [hl7.Field("^", ['PID', ...])])
+
+        If the key is a string of length greater than 3,
+        the key is parsed into an :py:class:`hl7.Accessor` and passed
+        to :py:meth:`hl7.Message.assign_field`.
+
+        >>> h["PID.2.1"] = "NEW"
+
+        If the key is an :py:class:`hl7.Accessor`, it is passed to
+        :py:meth:`hl7.Message.assign_field`.
+        """
+        if isinstance(key, six.string_types) and len(key) > 3 and isinstance(value, six.string_types):
+            return self.assign_field(Accessor.parse_key(key), value)
+        elif isinstance(key, Accessor):
+            return self.assign_field(key, value)
+        return super(Message, self).__setitem__(key, value)
 
     def segment(self, segment_id):
         """Gets the first segment with the *segment_id* from the parsed
@@ -229,11 +371,113 @@ class Message(Container):
         :rtype: list of :py:class:`hl7.Segment`
         """
         ## Compare segment_id to the very first string in each segment,
-        ## returning all segments that match
-        matches = [segment for segment in self if segment[0][0] == segment_id]
+        ## returning all segments that match.
+        ## Return as a Sequence so 1-based indexing can be used
+        matches = Sequence(segment for segment in self if segment[0][0] == segment_id)
         if len(matches) == 0:
             raise KeyError('No %s segments' % segment_id)
         return matches
+
+    def extract_field(self, accessor):
+        """
+            Extract a field using a future proofed approach, based on rules in:
+            http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+
+            'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
+
+                |   PID.F3.R1.C2.S2 = 'Sub-Component2'
+                |   PID.F4.R2.C1 = 'Repeat1'
+
+            Compatibility Rules:
+
+                If the parse tree is deeper than the specified path continue
+                following the first child branch until a leaf of the tree is
+                encountered and return that value (which could be blank).
+
+                Example:
+
+                    |   PID.F3.R1.C2 = 'Sub-Component1' (assume .SC1)
+
+                If the parse tree terminates before the full path is satisfied
+                check each of the subsequent paths and if every one is specified
+                at position 1 then the leaf value reached can be returned as the
+                result.
+
+                    |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
+        """
+        def defaultindex(index):
+            return 1 if index is None else index
+
+        field_num = defaultindex(accessor.field_num)
+        repeat_num = defaultindex(accessor.repeat_num)
+        component_num = defaultindex(accessor.component_num)
+        subcomponent_num = defaultindex(accessor.subcomponent_num)
+
+        segment = self.segments(accessor.segment)(accessor.segment_num)
+        if field_num < len(segment):
+            field = segment(field_num)
+        else:
+            if repeat_num == 1 and component_num == 1 and subcomponent_num == 1:
+                return ''  # Assume non-present optional value
+            raise IndexError('Field not present: {0}'.format(accessor.key))
+
+        rep = field(repeat_num)
+
+        if type(rep) != Repetition:
+            # leaf
+            if component_num == 1 and subcomponent_num == 1:
+                return self.unescape(rep)
+            raise IndexError('Field reaches leaf node before completing path: {0}'.format(accessor.key))
+
+        if component_num > len(rep):
+            if subcomponent_num == 1:
+                return ''  # Assume non-present optional value
+            raise IndexError('Component not present: {0}'.format(accessor.key))
+
+        component = rep(component_num)
+        if type(component) != Component:
+            # leaf
+            if subcomponent_num == 1:
+                return self.unescape(component)
+            raise IndexError('Field reaches leaf node before completing path: {0}'.format(accessor.key))
+
+        if subcomponent_num <= len(component):
+            subcomponent = component(subcomponent_num)
+            return self.unescape(subcomponent)
+        else:
+            return ''  # Assume non-present optional value
+
+    def assign_field(self, accessor, value):
+        """
+            Assign a value into a message using the tree based assignment notation.
+            The segment must exist.
+
+            Extract a field using a future proofed approach, based on rules in:
+            http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+        """
+        segment = self.segments(accessor.segment)(accessor.segment_num)
+
+        while len(segment) <= accessor.field_num:
+            segment.append(Field(self.separators[2], []))
+        field = segment(accessor.field_num)
+        if accessor.repeat_num is None:
+            field[:] = [value]
+            return
+        while len(field) < accessor.repeat_num:
+            field.append(Repetition(self.separators[3], []))
+        repetition = field(accessor.repeat_num)
+        if accessor.component_num is None:
+            repetition[:] = [value]
+            return
+        while len(repetition) < accessor.component_num:
+            repetition.append(Component(self.separators[4], []))
+        component = repetition(accessor.component_num)
+        if accessor.subcomponent_num is None:
+            component[:] = [value]
+            return
+        while len(component) < accessor.subcomponent_num:
+            component.append('')
+        component(accessor.subcomponent_num, value)
 
     def escape(self, field, app_map=None):
         """
@@ -387,6 +631,10 @@ class Segment(Container):
     return and is separated by pipes. It contains a list of
     :py:class:`hl7.Field` instances.
     """
+    def _adjust_index(self, index):
+        # First element is the segment name, so we don't need to adjust to get 1-based
+        return index
+
     def __str__(self):
         if six.text_type(self[0]) in ['MSH', 'FHS']:
             return six.text_type(self[0]) + six.text_type(self[1]) + six.text_type(self[2]) + six.text_type(self[1]) + \
