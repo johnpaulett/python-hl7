@@ -28,7 +28,7 @@ Data Types
    :members: __unicode__
 
 .. autoclass:: hl7.Accessor
-   :members: parse_key, key
+   :members: __new__, parse_key, key, _replace, _make, _asdict, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
 
 .. autoclass:: hl7.Message
    :members: segments, segment, __getitem__, __setitem__, escape, unescape, extract_field, assign_field

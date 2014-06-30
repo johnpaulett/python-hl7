@@ -6,6 +6,7 @@
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
 from __future__ import unicode_literals
+from collections import namedtuple
 
 from .compat import python_2_unicode_compatible
 from .version import get_version
@@ -206,28 +207,12 @@ class Container(Sequence):
 
 
 @python_2_unicode_compatible
-class Accessor(object):
-    def __init__(self, segment, segment_num=1, field_num=None, repeat_num=None, component_num=None, subcomponent_num=None):
-        self.segment = segment
-        self.segment_num = segment_num
-        self.field_num = field_num
-        self.repeat_num = repeat_num
-        self.component_num = component_num
-        self.subcomponent_num = subcomponent_num
+class Accessor(namedtuple('Accessor', ['segment', 'segment_num', 'field_num', 'repeat_num', 'component_num', 'subcomponent_num'])):
+    __slots__ = ()
 
-    def __eq__(self, other):
-        return (self.segment == other.segment and
-                self.segment_num == other.segment_num and
-                self.field_num == other.field_num and
-                self.repeat_num == other.repeat_num and
-                self.component_num == other.component_num and
-                self.subcomponent_num == other.subcomponent_num)
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __hash__(self):
-        return hash(self.key)
+    def __new__(cls, segment, segment_num=1, field_num=None, repeat_num=None, component_num=None, subcomponent_num=None):
+        """Create a new instance of Accessor for *segment*. Index numbers start from 1."""
+        return super(Accessor, cls).__new__(cls, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num)
 
     @property
     def key(self):
@@ -237,9 +222,6 @@ class Accessor(object):
 
     def __str__(self):
         return self.key
-
-    def __repr__(self):
-        return '{0}(segment="{1}", segment_num={2}, field_num={3}, repeat_num={4}, component_num={5}, subcomponent_num={6})'.format(self.__class__.__name__, self.segment, self.segment_num, self.field_num, self.repeat_num, self.component_num, self.subcomponent_num)
 
     @classmethod
     def parse_key(cls, key):
@@ -317,9 +299,9 @@ class Message(Container):
         if isinstance(key, six.string_types):
             if len(key) == 3:
                 return self.segments(key)
-            return self.extract_field(Accessor.parse_key(key))
+            return self.extract_field(*Accessor.parse_key(key))
         elif isinstance(key, Accessor):
-            return self.extract_field(key)
+            return self.extract_field(*key)
         return super(Message, self).__getitem__(key)
 
     def __setitem__(self, key, value):
@@ -340,9 +322,9 @@ class Message(Container):
         :py:meth:`hl7.Message.assign_field`.
         """
         if isinstance(key, six.string_types) and len(key) > 3 and isinstance(value, six.string_types):
-            return self.assign_field(Accessor.parse_key(key), value)
+            return self.assign_field(value, *Accessor.parse_key(key))
         elif isinstance(key, Accessor):
-            return self.assign_field(key, value)
+            return self.assign_field(value, *key)
         return super(Message, self).__setitem__(key, value)
 
     def segment(self, segment_id):
@@ -378,7 +360,7 @@ class Message(Container):
             raise KeyError('No %s segments' % segment_id)
         return matches
 
-    def extract_field(self, accessor):
+    def extract_field(self, segment, segment_num=1, field_num=1, repeat_num=1, component_num=1, subcomponent_num=1):
         """
             Extract a field using a future proofed approach, based on rules in:
             http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
@@ -405,15 +387,15 @@ class Message(Container):
 
                     |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
-        def defaultindex(index):
-            return 1 if index is None else index
+        # Save original values for error messages
+        accessor = Accessor(segment, segment_num, field_num, repeat_num, component_num, subcomponent_num)
 
-        field_num = defaultindex(accessor.field_num)
-        repeat_num = defaultindex(accessor.repeat_num)
-        component_num = defaultindex(accessor.component_num)
-        subcomponent_num = defaultindex(accessor.subcomponent_num)
+        field_num = field_num or 1
+        repeat_num = repeat_num or 1
+        component_num = component_num or 1
+        subcomponent_num = subcomponent_num or 1
 
-        segment = self.segments(accessor.segment)(accessor.segment_num)
+        segment = self.segments(segment)(segment_num)
         if field_num < len(segment):
             field = segment(field_num)
         else:
@@ -447,7 +429,7 @@ class Message(Container):
         else:
             return ''  # Assume non-present optional value
 
-    def assign_field(self, accessor, value):
+    def assign_field(self, value, segment, segment_num=1, field_num=None, repeat_num=None, component_num=None, subcomponent_num=None):
         """
             Assign a value into a message using the tree based assignment notation.
             The segment must exist.
@@ -455,29 +437,29 @@ class Message(Container):
             Extract a field using a future proofed approach, based on rules in:
             http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
         """
-        segment = self.segments(accessor.segment)(accessor.segment_num)
+        segment = self.segments(segment)(segment_num)
 
-        while len(segment) <= accessor.field_num:
+        while len(segment) <= field_num:
             segment.append(Field(self.separators[2], []))
-        field = segment(accessor.field_num)
-        if accessor.repeat_num is None:
+        field = segment(field_num)
+        if repeat_num is None:
             field[:] = [value]
             return
-        while len(field) < accessor.repeat_num:
+        while len(field) < repeat_num:
             field.append(Repetition(self.separators[3], []))
-        repetition = field(accessor.repeat_num)
-        if accessor.component_num is None:
+        repetition = field(repeat_num)
+        if component_num is None:
             repetition[:] = [value]
             return
-        while len(repetition) < accessor.component_num:
+        while len(repetition) < component_num:
             repetition.append(Component(self.separators[4], []))
-        component = repetition(accessor.component_num)
-        if accessor.subcomponent_num is None:
+        component = repetition(component_num)
+        if subcomponent_num is None:
             component[:] = [value]
             return
-        while len(component) < accessor.subcomponent_num:
+        while len(component) < subcomponent_num:
             component.append('')
-        component(accessor.subcomponent_num, value)
+        component(subcomponent_num, value)
 
     def escape(self, field, app_map=None):
         """

@@ -150,7 +150,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg['PID.1.1.1.1'], 'Field1')
 
         # Incorrect path
-        self.assertRaises(IndexError, msg.extract_field, Accessor.parse_key('PID.1.1.1.2'))
+        self.assertRaisesRegexp(IndexError, 'PID.1.1.1.2', msg.extract_field, *Accessor.parse_key('PID.1.1.1.2'))
 
         # Optional field, not included in message
         self.assertEqual(msg['MSH.20'], '')

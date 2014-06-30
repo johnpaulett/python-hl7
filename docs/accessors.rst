@@ -64,6 +64,19 @@ from a message.
     >>> h['PID.F2.R1.C1']
     u'Component1'
 
+You can also access values using :py:class:`hl7.Accessor`, or by directly calling
+:py:meth:`hl7.Message.extract_field`. The following are all equivalent:
+
+.. doctest::
+
+    >>> h['PID.F2.R1.C1']
+    u'Component1'
+
+    >>> h[hl7.Accessor('PID', 1, 2, 1, 1)]
+    u'Component1'
+
+    >>> h.extract_field('PID', 1, 2, 1, 1)
+    u'Component1'
 
 All values should be accessed in this manner. Even if a field is marked as being
 non-repeating a repeat of "1" should be specified as later version messages
@@ -171,6 +184,15 @@ of the tree).
 
     >>> unicode(response)
     u'MSH|^~\\&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message'
+
+You can also assign values using :py:class:`hl7.Accessor`, or by directly calling
+:py:meth:`hl7.Message.assign_field`. The following are all equivalent:
+
+.. doctest::
+
+    >>> response['MSA.F1.R1'] = 'AA'
+    >>> response[hl7.Accessor('MSA', 1, 1, 1)] = 'AA'
+    >>> response.assign_field('AA', 'MSA', 1, 1, 1)
 
 Escaping Content
 ----------------
