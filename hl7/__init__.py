@@ -626,18 +626,20 @@ class Segment(Container):
 
 class Field(Container):
     """Third level of an HL7 message, that traditionally is surrounded
-    by pipes and separated by carets. It contains a list of strings.
+    by pipes and separated by carets. It contains a list of strings
+    or :py:class:`hl7.Repetition` instances.
     """
 
 
 class Repetition(Container):
     """Fourth level of an HL7 message. A field can repeat.
+    It contains a list of strings or :py:class:`hl7.Component` instances.
     """
 
 
 class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
-    Contains sub-components
+    It contains a list of string sub-components.
     """
 
 
