@@ -158,6 +158,21 @@ class Container(list):
         self.esc = esc
         self.separators = separators
 
+    def __getitem__(self, item):
+        # Python slice operator was returning a regular list, not a
+        # Container subclass
+        sequence = super(Container, self).__getitem__(item)
+        if isinstance(item, slice):
+            return self.__class__(
+                self.separator, sequence, self.esc, self.separators
+            )
+        return sequence
+
+    def __getslice__(self, i, j):
+        # Python 2.x compatibility.  __getslice__ is deprecated, and
+        # we want to wrap the logic from __getitem__ when handling slices
+        return self.__getitem__(slice(i, j))
+
     def __str__(self):
         """Join a the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
