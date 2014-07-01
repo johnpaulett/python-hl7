@@ -4,6 +4,7 @@ from hl7 import Accessor, Message, Segment, Field, Repetition, Component
 
 import hl7
 import six
+import sys
 import unittest
 
 
@@ -275,12 +276,23 @@ class ContainerTest(unittest.TestCase):
 
 
 class MessageTest(unittest.TestCase):
+
+    def assertIsInstance(self, obj, expected_cls):
+        # TODO Remove once 2.6 compat is removed
+        if sys.version_info < (2, 7):
+            return self.assertTrue(isinstance(obj, expected_cls))
+
+        return super(MessageTest, self).assertIsInstance(obj, expected_cls)
+
     def test_segments(self):
         msg = hl7.parse(sample_hl7)
         s = msg.segments('OBX')
         self.assertEqual(len(s), 2)
+        self.assertIsInstance(s[0], Segment)
         self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
         self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
+
+        self.assertIsInstance(s[0][1], Field)
 
     def test_segments_does_not_exist(self):
         msg = hl7.parse(sample_hl7)
@@ -301,6 +313,12 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(len(s), 2)
         self.assertEqual(s[0][0:3], [['OBX'], ['1'], ['SN']])
         self.assertEqual(s[1][0:3], [['OBX'], ['2'], ['FN']])
+
+    def test_get_slice(self):
+        msg = hl7.parse(sample_hl7)
+        s = msg.segments('OBX')[0]
+        self.assertIsInstance(s, Segment)
+        self.assertIsInstance(s[0:3], Segment)
 
 
 class ParsePlanTest(unittest.TestCase):
