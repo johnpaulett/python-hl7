@@ -30,7 +30,7 @@ To run the test suite with a specific python interpreter::
 
 To documentation is built by tox, but you can manually build via::
 
-   $ pushd docs && make html man doctest && popd
+   $ make docs
    ...
    Doctest summary
    ===============

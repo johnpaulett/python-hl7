@@ -2,6 +2,3 @@
 tox==1.7.0
 flake8==2.1.0
 Sphinx==1.2.1
-
-# six is in setup.py's install_requires, but for simplicity with tox, we require here
-six
