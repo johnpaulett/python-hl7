@@ -325,13 +325,13 @@ class Message(Container):
         If key is an integer, ``__setitem__`` acts list a list, setting
         the :py:class:`hl7.Segment` held at that index:
 
-        >>> h[1] = Segment("|", [hl7.Field("^", ['PID', ...])])
+        >>> h[1] = hl7.Segment("|", [hl7.Field("^", [u'PID'], [u''])])
 
         If the key is a string of length greater than 3,
         the key is parsed into an :py:class:`hl7.Accessor` and passed
         to :py:meth:`hl7.Message.assign_field`.
 
-        >>> h["PID.2.1"] = "NEW"
+        >>> h["PID.2"] = "NEW"
 
         If the key is an :py:class:`hl7.Accessor`, it is passed to
         :py:meth:`hl7.Message.assign_field`.
@@ -346,7 +346,7 @@ class Message(Container):
         """Gets the first segment with the *segment_id* from the parsed
         *message*.
 
-        >>> h.segment('PID')
+        >>> h.segment('PID')  # doctest: +ELLIPSIS
         [[u'PID'], ...]
 
         :rtype: :py:class:`hl7.Segment`
