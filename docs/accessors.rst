@@ -246,10 +246,10 @@ The escape method returns a 'str' object. The unescape method returns a unicode 
     u'   '
 
     >>> h.escape('|~^&')
-    '\\F\\\\R\\\\S\\\\T\\'
+    u'\\F\\\\R\\\\S\\\\T\\'
 
     >>> h.escape('áéíóú')
-    '\\Xc3\\\\Xa1\\\\Xc3\\\\Xa9\\\\Xc3\\\\Xad\\\\Xc3\\\\Xb3\\\\Xc3\\\\Xba\\'
+    u'\\Xc3\\\\Xa1\\\\Xc3\\\\Xa9\\\\Xc3\\\\Xad\\\\Xc3\\\\Xb3\\\\Xc3\\\\Xba\\'
 
 **Presentation Characters**
 

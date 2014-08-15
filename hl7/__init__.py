@@ -155,7 +155,7 @@ class Sequence(list):
         """Support list access using HL7 compatible 1-based indices.
         Can be used to get and set values.
 
-        >>> s = Sequence([1, 2, 3, 4])
+        >>> s = hl7.Sequence([1, 2, 3, 4])
         >>> s(1) == s[0]
         True
         >>> s(2, "new")
@@ -294,14 +294,14 @@ class Message(Container):
         If key is an integer, ``__getitem__`` acts list a list, returning
         the :py:class:`hl7.Segment` held at that index:
 
-        >>> h[1]
+        >>> h[1]  # doctest: +ELLIPSIS
         [[u'PID'], ...]
 
         If the key is a string of length 3, ``__getitem__`` acts like a dictionary,
         returning all segments whose *segment_id* is *key*
         (alias of :py:meth:`hl7.Message.segments`).
 
-        >>> h['OBX']
+        >>> h['OBX']  # doctest: +ELLIPSIS
         [[[u'OBX'], [u'1'], ...]]
 
         If the key is a string of length greater than 3,
