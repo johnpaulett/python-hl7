@@ -18,7 +18,7 @@ that all supported Python versions are tested and the documentation is built
 and tested.  We provide a :file:`Makefile` to create a virtualenv, install tox,
 and run tox::
 
-    $ make test
+    $ make tests
       py27: commands succeeded
       py26: commands succeeded
       docs: commands succeeded

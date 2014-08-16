@@ -1,4 +1,4 @@
-.PHONY: test build docs lint upload
+.PHONY: test tests build docs lint upload
 
 BIN = env/bin
 PYTHON = $(BIN)/python
@@ -11,8 +11,11 @@ env: requirements.txt
 	$(PIP) install -U -r requirements.txt
 	$(PYTHON) setup.py develop
 
-test: env
+tests: env
 	$(BIN)/tox
+
+# Alias for old-style invocation
+test: tests
 
 build:
 	$(PYTHON) setup.py sdist
