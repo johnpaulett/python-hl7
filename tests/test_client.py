@@ -1,14 +1,14 @@
 from hl7.client import MLLPClient, MLLPException, mllp_send, CR, SB, EB
 from hl7 import __version__ as hl7_version
-from mock import patch, Mock
 from optparse import Values
 from shutil import rmtree
 from tempfile import mkdtemp
 
+from .compat import Mock, patch, unittest
+
 import hl7
 import os
 import socket
-import unittest
 
 
 class MLLPClientTest(unittest.TestCase):

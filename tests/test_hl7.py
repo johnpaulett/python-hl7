@@ -2,10 +2,10 @@
 from __future__ import unicode_literals
 from hl7 import Accessor, Message, Segment, Field, Repetition, Component
 
+from .compat import unittest
+
 import hl7
 import six
-import sys
-import unittest
 
 
 ## Sample message from HL7 Normative Edition
@@ -48,7 +48,7 @@ class ParseTest(unittest.TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
         self.assertEqual(len(msg), 5)
-        self.assertTrue(isinstance(msg[0][0][0], six.text_type))
+        self.assertIsInstance(msg[0][0][0], six.text_type)
         self.assertEqual(msg[0][0][0], 'MSH')
         self.assertEqual(msg[3][0][0], 'OBX')
         self.assertEqual(
@@ -57,9 +57,9 @@ class ParseTest(unittest.TestCase):
         )
         ## Make sure MSH-1 and MSH-2 are valid
         self.assertEqual(msg[0][1][0], '|')
-        self.assertTrue(isinstance(msg[0][1], hl7.Field))
+        self.assertIsInstance(msg[0][1], hl7.Field)
         self.assertEqual(msg[0][2][0], '^~\&')
-        self.assertTrue(isinstance(msg[0][2], hl7.Field))
+        self.assertIsInstance(msg[0][2], hl7.Field)
         ## MSH-9 is the message type
         self.assertEqual(msg[0][9], [[['ORU'], ['R01']]])
         ## Do it twice to make sure text coercion is idempotent
@@ -69,7 +69,7 @@ class ParseTest(unittest.TestCase):
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(six.text_type(sample_hl7))
         self.assertEqual(len(msg), 5)
-        self.assertTrue(isinstance(msg[0][0][0], six.text_type))
+        self.assertIsInstance(msg[0][0][0], six.text_type)
         self.assertEqual(msg[0][0][0], 'MSH')
 
     def test_non_ascii_bytestring(self):
@@ -87,10 +87,10 @@ class ParseTest(unittest.TestCase):
     def test_parsing_classes(self):
         msg = hl7.parse(sample_hl7)
 
-        self.assertTrue(isinstance(msg, hl7.Message))
-        self.assertTrue(isinstance(msg[3], hl7.Segment))
-        self.assertTrue(isinstance(msg[3][0], hl7.Field))
-        self.assertTrue(isinstance(msg[3][0][0], six.text_type))
+        self.assertIsInstance(msg, hl7.Message)
+        self.assertIsInstance(msg[3], hl7.Segment)
+        self.assertIsInstance(msg[3][0], hl7.Field)
+        self.assertIsInstance(msg[3][0][0], six.text_type)
 
     def test_nonstandard_separators(self):
         nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
@@ -103,13 +103,18 @@ class ParseTest(unittest.TestCase):
     def test_repetition(self):
         msg = hl7.parse(rep_sample_hl7)
         self.assertEqual(msg[1][4], [['Repeat1'], ['Repeat2']])
-        self.assertEqual(type(msg[1][4]), Field)
-        self.assertEqual(type(msg[1][4][0]), Repetition)
-        self.assertEqual(type(msg[1][4][1]), Repetition)
+        self.assertIsInstance(msg[1][4], Field)
+        self.assertIsInstance(msg[1][4][0], Repetition)
+        self.assertIsInstance(msg[1][4][1], Repetition)
         self.assertEqual(six.text_type(msg[1][4][0][0]), 'Repeat1')
-        self.assertTrue(isinstance(msg[1][4][0][0], six.text_type))
+        self.assertIsInstance(msg[1][4][0][0], six.text_type)
         self.assertEqual(six.text_type(msg[1][4][1][0]), 'Repeat2')
-        self.assertTrue(isinstance(msg[1][4][1][0], six.text_type))
+        self.assertIsInstance(msg[1][4][1][0], six.text_type)
+
+    def test_empty_initial_repetition(self):
+        # Switch to look like "|~Repeat2|
+        msg = hl7.parse(rep_sample_hl7.replace('Repeat1', ''))
+        self.assertEqual(msg[1][4], [[''], ['Repeat2']])
 
     def test_subcomponent(self):
         msg = hl7.parse(rep_sample_hl7)
@@ -276,14 +281,6 @@ class ContainerTest(unittest.TestCase):
 
 
 class MessageTest(unittest.TestCase):
-
-    def assertIsInstance(self, obj, expected_cls):
-        # TODO Remove once 2.6 compat is removed
-        if sys.version_info < (2, 7):
-            return self.assertTrue(isinstance(obj, expected_cls))
-
-        return super(MessageTest, self).assertIsInstance(obj, expected_cls)
-
     def test_segments(self):
         msg = hl7.parse(sample_hl7)
         s = msg.segments('OBX')
@@ -333,7 +330,7 @@ class ParsePlanTest(unittest.TestCase):
 
         self.assertEqual(plan.separator, '\r')
         con = plan.container([1, 2])
-        self.assertTrue(isinstance(con, Message))
+        self.assertIsInstance(con, Message)
         self.assertEqual(con, [1, 2])
         self.assertEqual(con.separator, '\r')
 
