@@ -6,11 +6,11 @@ python-hl7 is a simple library for parsing messages of Health Level 7
 client that can send HL7 messages to a Minimal Lower Level Protocol (MLLP)
 server (:ref:`mllp_send <mllp-send>`).
 
-HL7 is a communication protocol and message format for 
+HL7 is a communication protocol and message format for
 health care data. It is the de-facto standard for transmitting data
 between clinical information systems and between clinical devices.
 The version 2.x series, which is often is a pipe delimited format
-is currently the most widely accepted version of HL7 (there 
+is currently the most widely accepted version of HL7 (there
 is an alternative XML-based format).
 
 python-hl7 currently only parses HL7 version 2.x messages into
@@ -22,9 +22,16 @@ The there are specific subclasses of :py:class:`hl7.Container` depending on
 the part of the HL7 message. The :py:class:`hl7.Container` message itself
 is a subclass of a Python list, thus we can easily access the
 HL7 message as an n-dimensional list. Specifically, the subclasses of
-:py:class:`hl7.Container`, in order, are :py:class:`hl7.Message`, 
+:py:class:`hl7.Container`, in order, are :py:class:`hl7.Message`,
 :py:class:`hl7.Segment`, :py:class:`hl7.Field`, :py:class:`hl7.Repetition`.
 and :py:class:`hl7.Component`.
+
+.. warning::
+
+  :ref:`0.3.0 <changelog-0-3-0>` breaks backwards compatibility by correcting
+  the indexing of the MSH segment and the introducing improved parsing down to
+  the repetition and sub-component level.
+
 
 Result Tree
 -----------
@@ -32,7 +39,7 @@ Result Tree
 HL7 Messages have a limited number of levels. The top level is a Message.
 A Message is comprised of a number of Fields (:py:class:`hl7.Field`).
 Fields can repeat (:py:class:`hl7.Repetition`). The content of a field
-is either a primitive data type (such as a string) or a composite 
+is either a primitive data type (such as a string) or a composite
 data type comprised of one or more Components (:py:class:`hl7.Component`). Components
 are in turn comprised of Sub-Components (primitive data types).
 
@@ -65,7 +72,7 @@ We call the :py:func:`hl7.parse` command with string message:
     >>> import hl7
     >>> h = hl7.parse(message)
 
-We get a :py:class:`hl7.Message` object, wrapping a series of 
+We get a :py:class:`hl7.Message` object, wrapping a series of
 :py:class:`hl7.Segment` objects:
 
 .. doctest::
@@ -94,7 +101,7 @@ There were 4 segments (MSH, PID, OBR, OBX):
     >>> len(h)
     4
 
-We can extract the :py:class:`hl7.Segment` from the 
+We can extract the :py:class:`hl7.Segment` from the
 :py:class:`hl7.Message` instance:
 
 .. doctest::
@@ -203,13 +210,22 @@ MLLP network client - ``mllp_send``
 
 python-hl7 features a simple network client, ``mllp_send``, which reads HL7
 messages from a file or ``sys.stdin`` and posts them to an MLLP server.
-``mllp_send`` is a command-line wrapper around 
+``mllp_send`` is a command-line wrapper around
 :py:class:`hl7.client.MLLPClient`.  ``mllp_send`` is a useful tool for
 testing HL7 interfaces or resending logged messages::
 
     mllp_send --file sample.hl7 --port 6661 mirth.example.com
 
 See :doc:`mllp_send` for examples and usage instructions.
+
+For receiving HL7 messages using the Minimal Lower Level Protocol (MLLP), take a
+look at the related `twisted-hl7 <http://twisted-hl7.readthedocs.org>`_ package.
+If do not want to use twisted and are looking to re-write some of twisted-hl7's
+functionality, please reach out to us.  It is likely that some of the MLLP
+parsing and formatting can be moved into python-hl7, which twisted-hl7 and other
+libraries can depend upon.
+
+.. _unicode-vs-byte-strings:
 
 Python 2 vs Python 3 and Unicode vs Byte strings
 -------------------------------------------------
@@ -247,12 +263,12 @@ Contents
 Install
 -------
 
-python-hl7 is available on `PyPi <http://pypi.python.org/pypi/hl7>`_ 
+python-hl7 is available on `PyPi <http://pypi.python.org/pypi/hl7>`_
 via ``pip`` or ``easy_install``::
 
     pip install -U hl7
 
-For recent versions of Debian and Ubuntu, the *python-hl7* package is 
+For recent versions of Debian and Ubuntu, the *python-hl7* package is
 available::
 
     sudo apt-get install python-hl7
