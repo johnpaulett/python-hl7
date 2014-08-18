@@ -1,10 +1,50 @@
 Change Log
 ==========
 
+.. _changelog-0-3-0:
+
+0.3.0 - 2014-08-18
+------------------
+
+.. warning::
+
+  :ref:`0.3.0 <changelog-0-3-0>` breaks backwards compatibility by correcting
+  the indexing of the MSH segment and the introducing improved parsing down to
+  the repetition and sub-component level.
+
+
+* Changed the numbering of fields in the MSH segment.
+  **This breaks older code.**
+* Parse all the elements of the message (i.e. down to sub-component). **The
+  inclusion of repetitions will break older code.**
+* Implemented a basic escaping mechanism
+* New constant 'NULL' which maps to '""'
+* New :py:func:`hl7.isfile` and  :py:func:`hl7.split_file` functions to
+  identify file (FHS/FTS) wrapped messages
+* New mechanism to address message parts via a :doc:`symbolic accessor name
+  </accessors>`
+* Message (and Message.segments), Field, Repetition and Component can be
+  accessed using 1-based indices by using them as a callable.
+* Added Python 3 support.  Python 2.6, 2.7, and 3.3 are officially supported.
+* :py:func:`hl7.parse` can now decode byte strings, using the ``encoding``
+  parameter. :py:class:`hl7.client.MLLPClient` can now encode unicode input
+  using the ``encoding`` parameter. To support Python 3, unicode is now
+  the primary string type used inside the library. bytestrings are only
+  allowed at the edge of the library now, with ``hl7.parse`` and sending
+  via ``hl7.client.MLLPClient``.  Refer to :ref:`unicode-vs-byte-strings`.
+* Testing via tox and travis CI added.  See :doc:`contribute`.
+
+A massive thanks to `Kevin Gill <https://github.com/kevingill1966>`_ and
+`Emilien Klein <https://github.com/e2jk>`_ for the initial code submissions
+to add the improved parsing, and to
+`Andrew Wason <https://github.com/rectalogic>`_ for rebasing the initial pull
+request and providing assistance in the transition.
+
+
 0.2.5 - 2012-03-14
 ------------------
 
-* Do not senseless try to convert to unicode in mllp_send. Allows files to
+* Do not senselessly try to convert to unicode in mllp_send. Allows files to
   contain other encodings.
 
 0.2.4 - 2012-02-21

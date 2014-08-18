@@ -1,13 +1,14 @@
 from hl7.client import MLLPClient, MLLPException, mllp_send, CR, SB, EB
 from hl7 import __version__ as hl7_version
-from mock import patch, Mock
 from optparse import Values
 from shutil import rmtree
 from tempfile import mkdtemp
 
+from .compat import Mock, patch, unittest
+
+import hl7
 import os
 import socket
-import unittest
 
 
 class MLLPClientTest(unittest.TestCase):
@@ -40,13 +41,33 @@ class MLLPClientTest(unittest.TestCase):
         self.client.socket.send.assert_called_once_with('foobar\n')
         self.client.socket.recv.assert_called_once_with(4096)
 
-    def test_send_message(self):
+    def test_send_message_unicode(self):
         self.client.socket.recv.return_value = 'thanks'
 
-        result = self.client.send_message('foobar')
+        result = self.client.send_message(u'foobar')
         self.assertEqual(result, 'thanks')
 
-        self.client.socket.send.assert_called_once_with('\x0bfoobar\x1c\x0d')
+        self.client.socket.send.assert_called_once_with(b'\x0bfoobar\x1c\x0d')
+
+    def test_send_message_bytestring(self):
+        self.client.socket.recv.return_value = 'thanks'
+
+        result = self.client.send_message(b'foobar')
+        self.assertEqual(result, 'thanks')
+
+        self.client.socket.send.assert_called_once_with(b'\x0bfoobar\x1c\x0d')
+
+    def test_send_message_hl7_message(self):
+        self.client.socket.recv.return_value = 'thanks'
+
+        message = hl7.parse('MSH|^~\&|GHH LAB|ELAB')
+
+        result = self.client.send_message(message)
+        self.assertEqual(result, 'thanks')
+
+        self.client.socket.send.assert_called_once_with(
+            b'\x0bMSH|^~\&|GHH LAB|ELAB\x1c\x0d'
+        )
 
     def test_context_manager(self):
         with MLLPClient('localhost', 6666) as client:
@@ -86,7 +107,7 @@ class MLLPSendTest(unittest.TestCase):
 
         # we need a temporary directory
         self.dir = mkdtemp()
-        self.write(SB + 'foobar' + EB + CR)
+        self.write(SB + b'foobar' + EB + CR)
 
         self.option_values = Values({
             'port': 6661,
@@ -115,40 +136,46 @@ class MLLPSendTest(unittest.TestCase):
         rmtree(self.dir)
 
     def write(self, content, path='test.hl7'):
-        with open(os.path.join(self.dir, path), 'w') as f:
+        with open(os.path.join(self.dir, path), 'wb') as f:
             f.write(content)
 
     def test_send(self):
         mllp_send()
 
         self.mock_socket().connect.assert_called_once_with(('localhost', 6661))
-        self.mock_socket().send.assert_called_once_with(SB + 'foobar' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(
+            SB + b'foobar' + EB + CR
+        )
         self.mock_stdout.assert_called_once_with('thanks')
 
-    def test_send_mutliple(self):
+    def test_send_multiple(self):
         self.mock_socket().recv.return_value = 'thanks'
-        self.write(SB + 'foobar' + EB + CR + SB + 'hello' + EB + CR)
+        self.write(SB + b'foobar' + EB + CR + SB + b'hello' + EB + CR)
 
         mllp_send()
 
         self.assertEqual(self.mock_socket().send.call_args_list[0][0][0],
-                         SB + 'foobar' + EB + CR)
+                         SB + b'foobar' + EB + CR)
         self.assertEqual(self.mock_socket().send.call_args_list[1][0][0],
-                         SB + 'hello' + EB + CR)
+                         SB + b'hello' + EB + CR)
 
     def test_leftover_buffer(self):
-        self.write(SB + 'foobar' + EB + CR + SB + 'stuff')
+        self.write(SB + b'foobar' + EB + CR + SB + b'stuff')
 
         self.assertRaises(MLLPException, mllp_send)
 
-        self.mock_socket().send.assert_called_once_with(SB + 'foobar' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(
+            SB + b'foobar' + EB + CR
+        )
 
     def test_quiet(self):
         self.option_values.verbose = False
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'foobar' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(
+            SB + b'foobar' + EB + CR
+        )
         self.assertFalse(self.mock_stdout.called)
 
     def test_port(self):
@@ -164,7 +191,7 @@ class MLLPSendTest(unittest.TestCase):
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'hello' + EB + CR)
+        self.mock_socket().send.assert_called_once_with(SB + b'hello' + EB + CR)
 
     def test_loose_no_stdin(self):
         self.option_values.loose = True
@@ -180,42 +207,45 @@ class MLLPSendTest(unittest.TestCase):
 
     def test_loose_windows_newline(self):
         self.option_values.loose = True
-        self.write(SB + 'MSH|^~\&|foo\r\nbar\r\n' + EB + CR)
+        self.write(SB + b'MSH|^~\&|foo\r\nbar\r\n' + EB + CR)
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'MSH|^~\&|foo\rbar'
-                                                        + EB + CR)
+        self.mock_socket().send.assert_called_once_with(
+            SB + b'MSH|^~\&|foo\rbar' + EB + CR
+        )
 
     def test_loose_unix_newline(self):
         self.option_values.loose = True
-        self.write(SB + 'MSH|^~\&|foo\nbar\n' + EB + CR)
+        self.write(SB + b'MSH|^~\&|foo\nbar\n' + EB + CR)
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'MSH|^~\&|foo\rbar'
-                                                        + EB + CR)
+        self.mock_socket().send.assert_called_once_with(
+            SB + b'MSH|^~\&|foo\rbar' + EB + CR
+        )
 
     def test_loose_no_mllp_characters(self):
         self.option_values.loose = True
-        self.write('MSH|^~\&|foo\r\nbar\r\n')
+        self.write(b'MSH|^~\&|foo\r\nbar\r\n')
 
         mllp_send()
 
-        self.mock_socket().send.assert_called_once_with(SB + 'MSH|^~\&|foo\rbar'
-                                                        + EB + CR)
+        self.mock_socket().send.assert_called_once_with(
+            SB + b'MSH|^~\&|foo\rbar' + EB + CR
+        )
 
     def test_loose_send_mutliple(self):
         self.option_values.loose = True
         self.mock_socket().recv.return_value = 'thanks'
-        self.write('MSH|^~\&|1\r\nOBX|1\r\nMSH|^~\&|2\r\nOBX|2\r\n')
+        self.write(b'MSH|^~\&|1\r\nOBX|1\r\nMSH|^~\&|2\r\nOBX|2\r\n')
 
         mllp_send()
 
         self.assertEqual(self.mock_socket().send.call_args_list[0][0][0],
-                         SB + 'MSH|^~\&|1\rOBX|1' + EB + CR)
+                         SB + b'MSH|^~\&|1\rOBX|1' + EB + CR)
         self.assertEqual(self.mock_socket().send.call_args_list[1][0][0],
-                         SB + 'MSH|^~\&|2\rOBX|2' + EB + CR)
+                         SB + b'MSH|^~\&|2\rOBX|2' + EB + CR)
 
     def test_version(self):
         self.option_values.version = True
@@ -232,6 +262,6 @@ class FakeStream(object):
     def read(self, buf):
         self.count += 1
         if self.count == 1:
-            return SB + 'hello' + EB + CR
+            return SB + b'hello' + EB + CR
         else:
-            return ''
+            return b''

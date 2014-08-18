@@ -2,11 +2,22 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
+import sys
 
 # Avoid directly importing the module. Prevents potential circular
 # references when dependency needs to be installed via setup.py, so it
 # is not yet available to setup.py
 exec(open('hl7/version.py').read())
+
+tests_require = []
+if sys.version_info < (3, 0):
+    tests_require.extend([
+        'unittest2>=0.5.1'
+    ])
+if sys.version_info < (3, 3):
+    tests_require.extend([
+        'mock>=1.0.1'
+    ])
 
 setup(
     name='hl7',
@@ -40,8 +51,9 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=['hl7'],
+    install_requires=['six'],
     test_suite='tests',
-    tests_require=['mock>=1.0.1'],
+    tests_require=tests_require,
     entry_points={
         'console_scripts': [
             'mllp_send=hl7.client:mllp_send',

@@ -13,18 +13,33 @@ python-hl7 API
 
 .. autofunction:: hl7.ishl7
 
+.. autofunction:: hl7.isfile
+
+.. autofunction:: hl7.split_file
+
+
 Data Types
 ----------
+
+.. autoclass:: hl7.Sequence
+   :members: __call__
 
 .. autoclass:: hl7.Container
    :members: __unicode__
 
+.. autoclass:: hl7.Accessor
+   :members: __new__, parse_key, key, _replace, _make, _asdict, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
+
 .. autoclass:: hl7.Message
-   :members: segments, segment, __getitem__
+   :members: segments, segment, __getitem__, __setitem__, escape, unescape, extract_field, assign_field
 
 .. autoclass:: hl7.Segment
 
 .. autoclass:: hl7.Field
+
+.. autoclass:: hl7.Repetition
+
+.. autoclass:: hl7.Component
 
 
 MLLP Network Client

@@ -2,15 +2,16 @@ from optparse import OptionParser
 
 import hl7
 import os.path
+import six
 import socket
 import sys
 
 
-SB = '\x0b'  # <SB>, vertical tab
-EB = '\x1c'  # <EB>, file separator
-CR = '\x0d'  # <CR>, \r
+SB = b'\x0b'  # <SB>, vertical tab
+EB = b'\x1c'  # <EB>, file separator
+CR = b'\x0d'  # <CR>, \r
 
-FF = '\x0c'  # <FF>, new page form feed
+FF = b'\x0c'  # <FF>, new page form feed
 
 RECV_BUFFER = 4096
 
@@ -36,10 +37,15 @@ class MLLPClient(object):
         with MLLPClient(host, port) as client:
             client.send_message('MSH|...')
 
+    MLLPClient takes an optional ``encoding`` parameter, defaults to UTF-8,
+    for encoding unicode messages [#]_.
+
+    .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
     """
-    def __init__(self, host, port):
+    def __init__(self, host, port, encoding='utf-8'):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
+        self.encoding = encoding
 
     def __enter__(self):
         return self
@@ -52,13 +58,25 @@ class MLLPClient(object):
         self.socket.close()
 
     def send_message(self, message):
-        """Wraps a str, unicode, or :py:class:`hl7.Message` in a MLLP container
-        and send the message to the server
+        """Wraps a byte string, unicode string, or :py:class:`hl7.Message`
+        in a MLLP container and send the message to the server
+
+        If message is a byte string, we assume it is already encoded properly.
+        If message is unicode or  :py:class:`hl7.Message`, it will be encoded
+        according to  :py:attr:`hl7.client.MLLPClient.encoding`
+
         """
-        if isinstance(message, hl7.Message):
-            message = unicode(message)
+        if isinstance(message, six.binary_type):
+            # Assume we have the correct encoding
+            binary = message
+        else:
+            # Encode the unicode message into a bytestring
+            if isinstance(message, hl7.Message):
+                message = six.text_type(message)
+            binary = message.encode(self.encoding)
+
         # wrap in MLLP message container
-        data = SB + message + EB + CR
+        data = SB + binary + EB + CR
         return self.send(data)
 
     def send(self, data):
@@ -73,7 +91,7 @@ class MLLPClient(object):
 
 # wrappers to make testing easier
 def stdout(content):
-    sys.stdout.write(content + '\n')
+    sys.stdout.write(content + b'\n')
 
 
 def stdin():
@@ -86,11 +104,11 @@ def stderr():
 
 def read_stream(stream):
     """Buffer the stream and yield individual, stripped messages"""
-    _buffer = ''
+    _buffer = b''
 
     while True:
         data = stream.read(RECV_BUFFER)
-        if data == '':
+        if data == b'':
             break
         # usually should be broken up by EB, but I have seen FF separating
         # messages
@@ -110,16 +128,20 @@ def read_stream(stream):
 def read_loose(stream):
     """Turn a HL7-like blob of text into a real HL7 messages"""
     # look for the START_BLOCK to delineate messages
-    START_BLOCK = r'MSH|^~\&|'
+    START_BLOCK = b'MSH|^~\&|'
 
     # load all the data
     data = stream.read()
 
-    # take out all the the typical MLLP separators
-    data = ''.join([c for c in data if c not in [EB, FF, SB]])
+    # take out all the typical MLLP separators. In Python 3, iterating
+    # through a bytestring returns ints, so we need to filter out the int
+    # versions of the separators, then convert back from a list of ints to
+    # a bytestring (In Py3, we could just call bytes([ints]))
+    separators = [six.byte2int(bs) for bs in [EB, FF, SB]]
+    data = b''.join([six.int2byte(c) for c in six.iterbytes(data) if c not in separators])
 
     # Windows & Unix new lines to segment separators
-    data = data.replace('\r\n', '\r').replace('\n', '\r')
+    data = data.replace(b'\r\n', b'\r').replace(b'\n', b'\r')
 
     for m in data.split(START_BLOCK):
         if not m:
@@ -127,7 +149,7 @@ def read_loose(stream):
             continue
 
         # strip any trailing whitespace
-        m = m.strip(CR + '\n ')
+        m = m.strip(CR + b'\n ')
 
         # re-insert the START_BLOCK, which was removed via the split
         yield START_BLOCK + m
@@ -183,7 +205,12 @@ def mllp_send():
         return
 
     if options.filename is not None:
-        stream = open(options.filename, 'rb')  # FIXME with_statement
+        # Previously set stream to the open() handle, but then we did not
+        # close the open file handle.  This new approach consumes the entire
+        # file into memory before starting to process, which is not required
+        # or ideal, since we can handle a stream
+        with open(options.filename, 'rb') as f:
+            stream = six.BytesIO(f.read())
     else:
         if options.loose:
             stderr().write('--loose requires --file\n')

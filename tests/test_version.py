@@ -1,8 +1,6 @@
-from mock import patch, Mock
 from hl7.version import get_version
 
-import hl7
-import unittest
+from .compat import patch, unittest
 
 
 class GetVersionTest(unittest.TestCase):

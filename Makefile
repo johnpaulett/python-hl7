@@ -1,16 +1,24 @@
-.PHONY: init test build docs lint upload
+.PHONY: test tests build docs lint upload
+
+BIN = env/bin
+PYTHON = $(BIN)/python
+PIP = $(BIN)/pip
 
 SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
 
-init:
-	virtualenv --no-site-packages env
-	env/bin/pip install -U -r requirements.txt
+env: requirements.txt
+	test -f $(PYTHON) || virtualenv --no-site-packages env
+	$(PIP) install -U -r requirements.txt
+	$(PYTHON) setup.py develop
 
-test: init
-	env/bin/tox
+tests: env
+	$(BIN)/tox
+
+# Alias for old-style invocation
+test: tests
 
 build:
-	python setup.py sdist
+	$(PYTHON) setup.py sdist
 
 clean-docs:
 	cd docs; make clean
@@ -20,9 +28,9 @@ docs:
 
 lint:
 	# F821 -- Ignore doctest examples
-	env/bin/flake8 --ignore=F821 hl7
+	$(BIN)/flake8 --ignore=F821 hl7
 	# E501 -- hl7 sample messages can be long, ignore long lines in tests
-	env/bin/flake8 --ignore=E501 tests
+	$(BIN)/flake8 --ignore=E501 tests
 
 upload: build
-	python setup.py sdist register upload
+	$(PYTHON) setup.py sdist register upload

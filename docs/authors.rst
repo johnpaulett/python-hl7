@@ -2,4 +2,3 @@ Authors
 =======
 
 .. include::  ../AUTHORS
-   :literal:
