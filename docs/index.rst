@@ -33,6 +33,12 @@ and :py:class:`hl7.Component`.
   the repetition and sub-component level.
 
 
+.. image::
+   https://travis-ci.org/johnpaulett/python-hl7.png
+   :target: https://travis-ci.org/johnpaulett/python-hl7
+
+
+
 Result Tree
 -----------
 
@@ -52,10 +58,6 @@ each element as a callable:
 
     ``Message(segment)(field)(repetition)(component)(sub-component)``
 
-
-.. image::
-   https://travis-ci.org/johnpaulett/python-hl7.png
-   :target: https://travis-ci.org/johnpaulett/python-hl7
 
 Usage
 -----
