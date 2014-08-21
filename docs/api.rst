@@ -17,6 +17,8 @@ python-hl7 API
 
 .. autofunction:: hl7.split_file
 
+.. autofunction:: hl7.generate_message_control_id
+
 
 Data Types
 ----------
@@ -31,7 +33,7 @@ Data Types
    :members: __new__, parse_key, key, _replace, _make, _asdict, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
 
 .. autoclass:: hl7.Message
-   :members: segments, segment, __getitem__, __setitem__, escape, unescape, extract_field, assign_field
+   :members: segments, segment, __getitem__, __setitem__, escape, unescape, extract_field, assign_field, create_message, create_segment, create_field, create_repetition, create_component, create_ack
 
 .. autoclass:: hl7.Segment
 

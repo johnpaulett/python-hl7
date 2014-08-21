@@ -317,6 +317,29 @@ class MessageTest(unittest.TestCase):
         self.assertIsInstance(s, Segment)
         self.assertIsInstance(s[0:3], Segment)
 
+    def test_ack(self):
+        msg = hl7.parse(sample_hl7)
+        ack = msg.create_ack()
+        self.assertEqual(msg['MSH.1'], ack['MSH.1'])
+        self.assertEqual(msg['MSH.2'], ack['MSH.2'])
+        self.assertEqual('ACK', ack['MSH.9.1.1'])
+        self.assertEqual(msg['MSH.9.1.2'], ack['MSH.9.1.2'])
+        self.assertNotEqual(msg['MSH.7'], ack['MSH.7'])
+        self.assertNotEqual(msg['MSH.10'], ack['MSH.10'])
+        self.assertEqual('AA', ack['MSA.1'])
+        self.assertEqual(msg['MSH.10'], ack['MSA.2'])
+        self.assertEqual(20, len(ack['MSH.10']))
+        self.assertEqual(msg['MSH.5'], ack['MSH.3'])
+        self.assertEqual(msg['MSH.6'], ack['MSH.4'])
+        self.assertEqual(msg['MSH.3'], ack['MSH.5'])
+        self.assertEqual(msg['MSH.4'], ack['MSH.6'])
+        ack2 = msg.create_ack(ack_code='AE', message_id='testid', application="python", facility="test")
+        self.assertEqual('AE', ack2['MSA.1'])
+        self.assertEqual('testid', ack2['MSH.10'])
+        self.assertEqual('python', ack2['MSH.3'])
+        self.assertEqual('test', ack2['MSH.4'])
+        self.assertNotEqual(ack['MSH.10'], ack2['MSH.10'])
+
 
 class ParsePlanTest(unittest.TestCase):
     def test_create_parse_plan(self):

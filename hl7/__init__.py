@@ -7,6 +7,9 @@
 """
 from __future__ import unicode_literals
 from collections import namedtuple
+import datetime
+import random
+import string
 
 from .compat import python_2_unicode_compatible
 from .version import get_version
@@ -74,6 +77,23 @@ def split_file(hl7file):
         if not msg[-1] == '\r':
             rv[i] = msg + '\r'
     return rv
+
+
+alphanumerics = string.ascii_uppercase + string.digits
+
+
+def generate_message_control_id():
+    """Generate a unique 20 character message id.
+
+    See http://www.hl7resources.com/Public/index.html?a55433.htm
+    """
+    d = datetime.datetime.utcnow()
+    # Strip off the decade, ID only has to be unique for 3 years.
+    # So now we have a 16 char timestamp.
+    timestamp = d.strftime("%y%j%H%M%S%f")[1:]
+    # Add 4 chars of uniqueness
+    unique = ''.join(random.sample(alphanumerics, 4))
+    return timestamp + unique
 
 
 def parse(line, encoding='utf-8'):
@@ -455,19 +475,19 @@ class Message(Container):
         segment = self.segments(segment)(segment_num)
 
         while len(segment) <= field_num:
-            segment.append(Field(self.separators[2], []))
+            segment.append(self.create_field([]))
         field = segment(field_num)
         if repeat_num is None:
             field[:] = [value]
             return
         while len(field) < repeat_num:
-            field.append(Repetition(self.separators[3], []))
+            field.append(self.create_repetition([]))
         repetition = field(repeat_num)
         if component_num is None:
             repetition[:] = [value]
             return
         while len(repetition) < component_num:
-            repetition.append(Component(self.separators[4], []))
+            repetition.append(self.create_component([]))
         component = repetition(component_num)
         if subcomponent_num is None:
             component[:] = [value]
@@ -619,6 +639,67 @@ class Message(Container):
                 rv.append(six.text_type(c))
 
         return ''.join(rv)
+
+    def create_message(self, seq):
+        """Create a new :py:class:`hl7.Message` compatible with this message"""
+        return Message(self.separators[0], seq, esc=self.esc, separators=self.separators)
+
+    def create_segment(self, seq):
+        """Create a new :py:class:`hl7.Segment` compatible with this message"""
+        return Segment(self.separators[1], seq, esc=self.esc, separators=self.separators[1:])
+
+    def create_field(self, seq):
+        """Create a new :py:class:`hl7.Field` compatible with this message"""
+        return Field(self.separators[2], seq, esc=self.esc, separators=self.separators[2:])
+
+    def create_repetition(self, seq):
+        """Create a new :py:class:`hl7.Repetition` compatible with this message"""
+        return Repetition(self.separators[3], seq, esc=self.esc, separators=self.separators[3:])
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this message"""
+        return Component(self.separators[4], seq, esc=self.esc, separators=self.separators[4:])
+
+    def create_ack(self, ack_code='AA', message_id=None, application=None, facility=None):
+        """
+        Create an hl7 ACK response :py:class:`hl7.Message`, per spec 2.9.2, for this message.
+
+        See http://www.hl7standards.com/blog/2007/02/01/ack-message-original-mode-acknowledgement/
+
+        ``ack_code`` options are one of `AA` (accept), `AR` (reject), `AE` (error)
+        (see HL7 Table 0008 - Acknowledgment Code)
+        ``message_id`` control message ID for ACK, defaults to unique generated ID
+        ``application`` name of sending application, defaults to receiving application of message
+        ``facility`` name of sending facility, defaults to receiving facility of message
+        """
+        source_msh = self.segment('MSH')
+        msh = self.create_segment([self.create_field(['MSH'])])
+        msa = self.create_segment([self.create_field(['MSA'])])
+        ack = self.create_message([msh, msa])
+
+        ack.assign_field(six.text_type(source_msh(1)), 'MSH', 1, 1)
+        ack.assign_field(six.text_type(source_msh(2)), 'MSH', 1, 2)
+        # Sending application is source receving application
+        ack.assign_field(six.text_type(application) if application is not None else six.text_type(source_msh(5)), 'MSH', 1, 3)
+        # Sending facility is source receving facility
+        ack.assign_field(six.text_type(facility) if facility is not None else six.text_type(source_msh(6)), 'MSH', 1, 4)
+        # Receiving application is source sending application
+        ack.assign_field(six.text_type(source_msh(3)), 'MSH', 1, 5)
+        # Receiving facility is source sending facility
+        ack.assign_field(six.text_type(source_msh(4)), 'MSH', 1, 6)
+        ack.assign_field(six.text_type(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 'MSH', 1, 7)
+        # Message type code
+        ack.assign_field('ACK', 'MSH', 1, 9, 1, 1)
+        # Copy trigger event from source
+        ack.assign_field(six.text_type(source_msh(9)(1)(2)), 'MSH', 1, 9, 1, 2)
+        ack.assign_field(message_id if message_id is not None else generate_message_control_id(), 'MSH', 1, 10)
+        ack.assign_field(six.text_type(source_msh(11)), 'MSH', 1, 11)
+        ack.assign_field(six.text_type(source_msh(12)), 'MSH', 1, 12)
+
+        ack.assign_field(six.text_type(ack_code), 'MSA', 1, 1)
+        ack.assign_field(six.text_type(source_msh(10)), 'MSA', 1, 2)
+
+        return ack
 
 
 @python_2_unicode_compatible
