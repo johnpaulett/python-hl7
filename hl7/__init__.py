@@ -660,7 +660,7 @@ class Message(Container):
         """Create a new :py:class:`hl7.Component` compatible with this message"""
         return Component(self.separators[4], seq, esc=self.esc, separators=self.separators[4:])
 
-    def create_ack(self, ack_code='AA', application=None, facility=None):
+    def create_ack(self, ack_code='AA', message_id=None, application=None, facility=None):
         """
         Create an hl7 ACK response :py:class:`hl7.Message`, per spec 2.9.2, for this message.
 
@@ -668,6 +668,7 @@ class Message(Container):
 
         ``ack_code`` options are one of `AA` (accept), `AR` (reject), `AE` (error)
         (see HL7 Table 0008 - Acknowledgment Code)
+        ``message_id`` control message ID for ACK, defaults to unique generated ID
         ``application`` name of sending application, defaults to receiving application of message
         ``facility`` name of sending facility, defaults to receiving facility of message
         """
@@ -691,7 +692,7 @@ class Message(Container):
         ack.assign_field('ACK', 'MSH', 1, 9, 1, 1)
         # Copy trigger event from source
         ack.assign_field(six.text_type(source_msh(9)(1)(2)), 'MSH', 1, 9, 1, 2)
-        ack.assign_field(generate_message_control_id(), 'MSH', 1, 10)
+        ack.assign_field(message_id if message_id is not None else generate_message_control_id(), 'MSH', 1, 10)
         ack.assign_field(six.text_type(source_msh(11)), 'MSH', 1, 11)
         ack.assign_field(six.text_type(source_msh(12)), 'MSH', 1, 12)
 
