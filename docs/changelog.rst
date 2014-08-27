@@ -1,10 +1,16 @@
 Change Log
 ==========
 
+0.3.1 - August 2014
+-------------------
+
+* Allow HL7 ACK's to be generated from an existing Message via
+  :py:meth:`hl7.Message.create_ack`
+
 .. _changelog-0-3-0:
 
-0.3.0 - 2014-08-18
-------------------
+0.3.0 - August 2014
+-------------------
 
 .. warning::
 
@@ -41,41 +47,41 @@ to add the improved parsing, and to
 request and providing assistance in the transition.
 
 
-0.2.5 - 2012-03-14
+0.2.5 - March 2012
 ------------------
 
 * Do not senselessly try to convert to unicode in mllp_send. Allows files to
   contain other encodings.
 
-0.2.4 - 2012-02-21
-------------------
+0.2.4 - February 2012
+---------------------
 
 * ``mllp_send --version`` prints version number
 * ``mllp_send --loose`` algorithm modified to allow multiple messages per file.
   The algorithm now splits messages based upon the presumed start of a message,
   which must start with ``MSH|^~\&|``
 
-0.2.3 - 2012-01-17
-------------------
+0.2.3 - January 2012
+--------------------
 
 * ``mllp_send --loose`` accepts & converts Unix newlines in addition to
   Windows newlines
 
-0.2.2 - 2011-12-17
-------------------
+0.2.2 - December 2011
+---------------------
 
 * :ref:`mllp_send <mllp-send>` now takes the ``--loose`` options, which allows
   sending HL7 messages that may not exactly meet the standard (Windows newlines
   separating segments instead of carriage returns).
 
-0.2.1 - 2011-08-30
-------------------
+0.2.1 - August 2011
+-------------------
 
 * Added MLLP client (:py:class:`hl7.client.MLLPClient`) and command line tool,
   :ref:`mllp_send <mllp-send>`.
 
-0.2.0 - 2011-06-12
-------------------
+0.2.0 - June 2011
+-----------------
 
 * Converted ``hl7.segment`` and ``hl7.segments`` into methods on 
   :py:class:`hl7.Message`.
@@ -87,18 +93,18 @@ request and providing assistance in the transition.
 * Added Sphinx `documentation <http://python-hl7.readthedocs.org>`_.
   Moved project to `github <http://github.com/johnpaulett/python-hl7>`_.
 
-0.1.1 - 2009-06-27
-------------------
+0.1.1 - June 2009
+-----------------
 
 * Apply Python 3 trove classifier
 
-0.1.0 - 2009-03-13
+0.1.0 - March 2009
 ------------------
 
 * Support message-defined separation characters
 * Message, Segment, Field classes
 
-0.0.3 - 2009-01-09
-------------------
+0.0.3 - January 2009
+--------------------
 
 * Initial release
