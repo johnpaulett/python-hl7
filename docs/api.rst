@@ -19,6 +19,8 @@ python-hl7 API
 
 .. autofunction:: hl7.generate_message_control_id
 
+.. autofunction:: hl7.parse_datetime
+
 
 Data Types
 ----------
