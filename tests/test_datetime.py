@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from hl7 import parse_datetime, _UTCOffset
+from hl7.datatypes import parse_datetime, _UTCOffset
 from .compat import unittest
 from datetime import datetime
 

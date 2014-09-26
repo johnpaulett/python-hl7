@@ -343,13 +343,13 @@ class MessageTest(unittest.TestCase):
 
 class ParsePlanTest(unittest.TestCase):
     def test_create_parse_plan(self):
-        plan = hl7.create_parse_plan(sample_hl7)
+        plan = hl7.parser.create_parse_plan(sample_hl7)
 
         self.assertEqual(plan.separators, ['\r', '|', '~', '^', '&'])
         self.assertEqual(plan.containers, [Message, Segment, Field, Repetition, Component])
 
     def test_parse_plan(self):
-        plan = hl7.create_parse_plan(sample_hl7)
+        plan = hl7.parser.create_parse_plan(sample_hl7)
 
         self.assertEqual(plan.separator, '\r')
         con = plan.container([1, 2])
@@ -358,7 +358,7 @@ class ParsePlanTest(unittest.TestCase):
         self.assertEqual(con.separator, '\r')
 
     def test_parse_plan_next(self):
-        plan = hl7.create_parse_plan(sample_hl7)
+        plan = hl7.parser.create_parse_plan(sample_hl7)
 
         n1 = plan.next()
         self.assertEqual(n1.separators, ['|', '~', '^', '&'])
