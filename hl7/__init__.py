@@ -189,7 +189,12 @@ class _UTCOffset(datetime.tzinfo):
 
 
 def parse_datetime(value):
-    """Parse hl7 DTM string ``value`` into datetime - YYYY[MM[DD[HH[MM[SS[.S[S[S[S]]]]]]]]][+/-HHMM]"""
+    """Parse hl7 DTM string ``value`` into datetime.
+
+    ``value`` is of the format YYYY[MM[DD[HH[MM[SS[.S[S[S[S]]]]]]]]][+/-HHMM]
+
+    :rtype: datetime
+    """
     if not value:
         return None
 
