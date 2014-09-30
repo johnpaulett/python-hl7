@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+0.3.2 - September 2014
+----------------------
+* New :py:func:`hl7.parse_datetime` for parsing HL7 DTM into python
+  :py:class:`datetime.datetime`.
+
+
 0.3.1 - August 2014
 -------------------
 
