@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-# flake8: noqa
 """python-hl7 is a simple library for parsing messages of Health Level 7
 (HL7) version 2.x into Python objects.
 
 * Documentation: http://python-hl7.readthedocs.org
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
-from __future__ import unicode_literals
 from .version import get_version
 
 __version__ = get_version()
@@ -23,3 +21,11 @@ from .containers import Sequence, Container, Message, Segment, Field, Repetition
 from .accessor import Accessor
 from .util import ishl7, isfile, split_file, generate_message_control_id
 from .datatypes import parse_datetime
+
+__all__ = [
+    "parse",
+    "Sequence", "Container", "Message", "Segment", "Field", "Repetition", "Component",
+    "Accessor",
+    "ishl7", "isfile", "split_file", "generate_message_control_id",
+    "parse_datetime",
+]
