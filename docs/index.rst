@@ -84,7 +84,7 @@ We get a :py:class:`hl7.Message` object, wrapping a series of
 .. doctest::
 
     >>> type(h)
-    <class 'hl7.Message'>
+    <class 'hl7.containers.Message'>
 
 We can always get the HL7 message back:
 
@@ -184,19 +184,19 @@ type.
 .. doctest::
 
     >>> type(h)
-    <class 'hl7.Message'>
+    <class 'hl7.containers.Message'>
 
     >>> type(h[3])
-    <class 'hl7.Segment'>
+    <class 'hl7.containers.Segment'>
 
     >>> type(h[3][3])
-    <class 'hl7.Field'>
+    <class 'hl7.containers.Field'>
 
     >>> type(h[3][3][0])
-    <class 'hl7.Repetition'>
+    <class 'hl7.containers.Repetition'>
 
     >>> type(h[3][3][0][1])
-    <class 'hl7.Component'>
+    <class 'hl7.containers.Component'>
 
     >>> type(h[3][3][0][1][0])
     <type 'unicode'>
@@ -206,7 +206,7 @@ The parser only generates the levels which are present in the message.
 .. doctest::
 
     >>> type(h[3][1])
-    <class 'hl7.Field'>
+    <class 'hl7.containers.Field'>
 
     >>> type(h[3][1][0])
     <type 'unicode'>
