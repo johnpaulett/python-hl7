@@ -81,3 +81,52 @@ class MessageTest(unittest.TestCase):
         self.assertEqual('python', ack2['MSH.3'])
         self.assertEqual('test', ack2['MSH.4'])
         self.assertNotEqual(ack['MSH.10'], ack2['MSH.10'])
+
+
+class TestMessage(hl7.Message):
+    pass
+
+
+class TestSegment(hl7.Segment):
+    pass
+
+
+class TestField(hl7.Field):
+    pass
+
+
+class TestRepetition(hl7.Repetition):
+    pass
+
+
+class TestComponent(hl7.Component):
+    pass
+
+
+class TestFactory(hl7.Factory):
+    create_message = TestMessage
+    create_segment = TestSegment
+    create_field = TestField
+    create_repetition = TestRepetition
+    create_component = TestComponent
+
+
+class FactoryTest(unittest.TestCase):
+    def test_parse(self):
+        msg = hl7.parse(sample_hl7, factory=TestFactory)
+        self.assertIsInstance(msg, TestMessage)
+        s = msg.segments('OBX')
+        self.assertIsInstance(s[0], TestSegment)
+        self.assertIsInstance(s[0](3), TestField)
+        self.assertIsInstance(s[0](3)(1), TestRepetition)
+        self.assertIsInstance(s[0](3)(1)(1), TestComponent)
+        self.assertEqual("1554-5", s[0](3)(1)(1)(1))
+
+    def test_ack(self):
+        msg = hl7.parse(sample_hl7, factory=TestFactory)
+        ack = msg.create_ack()
+        self.assertIsInstance(ack, TestMessage)
+        self.assertIsInstance(ack(1)(9), TestField)
+        self.assertIsInstance(ack(1)(9)(1), TestRepetition)
+        self.assertIsInstance(ack(1)(9)(1)(2), TestComponent)
+        self.assertEqual("R01", ack(1)(9)(1)(2)(1))

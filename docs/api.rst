@@ -47,6 +47,9 @@ Data Types
 
 .. autoclass:: hl7.Component
 
+.. autoclass:: hl7.Factory
+   :members:
+
 
 MLLP Network Client
 -------------------

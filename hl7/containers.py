@@ -42,7 +42,7 @@ class Sequence(list):
 @python_2_unicode_compatible
 class Container(Sequence):
     """Abstract root class for the parts of the HL7 message."""
-    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&'):
+    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&', factory=None):
         # Initialize the list object, optionally passing in the
         # sequence.  Since list([]) == [], using the default
         # parameter will not cause any issues.
@@ -50,6 +50,7 @@ class Container(Sequence):
         self.separator = separator
         self.esc = esc
         self.separators = separators
+        self.factory = factory if factory is not None else Factory
 
     def __getitem__(self, item):
         # Python slice operator was returning a regular list, not a
@@ -57,7 +58,7 @@ class Container(Sequence):
         sequence = super(Container, self).__getitem__(item)
         if isinstance(item, slice):
             return self.__class__(
-                self.separator, sequence, self.esc, self.separators
+                self.separator, sequence, self.esc, self.separators, factory=self.factory
             )
         return sequence
 
@@ -422,23 +423,23 @@ class Message(Container):
 
     def create_message(self, seq):
         """Create a new :py:class:`hl7.Message` compatible with this message"""
-        return Message(self.separators[0], seq, esc=self.esc, separators=self.separators)
+        return self.factory.create_message(self.separators[0], seq, esc=self.esc, separators=self.separators, factory=self.factory)
 
     def create_segment(self, seq):
         """Create a new :py:class:`hl7.Segment` compatible with this message"""
-        return Segment(self.separators[1], seq, esc=self.esc, separators=self.separators[1:])
+        return self.factory.create_segment(self.separators[1], seq, esc=self.esc, separators=self.separators[1:], factory=self.factory)
 
     def create_field(self, seq):
         """Create a new :py:class:`hl7.Field` compatible with this message"""
-        return Field(self.separators[2], seq, esc=self.esc, separators=self.separators[2:])
+        return self.factory.create_field(self.separators[2], seq, esc=self.esc, separators=self.separators[2:], factory=self.factory)
 
     def create_repetition(self, seq):
         """Create a new :py:class:`hl7.Repetition` compatible with this message"""
-        return Repetition(self.separators[3], seq, esc=self.esc, separators=self.separators[3:])
+        return self.factory.create_repetition(self.separators[3], seq, esc=self.esc, separators=self.separators[3:], factory=self.factory)
 
     def create_component(self, seq):
         """Create a new :py:class:`hl7.Component` compatible with this message"""
-        return Component(self.separators[4], seq, esc=self.esc, separators=self.separators[4:])
+        return self.factory.create_component(self.separators[4], seq, esc=self.esc, separators=self.separators[4:], factory=self.factory)
 
     def create_ack(self, ack_code='AA', message_id=None, application=None, facility=None):
         """
@@ -517,3 +518,15 @@ class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
     It contains a list of string sub-components.
     """
+
+
+class Factory(object):
+    """Factory used to create each type of Container.
+
+    A subclass can be used to create specialized subclasses of each container.
+    """
+    create_message = Message        #: Create an instance of :py:class:`hl7.Message`
+    create_segment = Segment        #: Create an instance of :py:class:`hl7.Segment`
+    create_field = Field            #: Create an instance of :py:class:`hl7.Field`
+    create_repetition = Repetition  #: Create an instance of :py:class:`hl7.Repetition`
+    create_component = Component    #: Create an instance of :py:class:`hl7.Component`

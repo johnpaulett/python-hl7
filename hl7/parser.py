@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import six
-from .containers import Message, Segment, Field, Repetition, Component
+from .containers import Factory
 
 
-def parse(line, encoding='utf-8'):
+def parse(line, encoding='utf-8', factory=Factory):
     """Returns a instance of the :py:class:`hl7.Message` that allows
     indexed access to the data elements.
+
+    A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
+    constructing the message and it's components.
 
     .. note::
 
@@ -39,7 +42,7 @@ def parse(line, encoding='utf-8'):
     # Strip out unnecessary whitespace
     strmsg = line.strip()
     # The method for parsing the message
-    plan = create_parse_plan(strmsg)
+    plan = create_parse_plan(strmsg, factory)
     # Start spliting the methods based upon the ParsePlan
     return _split(strmsg, plan)
 
@@ -57,13 +60,13 @@ def _split(text, plan):
 
     # Parsing of the first segment is awkward because it contains
     # the separator characters in a field
-    if plan.containers[0] == Segment and text[:3] in ['MSH', 'FHS']:
+    if plan.containers[0] == plan.factory.create_segment and text[:3] in ['MSH', 'FHS']:
         seg = text[:3]
         sep0 = text[3]
         sep_end_off = text.find(sep0, 4)
         seps = text[4:sep_end_off]
         text = text[sep_end_off + 1:]
-        data = [Field('', [seg]), Field('', [sep0]), Field(sep0, [seps])]
+        data = [plan.factory.create_field('', [seg]), plan.factory.create_field('', [sep0]), plan.factory.create_field(sep0, [seps])]
     else:
         data = []
 
@@ -74,7 +77,7 @@ def _split(text, plan):
     return plan.container(data)
 
 
-def create_parse_plan(strmsg):
+def create_parse_plan(strmsg, factory=Factory):
     """Creates a plan on how to parse the HL7 message according to
     the details stored within the message.
     """
@@ -105,8 +108,8 @@ def create_parse_plan(strmsg):
         esc = '\\'
 
     # The ordered list of containers to create
-    containers = [Message, Segment, Field, Repetition, Component]
-    return _ParsePlan(separators, containers, esc)
+    containers = [factory.create_message, factory.create_segment, factory.create_field, factory.create_repetition, factory.create_component]
+    return _ParsePlan(separators, containers, esc, factory)
 
 
 class _ParsePlan(object):
@@ -115,7 +118,7 @@ class _ParsePlan(object):
     """
     # field, component, repetition, escape, subcomponent
 
-    def __init__(self, separators, containers, esc):
+    def __init__(self, separators, containers, esc, factory):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
@@ -123,6 +126,7 @@ class _ParsePlan(object):
         self.separators = separators
         self.containers = containers
         self.esc = esc
+        self.factory = factory
 
     @property
     def separator(self):
@@ -133,7 +137,7 @@ class _ParsePlan(object):
         """Return an instance of the approriate container for the *data*
         as specified by the current plan.
         """
-        return self.containers[0](self.separator, data, self.esc, self.separators)
+        return self.containers[0](self.separator, data, self.esc, self.separators, self.factory)
 
     def next(self):
         """Generate the next level of the plan (essentially generates
@@ -144,7 +148,7 @@ class _ParsePlan(object):
             # Return a new instance of this class using the tails of
             # the separators and containers lists. Use self.__class__()
             # in case :class:`hl7.ParsePlan` is subclassed
-            return self.__class__(self.separators[1:], self.containers[1:], self.esc)
+            return self.__class__(self.separators[1:], self.containers[1:], self.esc, self.factory)
         # When we have no separators and containers left, return None,
         # which indicates that we have nothing further.
         return None

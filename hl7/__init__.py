@@ -17,14 +17,14 @@ __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
 NULL = '""'
 
 from .parser import parse
-from .containers import Sequence, Container, Message, Segment, Field, Repetition, Component
+from .containers import Sequence, Container, Message, Segment, Field, Repetition, Component, Factory
 from .accessor import Accessor
 from .util import ishl7, isfile, split_file, generate_message_control_id
 from .datatypes import parse_datetime
 
 __all__ = [
     "parse",
-    "Sequence", "Container", "Message", "Segment", "Field", "Repetition", "Component",
+    "Sequence", "Container", "Message", "Segment", "Field", "Repetition", "Component", "Factory",
     "Accessor",
     "ishl7", "isfile", "split_file", "generate_message_control_id",
     "parse_datetime",
