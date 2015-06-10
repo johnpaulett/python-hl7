@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+0.3.3 - June 2015
+-----------------
+* Expose a Factory that allows control over the container subclasses created
+  to construct a message
+* Split up single module into more manageable submodules.
+
+Thanks `Andrew Wason <https://github.com/rectalogic>`_!
+
+
 0.3.2 - September 2014
 ----------------------
 * New :py:func:`hl7.parse_datetime` for parsing HL7 DTM into python
