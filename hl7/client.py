@@ -91,7 +91,7 @@ class MLLPClient(object):
 
 # wrappers to make testing easier
 def stdout(content):
-    sys.stdout.write(content + b'\n')
+    sys.stdout.write(str(content) + '\n')
 
 
 def stdin():
