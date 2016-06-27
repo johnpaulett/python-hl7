@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+0.3.4 - June 2016
+-----------------
+* Fix bug under Python 3 when writing to stdout from `mllp_send`
+
+
 0.3.3 - June 2015
 -----------------
 * Expose a Factory that allows control over the container subclasses created
