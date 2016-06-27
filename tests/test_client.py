@@ -201,7 +201,7 @@ class MLLPSendTest(unittest.TestCase):
         mllp_send()
 
         self.assertFalse(self.mock_socket().send.called)
-        self.mock_stderr().write.assert_call_with(
+        self.mock_stderr().write.assert_called_with(
             '--loose requires --file\n'
         )
 
