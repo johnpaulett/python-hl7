@@ -4,6 +4,7 @@ Change Log
 0.3.4 - June 2016
 -----------------
 * Fix bug under Python 3 when writing to stdout from `mllp_send`
+* Publish as a Python wheel
 
 
 0.3.3 - June 2015

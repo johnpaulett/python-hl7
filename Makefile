@@ -33,4 +33,4 @@ lint:
 	$(BIN)/flake8 --ignore=E501 tests
 
 upload: build
-	$(PYTHON) setup.py sdist register upload
+	$(PYTHON) setup.py sdist bdist_wheel register upload
