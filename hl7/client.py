@@ -91,7 +91,16 @@ class MLLPClient(object):
 
 # wrappers to make testing easier
 def stdout(content):
-    sys.stdout.write(content + b'\n')
+    # In Python 3, can't write bytes via sys.stdout.write
+    #   http://bugs.python.org/issue18512
+    if six.PY3 and isinstance(content, six.binary_type):
+        out = sys.stdout.buffer
+        newline = b'\n'
+    else:
+        out = sys.stdout
+        newline = '\n'
+
+    out.write(content + newline)
 
 
 def stdin():
