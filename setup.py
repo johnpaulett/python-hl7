@@ -16,7 +16,7 @@ if sys.version_info < (3, 0):
     ])
 if sys.version_info < (3, 3):
     tests_require.extend([
-        'mock>=1.0.1'
+        'mock==1.0.1'
     ])
 
 setup(
