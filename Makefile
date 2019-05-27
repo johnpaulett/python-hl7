@@ -4,7 +4,7 @@ BIN = env/bin
 PYTHON = $(BIN)/python
 PIP = $(BIN)/pip
 
-SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
+SPHINXBUILD   = $(which sphinx-build)
 
 env: requirements.txt
 	test -f $(PYTHON) || virtualenv --no-site-packages env
