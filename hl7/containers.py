@@ -408,8 +408,8 @@ class Message(Container):
                         try:
                             for off in range(0, len(value), 2):
                                 rv.append(six.unichr(int(value[off:off + 2], 16)))
-                        except:
-                            logger.exception('Error decoding hex value [%s], field [%s], offset [%s]', value, field, offset)
+                        except Exception as e:
+                            logger.exception('Error decoding hex value [%s], field [%s], offset [%s], error [%s]', value, field, offset, e)
                     else:
                         logger.exception('Error decoding value [%s], field [%s], offset [%s]', value, field, offset)
                 else:

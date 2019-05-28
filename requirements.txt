@@ -1,5 +1,3 @@
 # pip Requirements for developing python-hl7 (not required to use as a library)
-tox==1.7.0
-flake8==2.1.0
-Sphinx==1.2.1
-wheel==0.26.0
+flake8
+pylint

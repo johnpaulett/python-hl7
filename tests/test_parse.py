@@ -21,7 +21,7 @@ class ParseTest(unittest.TestCase):
         # Make sure MSH-1 and MSH-2 are valid
         self.assertEqual(msg[0][1][0], '|')
         self.assertIsInstance(msg[0][1], hl7.Field)
-        self.assertEqual(msg[0][2][0], '^~\&')
+        self.assertEqual(msg[0][2][0], '^~\&') # noqa
         self.assertIsInstance(msg[0][2], hl7.Field)
         # MSH-9 is the message type
         self.assertEqual(msg[0][9], [[['ORU'], ['R01']]])
@@ -38,14 +38,14 @@ class ParseTest(unittest.TestCase):
     def test_non_ascii_bytestring(self):
         # \x96 - valid cp1252, not valid utf8
         # it is the responsibility of the caller to convert to unicode
-        msg = hl7.parse(b'MSH|^~\&|GHH LAB|ELAB\x963', encoding='cp1252')
+        msg = hl7.parse(b'MSH|^~\&|GHH LAB|ELAB\x963', encoding='cp1252') # noqa
         self.assertEqual(msg[0][4][0], 'ELAB\u20133')
 
     def test_non_ascii_bytestring_no_encoding(self):
         # \x96 - valid cp1252, not valid utf8
         # it is the responsibility of the caller to convert to unicode
         self.assertRaises(UnicodeDecodeError, hl7.parse,
-                          b'MSH|^~\&|GHH LAB|ELAB\x963')
+                          b'MSH|^~\&|GHH LAB|ELAB\x963') # noqa
 
     def test_parsing_classes(self):
         msg = hl7.parse(sample_hl7)
@@ -56,7 +56,7 @@ class ParseTest(unittest.TestCase):
         self.assertIsInstance(msg[3][0][0], six.text_type)
 
     def test_nonstandard_separators(self):
-        nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
+        nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L' # noqa
         msg = hl7.parse(nonstd)
 
         self.assertEqual(six.text_type(msg), nonstd)
