@@ -85,7 +85,10 @@ def create_parse_plan(strmsg, factory=Factory):
     separators = ['\r']
 
     # Extract the rest of the separators. Defaults used if not present.
-    assert strmsg[:3] in ('MSH')
+    # TODO: Change this to check without using assert.
+    #       assert does not exist in optimized bytecode and this introduces
+    #       a potential security issue.
+    # assert strmsg[:3] in ('MSH')
     sep0 = strmsg[3]
     seps = list(strmsg[3: strmsg.find(sep0, 4)])
 
@@ -122,7 +125,10 @@ class _ParsePlan(object):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
-        assert len(containers) == len(separators)
+        # TODO: Change this to check without using assert.
+        #       assert does not exist in optimized bytecode and this introduces
+        #       a potential security issue.
+        # assert len(containers) == len(separators)
         self.separators = separators
         self.containers = containers
         self.esc = esc

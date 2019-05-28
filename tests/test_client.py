@@ -60,13 +60,13 @@ class MLLPClientTest(unittest.TestCase):
     def test_send_message_hl7_message(self):
         self.client.socket.recv.return_value = 'thanks'
 
-        message = hl7.parse('MSH|^~\&|GHH LAB|ELAB')
+        message = hl7.parse('MSH|^~\&|GHH LAB|ELAB') # noqa
 
         result = self.client.send_message(message)
         self.assertEqual(result, 'thanks')
 
         self.client.socket.send.assert_called_once_with(
-            b'\x0bMSH|^~\&|GHH LAB|ELAB\x1c\x0d'
+            b'\x0bMSH|^~\&|GHH LAB|ELAB\x1c\x0d' # noqa
         )
 
     def test_context_manager(self):
@@ -81,7 +81,7 @@ class MLLPClientTest(unittest.TestCase):
             with MLLPClient('localhost', 6666):
                 raise Exception()
             self.fail()
-        except:
+        except: # noqa
             # expected
             pass
 
@@ -207,45 +207,45 @@ class MLLPSendTest(unittest.TestCase):
 
     def test_loose_windows_newline(self):
         self.option_values.loose = True
-        self.write(SB + b'MSH|^~\&|foo\r\nbar\r\n' + EB + CR)
+        self.write(SB + b'MSH|^~\&|foo\r\nbar\r\n' + EB + CR) # noqa
 
         mllp_send()
 
         self.mock_socket().send.assert_called_once_with(
-            SB + b'MSH|^~\&|foo\rbar' + EB + CR
+            SB + b'MSH|^~\&|foo\rbar' + EB + CR # noqa
         )
 
     def test_loose_unix_newline(self):
         self.option_values.loose = True
-        self.write(SB + b'MSH|^~\&|foo\nbar\n' + EB + CR)
+        self.write(SB + b'MSH|^~\&|foo\nbar\n' + EB + CR) # noqa
 
         mllp_send()
 
         self.mock_socket().send.assert_called_once_with(
-            SB + b'MSH|^~\&|foo\rbar' + EB + CR
+            SB + b'MSH|^~\&|foo\rbar' + EB + CR # noqa
         )
 
     def test_loose_no_mllp_characters(self):
         self.option_values.loose = True
-        self.write(b'MSH|^~\&|foo\r\nbar\r\n')
+        self.write(b'MSH|^~\&|foo\r\nbar\r\n') # noqa
 
         mllp_send()
 
         self.mock_socket().send.assert_called_once_with(
-            SB + b'MSH|^~\&|foo\rbar' + EB + CR
+            SB + b'MSH|^~\&|foo\rbar' + EB + CR # noqa
         )
 
     def test_loose_send_mutliple(self):
         self.option_values.loose = True
         self.mock_socket().recv.return_value = 'thanks'
-        self.write(b'MSH|^~\&|1\r\nOBX|1\r\nMSH|^~\&|2\r\nOBX|2\r\n')
+        self.write(b'MSH|^~\&|1\r\nOBX|1\r\nMSH|^~\&|2\r\nOBX|2\r\n') # noqa
 
         mllp_send()
 
         self.assertEqual(self.mock_socket().send.call_args_list[0][0][0],
-                         SB + b'MSH|^~\&|1\rOBX|1' + EB + CR)
+                         SB + b'MSH|^~\&|1\rOBX|1' + EB + CR) # noqa
         self.assertEqual(self.mock_socket().send.call_args_list[1][0][0],
-                         SB + b'MSH|^~\&|2\rOBX|2' + EB + CR)
+                         SB + b'MSH|^~\&|2\rOBX|2' + EB + CR) # noqa
 
     def test_version(self):
         self.option_values.version = True

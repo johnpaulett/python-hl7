@@ -7,7 +7,7 @@ import hl7
 from .samples import rep_sample_hl7
 
 
-SEP = '|^~\&'
+SEP = '|^~\&' # noqa
 CR_SEP = '\r'
 
 
