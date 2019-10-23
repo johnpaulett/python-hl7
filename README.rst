@@ -1,3 +1,5 @@
+Further updates are not expected by the authors
+
 python-hl7 is a simple library for parsing messages of Health Level 7 
 (HL7) version 2.x into Python objects.
 
