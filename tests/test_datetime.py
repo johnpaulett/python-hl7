@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 from hl7.datatypes import parse_datetime, _UTCOffset
-from .compat import unittest
+from unittest import TestCase
 from datetime import datetime
 
 
-class DatetimeTest(unittest.TestCase):
+class DatetimeTest(TestCase):
     def test_parse_date(self):
         self.assertEqual(datetime(1901, 2, 13), parse_datetime("19010213"))
 

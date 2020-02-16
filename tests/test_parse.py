@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import six
 import hl7
 from hl7 import Accessor, Message, Segment, Field, Repetition, Component
-from .compat import unittest
+from unittest import TestCase
 from .samples import sample_hl7, rep_sample_hl7, sample_file
 
 
-class ParseTest(unittest.TestCase):
+class ParseTest(TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
         self.assertEqual(len(msg), 5)
-        self.assertIsInstance(msg[0][0][0], six.text_type)
+        self.assertIsInstance(msg[0][0][0], str)
         self.assertEqual(msg[0][0][0], 'MSH')
         self.assertEqual(msg[3][0][0], 'OBX')
         self.assertEqual(
@@ -26,13 +25,13 @@ class ParseTest(unittest.TestCase):
         # MSH-9 is the message type
         self.assertEqual(msg[0][9], [[['ORU'], ['R01']]])
         # Do it twice to make sure text coercion is idempotent
-        self.assertEqual(six.text_type(msg), sample_hl7.strip())
-        self.assertEqual(six.text_type(msg), sample_hl7.strip())
+        self.assertEqual(str(msg), sample_hl7.strip())
+        self.assertEqual(str(msg), sample_hl7.strip())
 
     def test_bytestring_converted_to_unicode(self):
-        msg = hl7.parse(six.text_type(sample_hl7))
+        msg = hl7.parse(str(sample_hl7))
         self.assertEqual(len(msg), 5)
-        self.assertIsInstance(msg[0][0][0], six.text_type)
+        self.assertIsInstance(msg[0][0][0], str)
         self.assertEqual(msg[0][0][0], 'MSH')
 
     def test_non_ascii_bytestring(self):
@@ -53,13 +52,13 @@ class ParseTest(unittest.TestCase):
         self.assertIsInstance(msg, hl7.Message)
         self.assertIsInstance(msg[3], hl7.Segment)
         self.assertIsInstance(msg[3][0], hl7.Field)
-        self.assertIsInstance(msg[3][0][0], six.text_type)
+        self.assertIsInstance(msg[3][0][0], str)
 
     def test_nonstandard_separators(self):
         nonstd = 'MSH$%~\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L'
         msg = hl7.parse(nonstd)
 
-        self.assertEqual(six.text_type(msg), nonstd)
+        self.assertEqual(str(msg), nonstd)
         self.assertEqual(len(msg), 2)
         self.assertEqual(msg[1][5], [[['EVERYWOMAN'], ['EVE'], ['E'], [''], [''], ['L']]])
 
@@ -69,10 +68,10 @@ class ParseTest(unittest.TestCase):
         self.assertIsInstance(msg[1][4], Field)
         self.assertIsInstance(msg[1][4][0], Repetition)
         self.assertIsInstance(msg[1][4][1], Repetition)
-        self.assertEqual(six.text_type(msg[1][4][0][0]), 'Repeat1')
-        self.assertIsInstance(msg[1][4][0][0], six.text_type)
-        self.assertEqual(six.text_type(msg[1][4][1][0]), 'Repeat2')
-        self.assertIsInstance(msg[1][4][1][0], six.text_type)
+        self.assertEqual(str(msg[1][4][0][0]), 'Repeat1')
+        self.assertIsInstance(msg[1][4][0][0], str)
+        self.assertEqual(str(msg[1][4][1][0]), 'Repeat2')
+        self.assertIsInstance(msg[1][4][1][0], str)
 
     def test_empty_initial_repetition(self):
         # Switch to look like "|~Repeat2|
@@ -145,7 +144,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(msg['MSH.21.1.2.4'], 'SUBCOMPONENT 21.1.2.4')
 
         # Verify round-tripping (i.e. that separators are correct)
-        msg2 = hl7.parse(six.text_type(msg))
+        msg2 = hl7.parse(str(msg))
         self.assertEqual(msg2['MSH.20'], 'FIELD 20')
         self.assertEqual(msg2['MSH.21.1.1'], 'COMPONENT 21.1.1')
         self.assertEqual(msg2['MSH.21.1.2.4'], 'SUBCOMPONENT 21.1.2.4')
@@ -194,7 +193,7 @@ class ParseTest(unittest.TestCase):
         self.assertEqual([s[0][0] for s in msg], ['MSH', 'EVN', 'PID', 'PD1', 'NK1', 'PV1'])
 
 
-class ParsePlanTest(unittest.TestCase):
+class ParsePlanTest(TestCase):
     def test_create_parse_plan(self):
         plan = hl7.parser.create_parse_plan(sample_hl7)
 

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import hl7
-from .compat import unittest
+from unittest import TestCase
 from .samples import sample_hl7, sample_file
 
 
-class IsHL7Test(unittest.TestCase):
+class IsHL7Test(TestCase):
     def test_ishl7(self):
         self.assertTrue(hl7.ishl7(sample_hl7))
 

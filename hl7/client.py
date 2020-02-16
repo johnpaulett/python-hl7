@@ -1,8 +1,8 @@
 from optparse import OptionParser
 
 import hl7
+import io
 import os.path
-import six
 import socket
 import sys
 
@@ -66,13 +66,13 @@ class MLLPClient(object):
         according to  :py:attr:`hl7.client.MLLPClient.encoding`
 
         """
-        if isinstance(message, six.binary_type):
+        if isinstance(message, bytes):
             # Assume we have the correct encoding
             binary = message
         else:
             # Encode the unicode message into a bytestring
             if isinstance(message, hl7.Message):
-                message = six.text_type(message)
+                message = str(message)
             binary = message.encode(self.encoding)
 
         # wrap in MLLP message container
@@ -93,7 +93,7 @@ class MLLPClient(object):
 def stdout(content):
     # In Python 3, can't write bytes via sys.stdout.write
     #   http://bugs.python.org/issue18512
-    if six.PY3 and isinstance(content, six.binary_type):
+    if isinstance(content, bytes):
         out = sys.stdout.buffer
         newline = b'\n'
     else:
@@ -142,13 +142,14 @@ def read_loose(stream):
     # load all the data
     data = stream.read()
 
-    # take out all the typical MLLP separators. In Python 3, iterating
+    # Take out all the typical MLLP separators. In Python 3, iterating
     # through a bytestring returns ints, so we need to filter out the int
     # versions of the separators, then convert back from a list of ints to
-    # a bytestring (In Py3, we could just call bytes([ints]))
-    separators = [six.byte2int(bs) for bs in [EB, FF, SB]]
-    data = b''.join([six.int2byte(c) for c in six.iterbytes(data) if c not in separators])
-
+    # a bytestring.
+    # WARNING: There is an assumption here that we can treat the data as single bytes
+    #   when filtering out the separators.
+    separators = [bs[0] for bs in [EB, FF, SB]]
+    data = bytes(b for b in data if b not in separators)
     # Windows & Unix new lines to segment separators
     data = data.replace(b'\r\n', b'\r').replace(b'\n', b'\r')
 
@@ -219,7 +220,7 @@ def mllp_send():
         # file into memory before starting to process, which is not required
         # or ideal, since we can handle a stream
         with open(options.filename, 'rb') as f:
-            stream = six.BytesIO(f.read())
+            stream = io.BytesIO(f.read())
     else:
         if options.loose:
             stderr().write('--loose requires --file\n')

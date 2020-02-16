@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import six
+
 from .containers import Factory
 
 
@@ -37,7 +37,7 @@ def parse(line, encoding='utf-8', factory=Factory):
     """
     # Ensure we are working with unicode data, decode the bytestring
     # if needed
-    if isinstance(line, six.binary_type):
+    if isinstance(line, bytes):
         line = line.decode(encoding)
     # Strip out unnecessary whitespace
     strmsg = line.strip()

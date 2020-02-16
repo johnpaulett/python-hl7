@@ -236,21 +236,20 @@ libraries can depend upon.
 Python 2 vs Python 3 and Unicode vs Byte strings
 -------------------------------------------------
 
-python-hl7 supports both Python 2.7 and Python 3.4+. The library primarily
-deals in unicode (the ``str`` type in Python 3).
+python-hl7 supports Python 3.5+ and primarily deals with the unicode ``str`` type.
 
-Passing a byte string to :py:func:`hl7.parse`, requires setting the
+Passing bytes to :py:func:`hl7.parse`, requires setting the
 ``encoding`` parameter, if using anything other than UTF-8. :py:func:`hl7.parse`
-will always return a datastructure containing unicode.
+will always return a datastructure containing unicode ``str`` objects.
 
-:py:class:`hl7.Message` can be forced back into a string using
-``unicode(message)`` in Python 2 and ``str(message)`` in Python 3.
+:py:class:`hl7.Message` can be forced back into a single string using
+and ``str(message)``.
 
 :doc:`mllp_send` assumes the stream is already in the correct encoding.
 
-:py:class:`hl7.client.MLLPClient`, if given a unicode string or
+:py:class:`hl7.client.MLLPClient`, if given a ``str`` or
 :py:class:`hl7.Message` instance, will use its ``encoding`` method
-to encode the unicode data to a byte string.
+to encode the unicode data into bytes.
 
 Contents
 --------
