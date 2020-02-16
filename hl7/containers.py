@@ -74,12 +74,8 @@ class Container(Sequence):
         approriate method for turning the python-hl7 representation of
         HL7 into a standard string.
 
-        >>> unicode(h) == message
+        >>> str(h) == message
         True
-
-        .. note::
-           For Python 2.x use ``unicode()``, but for Python 3.x, use
-           ``str()``
 
         """
         return self.separator.join((six.text_type(x) for x in self))
@@ -96,14 +92,14 @@ class Message(Container):
         the :py:class:`hl7.Segment` held at that index:
 
         >>> h[1]  # doctest: +ELLIPSIS
-        [[u'PID'], ...]
+        [['PID'], ...]
 
         If the key is a string of length 3, ``__getitem__`` acts like a dictionary,
         returning all segments whose *segment_id* is *key*
         (alias of :py:meth:`hl7.Message.segments`).
 
         >>> h['OBX']  # doctest: +ELLIPSIS
-        [[[u'OBX'], [u'1'], ...]]
+        [[['OBX'], ['1'], ...]]
 
         If the key is a string of length greater than 3,
         the key is parsed into an :py:class:`hl7.Accessor` and passed
@@ -126,7 +122,7 @@ class Message(Container):
         If key is an integer, ``__setitem__`` acts list a list, setting
         the :py:class:`hl7.Segment` held at that index:
 
-        >>> h[1] = hl7.Segment("|", [hl7.Field("^", [u'PID'], [u''])])
+        >>> h[1] = hl7.Segment("|", [hl7.Field("^", ['PID'], [''])])
 
         If the key is a string of length greater than 3,
         the key is parsed into an :py:class:`hl7.Accessor` and passed
@@ -148,7 +144,7 @@ class Message(Container):
         *message*.
 
         >>> h.segment('PID')  # doctest: +ELLIPSIS
-        [[u'PID'], ...]
+        [['PID'], ...]
 
         :rtype: :py:class:`hl7.Segment`
         """
@@ -164,7 +160,7 @@ class Message(Container):
         identified by the *segment_id* (e.g. OBR, MSH, ORC, OBX).
 
         >>> h.segments('OBX')
-        [[[u'OBX'], [u'1'], ...]]
+        [[['OBX'], ['1'], ...]]
 
         :rtype: list of :py:class:`hl7.Segment`
         """

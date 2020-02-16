@@ -90,7 +90,7 @@ We can always get the HL7 message back:
 
 .. doctest::
 
-    >>> unicode(h) == message
+    >>> str(h) == message
     True
 
 Interestingly, :py:class:`hl7.Message` can be accessed as a list:
@@ -113,7 +113,7 @@ We can extract the :py:class:`hl7.Segment` from the
 .. doctest::
 
     >>> h[3]
-    [[u'OBX'], [u'1'], [u'SN'], [[[u'1554-5'], [u'GLUCOSE'], [u'POST 12H CFST:MCNC:PT:SER/PLAS:QN']]], [u''], [[[u''], [u'182']]], [u'mg/dl'], [u'70_105'], [u'H'], [u''], [u''], [u'F']]
+    [['OBX'], ['1'], ['SN'], [[['1554-5'], ['GLUCOSE'], ['POST 12H CFST:MCNC:PT:SER/PLAS:QN']]], [''], [[[''], ['182']]], ['mg/dl'], ['70_105'], ['H'], [''], [''], ['F']]
     >>> h[3] is h(4)
     True
 
@@ -124,32 +124,32 @@ not count the segment name as part of the segment itself):
 .. doctest::
 
     >>> h[3][0]
-    [u'OBX']
+    ['OBX']
     >>> h[3][1]
-    [u'1']
+    ['1']
     >>> h[3][2]
-    [u'SN']
+    ['SN']
     >>> h(4)(2)
-    [u'SN']
+    ['SN']
 
 We can easily reconstitute this segment as HL7, using the
 appropriate separators:
 
 .. doctest::
 
-    >>> unicode(h[3])
-    u'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
+    >>> str(h[3])
+    'OBX|1|SN|1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN||^182|mg/dl|70_105|H|||F'
 
 We can extract individual elements of the message:
 
 .. doctest::
 
     >>> h[3][3][0][1][0]
-    u'GLUCOSE'
+    'GLUCOSE'
     >>> h[3][3][0][1][0] is h(4)(3)(1)(2)(1)
     True
     >>> h[3][5][0][1][0]
-    u'182'
+    '182'
     >>> h[3][5][0][1][0] is h(4)(5)(1)(2)(1)
     True
 
@@ -160,9 +160,9 @@ syntax:
 .. doctest::
 
     >>> h.segments('OBX')[0][3][0][1][0]
-    u'GLUCOSE'
+    'GLUCOSE'
     >>> h['OBX'][0][3][0][1][0]
-    u'GLUCOSE'
+    'GLUCOSE'
     >>> h['OBX'][0][3][0][1][0] is h['OBX'](1)(3)(1)(2)(1)
     True
 
@@ -174,7 +174,7 @@ wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
 .. doctest::
 
     >>> h.segment('PID')[3][0]
-    u'555-44-4444'
+    '555-44-4444'
     >>> h.segment('PID')[3][0] is h.segment('PID')(3)(1)
     True
 
@@ -199,7 +199,7 @@ type.
     <class 'hl7.containers.Component'>
 
     >>> type(h[3][3][0][1][0])
-    <type 'unicode'>
+    <class 'str'>
 
 The parser only generates the levels which are present in the message.
 
@@ -209,7 +209,7 @@ The parser only generates the levels which are present in the message.
     <class 'hl7.containers.Field'>
 
     >>> type(h[3][1][0])
-    <type 'unicode'>
+    <class 'str'>
 
 MLLP network client - ``mllp_send``
 -----------------------------------
