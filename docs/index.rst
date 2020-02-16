@@ -34,8 +34,8 @@ and :py:class:`hl7.Component`.
 
 
 .. image::
-   https://travis-ci.org/johnpaulett/python-hl7.png
-   :target: https://travis-ci.org/johnpaulett/python-hl7
+   https://github.com/johnpaulett/python-hl7/workflows/Python%20package/badge.svg
+   :target: https://github.com/johnpaulett/python-hl7/actions
 
 
 
