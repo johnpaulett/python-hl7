@@ -137,7 +137,7 @@ def read_stream(stream):
 def read_loose(stream):
     """Turn a HL7-like blob of text into a real HL7 messages"""
     # look for the START_BLOCK to delineate messages
-    START_BLOCK = b"MSH|^~\&|"
+    START_BLOCK = rb"MSH|^~\&|"
 
     # load all the data
     data = stream.read()
