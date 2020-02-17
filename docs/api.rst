@@ -31,7 +31,7 @@ Data Types
    :members: __call__
 
 .. autoclass:: hl7.Container
-   :members: __unicode__
+   :members: __str__
 
 .. autoclass:: hl7.Accessor
    :members: __new__, parse_key, key, _replace, _make, _asdict, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num

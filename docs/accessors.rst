@@ -1,9 +1,11 @@
-python-hl7 - Message Accessor
-=============================
+Message Accessor
+================
 
-reproduced from: http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+Reproduced from: http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
 
-**Warning: Indexes in this API are from 1, not 0. This is to align with the HL7 documentation.**
+.. note::
+
+   Warning: Indexes in this API are from 1, not 0. This is to align with the HL7 documentation.
 
 Example HL7 Fragment:
 
@@ -59,10 +61,10 @@ from a message.
 .. doctest::
 
     >>> h['PID.F1.R1']
-    u'Field1'
+    'Field1'
 
     >>> h['PID.F2.R1.C1']
-    u'Component1'
+    'Component1'
 
 You can also access values using :py:class:`hl7.Accessor`, or by directly calling
 :py:meth:`hl7.Message.extract_field`. The following are all equivalent:
@@ -70,13 +72,13 @@ You can also access values using :py:class:`hl7.Accessor`, or by directly callin
 .. doctest::
 
     >>> h['PID.F2.R1.C1']
-    u'Component1'
+    'Component1'
 
     >>> h[hl7.Accessor('PID', 1, 2, 1, 1)]
-    u'Component1'
+    'Component1'
 
     >>> h.extract_field('PID', 1, 2, 1, 1)
-    u'Component1'
+    'Component1'
 
 All values should be accessed in this manner. Even if a field is marked as being
 non-repeating a repeat of "1" should be specified as later version messages
@@ -102,7 +104,7 @@ returned.
 .. doctest::
 
     >>> h['PID.F3.R1.C2']
-    u'Sub-Component1'
+    'Sub-Component1'
 
 This is a general rule for reading values: **If the parse tree is deeper than the specified 
 path continue following the first child branch until a leaf of the tree is encountered
@@ -124,7 +126,7 @@ then the leaf value reached can be returned as the result.**
 .. doctest::
 
     >>> h['PID.F1.R1.C1.S1']
-    u'Field1'
+    'Field1'
 
 This is a general rule for reading values: **If the parse tree is deeper than the specified 
 path continue following the first child branch until a leaf of the tree is encountered
@@ -143,7 +145,7 @@ handling earlier and later message versions.
 .. doctest::
 
     >>> h['PID.F10.R1']
-    u''
+    ''
 
 
 At this point the desired value has either been located, or is absent, in which case a blank
@@ -167,8 +169,8 @@ Create a response message.
     >>> response['MSH.F1.R1'] = SEP[0]
     >>> response['MSH.F2.R1'] = SEP[1:]
 
-    >>> unicode(response)
-    u'MSH|^~\\&|\rMSA'
+    >>> str(response)
+    'MSH|^~\\&|\rMSA'
 
 Assign values into the message. You can only assign a string into the message (i.e. a leaf
 of the tree).
@@ -182,8 +184,8 @@ of the tree).
     >>> response['MSA.F1.R1'] = 'AA'
     >>> response['MSA.F3.R1'] = 'Application Message'
 
-    >>> unicode(response)
-    u'MSH|^~\\&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message'
+    >>> str(response)
+    'MSH|^~\\&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message'
 
 You can also assign values using :py:class:`hl7.Accessor`, or by directly calling
 :py:meth:`hl7.Message.assign_field`. The following are all equivalent:
@@ -202,7 +204,7 @@ ascii 32 and 127 are used. Characters which cannot be transported using this ran
 of values must be 'escaped', that is replaced by a sequence of characters for transmission.
 
 The stores values internally in the escaped format.  When the message is composed using
-'unicode', the escaped value must be returned.
+'str', the escaped value must be returned.
 
 .. doctest::
 
@@ -210,46 +212,46 @@ The stores values internally in the escaped format.  When the message is compose
     >>> message += 'PID|Field1|\F\|\r\r'
     >>> h = hl7.parse(message)
 
-    >>> unicode(h['PID'][0][2])
-    u'\\F\\'
+    >>> str(h['PID'][0][2])
+    '\\F\\'
 
-    >>> h.unescape(unicode(h['PID'][0][2]))
-    u'|'
+    >>> h.unescape(str(h['PID'][0][2]))
+    '|'
 
 When the accessor is used to reference the field, the field is automatically unescaped.
 
 .. doctest::
 
     >>> h['PID.F2.R1']
-    u'|'
+    '|'
 
 The escape/unescape mechanism support replacing separator characters with their escaped
 version and replacing non-ascii characters with hexadecimal versions.
 
-The escape method returns a 'str' object. The unescape method returns a unicode object.
+The escape method returns a 'str' object. The unescape method returns a str object.
 
 .. doctest::
 
     >>> h.unescape('\\F\\')
-    u'|'
+    '|'
 
     >>> h.unescape('\\R\\')
-    u'~'
+    '~'
 
     >>> h.unescape('\\S\\')
-    u'^'
+    '^'
 
     >>> h.unescape('\\T\\')
-    u'&'
+    '&'
 
     >>> h.unescape('\\X202020\\')
-    u'   '
+    '   '
 
     >>> h.escape('|~^&')
-    u'\\F\\\\R\\\\S\\\\T\\'
+    '\\F\\\\R\\\\S\\\\T\\'
 
     >>> h.escape('áéíóú')
-    u'\\Xc3\\\\Xa1\\\\Xc3\\\\Xa9\\\\Xc3\\\\Xad\\\\Xc3\\\\Xb3\\\\Xc3\\\\Xba\\'
+    '\\Xe1\\\\Xe9\\\\Xed\\\\Xf3\\\\Xfa\\'
 
 **Presentation Characters**
 
