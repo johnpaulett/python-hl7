@@ -354,7 +354,7 @@ class Message(Container):
 
         return "".join(rv)
 
-    def unescape(self, field, app_map=None):
+    def unescape(self, field, app_map=None):  # noqa: C901
         """
             See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
@@ -457,7 +457,7 @@ class Message(Container):
                         try:
                             for off in range(0, len(value), 2):
                                 rv.append(chr(int(value[off : off + 2], 16)))
-                        except:
+                        except Exception:
                             logger.exception(
                                 "Error decoding hex value [%s], field [%s], offset [%s]",
                                 value,

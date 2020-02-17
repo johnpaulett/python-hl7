@@ -37,8 +37,9 @@ jobs:
 
     - name: Check code formatting
       if: matrix.python-version == env.primary-python-version
+      # Includes flake8, black --check, and isort --check-only
       run: |
-        CHECK_ONLY=true make format
+        make lint
 
     - name: Upload to codecov.io
       # Only upload coverage report for single version
