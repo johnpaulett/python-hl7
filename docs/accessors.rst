@@ -1,9 +1,11 @@
-python-hl7 - Message Accessor
-=============================
+Message Accessor
+================
 
-reproduced from: http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+Reproduced from: http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
 
-**Warning: Indexes in this API are from 1, not 0. This is to align with the HL7 documentation.**
+.. note::
+
+   Warning: Indexes in this API are from 1, not 0. This is to align with the HL7 documentation.
 
 Example HL7 Fragment:
 

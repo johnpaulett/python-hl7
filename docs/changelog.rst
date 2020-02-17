@@ -1,5 +1,5 @@
-Change Log
-==========
+Changelog
+=========
 
 .. _changelog-0-4-0:
 
