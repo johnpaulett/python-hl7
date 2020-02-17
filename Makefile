@@ -49,6 +49,10 @@ format:
 	$(BIN)/black $(BLACK_ARGS) hl7 tests
 .PHONY: isort
 
+mypy:
+	$(BIN)/mypy hl7
+.PHONY: mypy
+
 upload: build
 	$(PYTHON) setup.py sdist bdist_wheel register upload
 .PHONY: upload

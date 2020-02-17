@@ -5,3 +5,4 @@ Sphinx==2.4.1
 coverage==5.0.3
 isort==4.3.21
 black==19.10b0; python_version > "3.5"
+mypy==0.761
