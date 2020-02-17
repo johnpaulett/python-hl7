@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import hl7
 from hl7 import Accessor, Message, Segment, Field, Repetition, Component
 from unittest import TestCase
@@ -118,7 +117,7 @@ class ParseTest(TestCase):
         self.assertEqual(msg['PID.1.1.1.1'], 'Field1')
 
         # Incorrect path
-        self.assertRaisesRegexp(IndexError, 'PID.1.1.1.2', msg.extract_field, *Accessor.parse_key('PID.1.1.1.2'))
+        self.assertRaisesRegex(IndexError, 'PID.1.1.1.2', msg.extract_field, *Accessor.parse_key('PID.1.1.1.2'))
 
         # Optional field, not included in message
         self.assertEqual(msg['MSH.20'], '')

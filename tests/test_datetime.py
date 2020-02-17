@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from hl7.datatypes import parse_datetime, _UTCOffset
 from unittest import TestCase
 from datetime import datetime

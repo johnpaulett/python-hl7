@@ -77,13 +77,9 @@ class MLLPClientTest(TestCase):
         self.client.socket.close.assert_called_once_with()
 
     def test_context_manager_exception(self):
-        try:
+        with self.assertRaises(Exception):
             with MLLPClient('localhost', 6666):
                 raise Exception()
-            self.fail()
-        except:
-            # expected
-            pass
 
         # socket.close should be called via the with statement
         self.client.socket.close.assert_called_once_with()

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import hl7
 from unittest import TestCase
 from .samples import sample_hl7, sample_file

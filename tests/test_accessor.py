@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from hl7 import Accessor
 from unittest import TestCase
 

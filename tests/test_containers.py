@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import hl7
 from hl7 import Segment, Field
 from unittest import TestCase
