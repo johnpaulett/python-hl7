@@ -2,7 +2,7 @@
 from .containers import Factory
 
 
-def parse(line, encoding='utf-8', factory=Factory):
+def parse(line, encoding="utf-8", factory=Factory):
     """Returns a instance of the :py:class:`hl7.Message` that allows
     indexed access to the data elements.
 
@@ -58,13 +58,17 @@ def _split(text, plan):
 
     # Parsing of the first segment is awkward because it contains
     # the separator characters in a field
-    if plan.containers[0] == plan.factory.create_segment and text[:3] in ['MSH', 'FHS']:
+    if plan.containers[0] == plan.factory.create_segment and text[:3] in ["MSH", "FHS"]:
         seg = text[:3]
         sep0 = text[3]
         sep_end_off = text.find(sep0, 4)
         seps = text[4:sep_end_off]
-        text = text[sep_end_off + 1:]
-        data = [plan.factory.create_field('', [seg]), plan.factory.create_field('', [sep0]), plan.factory.create_field(sep0, [seps])]
+        text = text[sep_end_off + 1 :]
+        data = [
+            plan.factory.create_field("", [seg]),
+            plan.factory.create_field("", [sep0]),
+            plan.factory.create_field(sep0, [seps]),
+        ]
     else:
         data = []
 
@@ -80,33 +84,39 @@ def create_parse_plan(strmsg, factory=Factory):
     the details stored within the message.
     """
     # We will always use a carriage return to separate segments
-    separators = ['\r']
+    separators = ["\r"]
 
     # Extract the rest of the separators. Defaults used if not present.
-    assert strmsg[:3] in ('MSH')
+    assert strmsg[:3] in ("MSH")
     sep0 = strmsg[3]
-    seps = list(strmsg[3: strmsg.find(sep0, 4)])
+    seps = list(strmsg[3 : strmsg.find(sep0, 4)])
 
     separators.append(seps[0])
     if len(seps) > 2:
-        separators.append(seps[2])   # repetition separator
+        separators.append(seps[2])  # repetition separator
     else:
-        separators.append('~')       # repetition separator
+        separators.append("~")  # repetition separator
     if len(seps) > 1:
-        separators.append(seps[1])   # component separator
+        separators.append(seps[1])  # component separator
     else:
-        separators.append('^')       # component separator
+        separators.append("^")  # component separator
     if len(seps) > 4:
-        separators.append(seps[4])   # sub-component separator
+        separators.append(seps[4])  # sub-component separator
     else:
-        separators.append('&')       # sub-component separator
+        separators.append("&")  # sub-component separator
     if len(seps) > 3:
         esc = seps[3]
     else:
-        esc = '\\'
+        esc = "\\"
 
     # The ordered list of containers to create
-    containers = [factory.create_message, factory.create_segment, factory.create_field, factory.create_repetition, factory.create_component]
+    containers = [
+        factory.create_message,
+        factory.create_segment,
+        factory.create_field,
+        factory.create_repetition,
+        factory.create_component,
+    ]
     return _ParsePlan(separators, containers, esc, factory)
 
 
@@ -114,6 +124,7 @@ class _ParsePlan(object):
     """Details on how to parse an HL7 message. Typically this object
     should be created via :func:`hl7.create_parse_plan`
     """
+
     # field, component, repetition, escape, subcomponent
 
     def __init__(self, separators, containers, esc, factory):
@@ -135,7 +146,9 @@ class _ParsePlan(object):
         """Return an instance of the approriate container for the *data*
         as specified by the current plan.
         """
-        return self.containers[0](self.separator, data, self.esc, self.separators, self.factory)
+        return self.containers[0](
+            self.separator, data, self.esc, self.separators, self.factory
+        )
 
     def next(self):
         """Generate the next level of the plan (essentially generates
@@ -146,7 +159,9 @@ class _ParsePlan(object):
             # Return a new instance of this class using the tails of
             # the separators and containers lists. Use self.__class__()
             # in case :class:`hl7.ParsePlan` is subclassed
-            return self.__class__(self.separators[1:], self.containers[1:], self.esc, self.factory)
+            return self.__class__(
+                self.separators[1:], self.containers[1:], self.esc, self.factory
+            )
         # When we have no separators and containers left, return None,
         # which indicates that we have nothing further.
         return None

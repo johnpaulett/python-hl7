@@ -7,6 +7,7 @@ Changelog
 ------------------
 
 * Dropped support for Python 2.7, 3.3, & 3.4. Python 3.5 - 3.8 now supported.
+* Converted code style to use black.
 
 
 0.3.4 - June 2016

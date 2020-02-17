@@ -35,11 +35,19 @@ docs:
 	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
 
 lint:
-	# F821 -- Ignore doctest examples
-	$(BIN)/flake8 --ignore=F821 hl7
-	# E501 -- hl7 sample messages can be long, ignore long lines in tests
-	$(BIN)/flake8 --ignore=E501 tests
+	$(BIN)/flake8 hl7 tests
+	CHECK_ONLY=true $(MAKE) format
 .PHONY: lint
+
+CHECK_ONLY ?=
+ifdef CHECK_ONLY
+ISORT_ARGS=--check-only
+BLACK_ARGS=--check
+endif
+format:
+	$(BIN)/isort -rc $(ISORT_ARGS) hl7 tests
+	$(BIN)/black $(BLACK_ARGS) hl7 tests
+.PHONY: isort
 
 upload: build
 	$(PYTHON) setup.py sdist bdist_wheel register upload

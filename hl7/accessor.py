@@ -2,18 +2,60 @@
 from collections import namedtuple
 
 
-class Accessor(namedtuple('Accessor', ['segment', 'segment_num', 'field_num', 'repeat_num', 'component_num', 'subcomponent_num'])):
+class Accessor(
+    namedtuple(
+        "Accessor",
+        [
+            "segment",
+            "segment_num",
+            "field_num",
+            "repeat_num",
+            "component_num",
+            "subcomponent_num",
+        ],
+    )
+):
     __slots__ = ()
 
-    def __new__(cls, segment, segment_num=1, field_num=None, repeat_num=None, component_num=None, subcomponent_num=None):
+    def __new__(
+        cls,
+        segment,
+        segment_num=1,
+        field_num=None,
+        repeat_num=None,
+        component_num=None,
+        subcomponent_num=None,
+    ):
         """Create a new instance of Accessor for *segment*. Index numbers start from 1."""
-        return super(Accessor, cls).__new__(cls, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num)
+        return super(Accessor, cls).__new__(
+            cls,
+            segment,
+            segment_num,
+            field_num,
+            repeat_num,
+            component_num,
+            subcomponent_num,
+        )
 
     @property
     def key(self):
         """Return the string accessor key that represents this instance"""
-        seg = self.segment if self.segment_num == 1 else self.segment + str(self.segment_num)
-        return ".".join(str(f) for f in [seg, self.field_num, self.repeat_num, self.component_num, self.subcomponent_num] if f is not None)
+        seg = (
+            self.segment
+            if self.segment_num == 1
+            else self.segment + str(self.segment_num)
+        )
+        return ".".join(
+            str(f)
+            for f in [
+                seg,
+                self.field_num,
+                self.repeat_num,
+                self.component_num,
+                self.subcomponent_num,
+            ]
+            if f is not None
+        )
 
     def __str__(self):
         return self.key
@@ -42,6 +84,7 @@ class Accessor(namedtuple('Accessor', ['segment', 'segment_num', 'field_num', 'r
             |   C2  (component 2 counting from 1)
             |   S2  (component 2 counting from 1)
         """
+
         def parse_part(keyparts, index, prefix):
             if len(keyparts) > index:
                 num = keyparts[index]
@@ -51,14 +94,16 @@ class Accessor(namedtuple('Accessor', ['segment', 'segment_num', 'field_num', 'r
             else:
                 return None
 
-        parts = key.split('.')
+        parts = key.split(".")
         segment = parts[0][:3]
         if len(parts[0]) > 3:
             segment_num = int(parts[0][3:])
         else:
             segment_num = 1
-        field_num = parse_part(parts, 1, 'F')
-        repeat_num = parse_part(parts, 2, 'R')
-        component_num = parse_part(parts, 3, 'C')
-        subcomponent_num = parse_part(parts, 4, 'S')
-        return cls(segment, segment_num, field_num, repeat_num, component_num, subcomponent_num)
+        field_num = parse_part(parts, 1, "F")
+        repeat_num = parse_part(parts, 2, "R")
+        component_num = parse_part(parts, 3, "C")
+        subcomponent_num = parse_part(parts, 4, "S")
+        return cls(
+            segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
+        )

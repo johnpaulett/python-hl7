@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import string
 import datetime
-import random
 import logging
+import random
+import string
 
 logger = logging.getLogger(__file__)
 
@@ -15,7 +15,7 @@ def ishl7(line):
     :rtype: bool
     """
     # Prevent issues if the line is empty
-    return line and (line.strip()[:3] in ['MSH']) or False
+    return line and (line.strip()[:3] in ["MSH"]) or False
 
 
 def isfile(line):
@@ -24,7 +24,7 @@ def isfile(line):
         FHS = file header segment
         FTS = file trailer segment
     """
-    return line and (line.strip()[:3] in ['FHS']) or False
+    return line and (line.strip()[:3] in ["FHS"]) or False
 
 
 def split_file(hl7file):
@@ -34,22 +34,22 @@ def split_file(hl7file):
         Throws away batch and file segments.
     """
     rv = []
-    for line in hl7file.split('\r'):
+    for line in hl7file.split("\r"):
         line = line.strip()
-        if line[:3] in ['FHS', 'BHS', 'FTS', 'BTS']:
+        if line[:3] in ["FHS", "BHS", "FTS", "BTS"]:
             continue
-        if line[:3] == 'MSH':
+        if line[:3] == "MSH":
             newmsg = [line]
             rv.append(newmsg)
         else:
             if len(rv) == 0:
-                logger.error('Segment received before message header [%s]', line)
+                logger.error("Segment received before message header [%s]", line)
                 continue
             rv[-1].append(line)
-    rv = ['\r'.join(msg) for msg in rv]
+    rv = ["\r".join(msg) for msg in rv]
     for i, msg in enumerate(rv):
-        if not msg[-1] == '\r':
-            rv[i] = msg + '\r'
+        if not msg[-1] == "\r":
+            rv[i] = msg + "\r"
     return rv
 
 
@@ -66,5 +66,5 @@ def generate_message_control_id():
     # So now we have a 16 char timestamp.
     timestamp = d.strftime("%y%j%H%M%S%f")[1:]
     # Add 4 chars of uniqueness
-    unique = ''.join(random.sample(alphanumerics, 4))
+    unique = "".join(random.sample(alphanumerics, 4))
     return timestamp + unique

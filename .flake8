@@ -1,0 +1,15 @@
+#  -*- mode: conf; -*-
+
+[flake8]
+# Recommend matching the black line length (default 88),
+# rather than using the flake8 default of 79:
+max-line-length = 88
+max-complexity = 10
+ignore = E203, E501, W503
+
+exclude =
+    .git,
+    env,
+    __pycache__,
+    build,
+    dist
