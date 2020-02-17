@@ -16,12 +16,24 @@ tests: env
 
 # Alias for old-style invocation
 test: tests
+.PHONY: test
+
+coverage:
+	$(BIN)/coverage run -m unittest discover -t . -s tests
+.PHONY: coverage
+
+codecov: coverage
+	$(BIN)/coverage xml
+	$(BIN)/codecov --token=$(CODECOV_TOKEN)
+.PHONY: codecov
 
 build:
 	$(PYTHON) setup.py sdist
+.PHONY: build
 
 clean-docs:
 	cd docs; make clean
+.PHONY: clean-docs
 
 docs:
 	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
@@ -31,6 +43,8 @@ lint:
 	$(BIN)/flake8 --ignore=F821 hl7
 	# E501 -- hl7 sample messages can be long, ignore long lines in tests
 	$(BIN)/flake8 --ignore=E501 tests
+.PHONY: lint
 
 upload: build
 	$(PYTHON) setup.py sdist bdist_wheel register upload
+.PHONY: upload

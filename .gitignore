@@ -3,6 +3,8 @@
 *.pyc
 *.egg-info/
 *.egg
+.coverage
+coverage.xml
 /.tox/
 /build/
 /dist/
