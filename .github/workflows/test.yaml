@@ -3,7 +3,7 @@ name: Python package
 on: [push]
 
 env:
-  primary-python-version: 3.7
+  primary-python-version: 3.8
 
 jobs:
   build:
@@ -31,13 +31,7 @@ jobs:
     #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
     #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Test Legacy
-      if: matrix.python-version < env.primary-python-version
-      run: |
-        env/bin/python setup.py test
-
-    - name: Test Primary
-      if: matrix.python-version >= env.primary-python-version
+    - name: Test
       run: |
         make coverage
 
