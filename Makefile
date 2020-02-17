@@ -39,15 +39,17 @@ lint:
 	$(BIN)/flake8 --ignore=F821 hl7
 	# E501 -- hl7 sample messages can be long, ignore long lines in tests
 	$(BIN)/flake8 --ignore=E501 tests
-	CHECK_ONLY=true $(MAKE) isort
+	CHECK_ONLY=true $(MAKE) format
 .PHONY: lint
 
 CHECK_ONLY ?=
 ifdef CHECK_ONLY
 ISORT_ARGS=--check-only
+BLACK_ARGS=--check
 endif
-isort:
+format:
 	$(BIN)/isort -rc $(ISORT_ARGS) hl7 tests
+	$(BIN)/black $(BLACK_ARGS) hl7 tests
 .PHONY: isort
 
 upload: build

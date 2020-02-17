@@ -39,6 +39,15 @@ To documentation is built by tox, but you can manually build via::
        0 failures in setup code
    ...
 
+
+Formatting
+----------
+
+python-hl7 has converted to use `black <https://black.readthedocs.io/en/stable/>`
+to enforce a coding style.  To automatically format using black and isort::
+
+    $ make format
+
 It is also recommended to run the flake8 checks for PEP8 and PyFlake
 violations.  Commits should be free of warnings::
 

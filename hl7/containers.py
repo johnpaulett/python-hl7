@@ -12,6 +12,7 @@ _SENTINEL = object()
 
 class Sequence(list):
     """Base class for sequences that can be indexed using 1-based index"""
+
     def __call__(self, index, value=_SENTINEL):
         """Support list access using HL7 compatible 1-based indices.
         Can be used to get and set values.
@@ -39,7 +40,10 @@ class Sequence(list):
 
 class Container(Sequence):
     """Abstract root class for the parts of the HL7 message."""
-    def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&', factory=None):
+
+    def __init__(
+        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
+    ):
         # Initialize the list object, optionally passing in the
         # sequence.  Since list([]) == [], using the default
         # parameter will not cause any issues.
@@ -55,7 +59,11 @@ class Container(Sequence):
         sequence = super(Container, self).__getitem__(item)
         if isinstance(item, slice):
             return self.__class__(
-                self.separator, sequence, self.esc, self.separators, factory=self.factory
+                self.separator,
+                sequence,
+                self.esc,
+                self.separators,
+                factory=self.factory,
             )
         return sequence
 
@@ -82,6 +90,7 @@ class Message(Container):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
+
     def __getitem__(self, key):
         """Index, segment-based or accessor lookup.
 
@@ -166,10 +175,18 @@ class Message(Container):
         # Return as a Sequence so 1-based indexing can be used
         matches = Sequence(segment for segment in self if segment[0][0] == segment_id)
         if len(matches) == 0:
-            raise KeyError('No %s segments' % segment_id)
+            raise KeyError("No %s segments" % segment_id)
         return matches
 
-    def extract_field(self, segment, segment_num=1, field_num=1, repeat_num=1, component_num=1, subcomponent_num=1):
+    def extract_field(
+        self,
+        segment,
+        segment_num=1,
+        field_num=1,
+        repeat_num=1,
+        component_num=1,
+        subcomponent_num=1,
+    ):
         """
             Extract a field using a future proofed approach, based on rules in:
             http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
@@ -197,7 +214,9 @@ class Message(Container):
                     |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
         # Save original values for error messages
-        accessor = Accessor(segment, segment_num, field_num, repeat_num, component_num, subcomponent_num)
+        accessor = Accessor(
+            segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
+        )
 
         field_num = field_num or 1
         repeat_num = repeat_num or 1
@@ -209,8 +228,8 @@ class Message(Container):
             field = segment(field_num)
         else:
             if repeat_num == 1 and component_num == 1 and subcomponent_num == 1:
-                return ''  # Assume non-present optional value
-            raise IndexError('Field not present: {0}'.format(accessor.key))
+                return ""  # Assume non-present optional value
+            raise IndexError("Field not present: {0}".format(accessor.key))
 
         rep = field(repeat_num)
 
@@ -218,27 +237,44 @@ class Message(Container):
             # leaf
             if component_num == 1 and subcomponent_num == 1:
                 return self.unescape(rep)
-            raise IndexError('Field reaches leaf node before completing path: {0}'.format(accessor.key))
+            raise IndexError(
+                "Field reaches leaf node before completing path: {0}".format(
+                    accessor.key
+                )
+            )
 
         if component_num > len(rep):
             if subcomponent_num == 1:
-                return ''  # Assume non-present optional value
-            raise IndexError('Component not present: {0}'.format(accessor.key))
+                return ""  # Assume non-present optional value
+            raise IndexError("Component not present: {0}".format(accessor.key))
 
         component = rep(component_num)
         if not isinstance(component, Component):
             # leaf
             if subcomponent_num == 1:
                 return self.unescape(component)
-            raise IndexError('Field reaches leaf node before completing path: {0}'.format(accessor.key))
+            raise IndexError(
+                "Field reaches leaf node before completing path: {0}".format(
+                    accessor.key
+                )
+            )
 
         if subcomponent_num <= len(component):
             subcomponent = component(subcomponent_num)
             return self.unescape(subcomponent)
         else:
-            return ''  # Assume non-present optional value
+            return ""  # Assume non-present optional value
 
-    def assign_field(self, value, segment, segment_num=1, field_num=None, repeat_num=None, component_num=None, subcomponent_num=None):
+    def assign_field(
+        self,
+        value,
+        segment,
+        segment_num=1,
+        field_num=None,
+        repeat_num=None,
+        component_num=None,
+        subcomponent_num=None,
+    ):
         """
             Assign a value into a message using the tree based assignment notation.
             The segment must exist.
@@ -267,7 +303,7 @@ class Message(Container):
             component[:] = [value]
             return
         while len(component) < subcomponent_num:
-            component.append('')
+            component.append("")
         component(subcomponent_num, value)
 
     def escape(self, field, app_map=None):
@@ -297,12 +333,12 @@ class Message(Container):
         esc = str(self.esc)
 
         DEFAULT_MAP = {
-            self.separators[1]: 'F',  # 2.10.4
-            self.separators[2]: 'R',
-            self.separators[3]: 'S',
-            self.separators[4]: 'T',
-            self.esc: 'E',
-            '\r': '.br',  # 2.10.6
+            self.separators[1]: "F",  # 2.10.4
+            self.separators[2]: "R",
+            self.separators[3]: "S",
+            self.separators[4]: "T",
+            self.esc: "E",
+            "\r": ".br",  # 2.10.6
         }
 
         rv = []
@@ -312,11 +348,11 @@ class Message(Container):
             elif c in DEFAULT_MAP:
                 rv.append(esc + DEFAULT_MAP[c] + esc)
             elif ord(c) >= 0x20 and ord(c) <= 0x7E:
-                rv.append(c.encode('ascii'))
+                rv.append(c.encode("ascii"))
             else:
-                rv.append('%sX%2x%s' % (esc, ord(c), esc))
+                rv.append("%sX%2x%s" % (esc, ord(c), esc))
 
-        return ''.join(rv)
+        return "".join(rv)
 
     def unescape(self, field, app_map=None):
         """
@@ -348,21 +384,21 @@ class Message(Container):
             return field
 
         DEFAULT_MAP = {
-            'H': '_',  # Override using the APP MAP: 2.10.3
-            'N': '_',  # Override using the APP MAP
-            'F': self.separators[1],  # 2.10.4
-            'R': self.separators[2],
-            'S': self.separators[3],
-            'T': self.separators[4],
-            'E': self.esc,
-            '.br': '\r',  # 2.10.6
-            '.sp': '\r',
-            '.fi': '',
-            '.nf': '',
-            '.in': '    ',
-            '.ti': '    ',
-            '.sk': ' ',
-            '.ce': '\r',
+            "H": "_",  # Override using the APP MAP: 2.10.3
+            "N": "_",  # Override using the APP MAP
+            "F": self.separators[1],  # 2.10.4
+            "R": self.separators[2],
+            "S": self.separators[3],
+            "T": self.separators[4],
+            "E": self.esc,
+            ".br": "\r",  # 2.10.6
+            ".sp": "\r",
+            ".fi": "",
+            ".nf": "",
+            ".in": "    ",
+            ".ti": "    ",
+            ".sk": " ",
+            ".ce": "\r",
         }
 
         rv = []
@@ -372,16 +408,22 @@ class Message(Container):
             if in_seq:
                 if c == self.esc:
                     in_seq = False
-                    value = ''.join(collecting)
+                    value = "".join(collecting)
                     collecting = []
                     if not value:
-                        logger.warn('Error unescaping value [%s], empty sequence found at %d', field, offset)
+                        logger.warn(
+                            "Error unescaping value [%s], empty sequence found at %d",
+                            field,
+                            offset,
+                        )
                         continue
                     if app_map and value in app_map:
                         rv.append(app_map[value])
                     elif value in DEFAULT_MAP:
                         rv.append(DEFAULT_MAP[value])
-                    elif value.startswith('.') and ((app_map and value[:3] in app_map) or value[:3] in DEFAULT_MAP):
+                    elif value.startswith(".") and (
+                        (app_map and value[:3] in app_map) or value[:3] in DEFAULT_MAP
+                    ):
                         # Substitution with a number of repetitions defined (2.10.6)
                         if app_map and value[:3] in app_map:
                             ch = app_map[value[:3]]
@@ -390,21 +432,45 @@ class Message(Container):
                         count = int(value[3:])
                         rv.append(ch * count)
 
-                    elif value[0] == 'C':  # Convert to new Single Byte character set : 2.10.2
+                    elif (
+                        value[0] == "C"
+                    ):  # Convert to new Single Byte character set : 2.10.2
                         # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
-                        logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
-                    elif value[0] == 'M':  # Switch to new Multi Byte character set : 2.10.2
+                        logger.warn(
+                            "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
+                            value,
+                            field,
+                            offset,
+                        )
+                    elif (
+                        value[0] == "M"
+                    ):  # Switch to new Multi Byte character set : 2.10.2
                         # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
-                        logger.warn('Error inline character sets [%s] not implemented, field [%s], offset [%s]', value, field, offset)
-                    elif value[0] == 'X':  # Hex encoded Bytes: 2.10.5
+                        logger.warn(
+                            "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
+                            value,
+                            field,
+                            offset,
+                        )
+                    elif value[0] == "X":  # Hex encoded Bytes: 2.10.5
                         value = value[1:]
                         try:
                             for off in range(0, len(value), 2):
-                                rv.append(chr(int(value[off:off + 2], 16)))
+                                rv.append(chr(int(value[off : off + 2], 16)))
                         except:
-                            logger.exception('Error decoding hex value [%s], field [%s], offset [%s]', value, field, offset)
+                            logger.exception(
+                                "Error decoding hex value [%s], field [%s], offset [%s]",
+                                value,
+                                field,
+                                offset,
+                            )
                     else:
-                        logger.exception('Error decoding value [%s], field [%s], offset [%s]', value, field, offset)
+                        logger.exception(
+                            "Error decoding value [%s], field [%s], offset [%s]",
+                            value,
+                            field,
+                            offset,
+                        )
                 else:
                     collecting.append(c)
             elif c == self.esc:
@@ -412,29 +478,61 @@ class Message(Container):
             else:
                 rv.append(str(c))
 
-        return ''.join(rv)
+        return "".join(rv)
 
     def create_message(self, seq):
         """Create a new :py:class:`hl7.Message` compatible with this message"""
-        return self.factory.create_message(self.separators[0], seq, esc=self.esc, separators=self.separators, factory=self.factory)
+        return self.factory.create_message(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
 
     def create_segment(self, seq):
         """Create a new :py:class:`hl7.Segment` compatible with this message"""
-        return self.factory.create_segment(self.separators[1], seq, esc=self.esc, separators=self.separators[1:], factory=self.factory)
+        return self.factory.create_segment(
+            self.separators[1],
+            seq,
+            esc=self.esc,
+            separators=self.separators[1:],
+            factory=self.factory,
+        )
 
     def create_field(self, seq):
         """Create a new :py:class:`hl7.Field` compatible with this message"""
-        return self.factory.create_field(self.separators[2], seq, esc=self.esc, separators=self.separators[2:], factory=self.factory)
+        return self.factory.create_field(
+            self.separators[2],
+            seq,
+            esc=self.esc,
+            separators=self.separators[2:],
+            factory=self.factory,
+        )
 
     def create_repetition(self, seq):
         """Create a new :py:class:`hl7.Repetition` compatible with this message"""
-        return self.factory.create_repetition(self.separators[3], seq, esc=self.esc, separators=self.separators[3:], factory=self.factory)
+        return self.factory.create_repetition(
+            self.separators[3],
+            seq,
+            esc=self.esc,
+            separators=self.separators[3:],
+            factory=self.factory,
+        )
 
     def create_component(self, seq):
         """Create a new :py:class:`hl7.Component` compatible with this message"""
-        return self.factory.create_component(self.separators[4], seq, esc=self.esc, separators=self.separators[4:], factory=self.factory)
+        return self.factory.create_component(
+            self.separators[4],
+            seq,
+            esc=self.esc,
+            separators=self.separators[4:],
+            factory=self.factory,
+        )
 
-    def create_ack(self, ack_code='AA', message_id=None, application=None, facility=None):
+    def create_ack(
+        self, ack_code="AA", message_id=None, application=None, facility=None
+    ):
         """
         Create an hl7 ACK response :py:class:`hl7.Message`, per spec 2.9.2, for this message.
 
@@ -446,32 +544,46 @@ class Message(Container):
         ``application`` name of sending application, defaults to receiving application of message
         ``facility`` name of sending facility, defaults to receiving facility of message
         """
-        source_msh = self.segment('MSH')
-        msh = self.create_segment([self.create_field(['MSH'])])
-        msa = self.create_segment([self.create_field(['MSA'])])
+        source_msh = self.segment("MSH")
+        msh = self.create_segment([self.create_field(["MSH"])])
+        msa = self.create_segment([self.create_field(["MSA"])])
         ack = self.create_message([msh, msa])
 
-        ack.assign_field(str(source_msh(1)), 'MSH', 1, 1)
-        ack.assign_field(str(source_msh(2)), 'MSH', 1, 2)
+        ack.assign_field(str(source_msh(1)), "MSH", 1, 1)
+        ack.assign_field(str(source_msh(2)), "MSH", 1, 2)
         # Sending application is source receving application
-        ack.assign_field(str(application) if application is not None else str(source_msh(5)), 'MSH', 1, 3)
+        ack.assign_field(
+            str(application) if application is not None else str(source_msh(5)),
+            "MSH",
+            1,
+            3,
+        )
         # Sending facility is source receving facility
-        ack.assign_field(str(facility) if facility is not None else str(source_msh(6)), 'MSH', 1, 4)
+        ack.assign_field(
+            str(facility) if facility is not None else str(source_msh(6)), "MSH", 1, 4
+        )
         # Receiving application is source sending application
-        ack.assign_field(str(source_msh(3)), 'MSH', 1, 5)
+        ack.assign_field(str(source_msh(3)), "MSH", 1, 5)
         # Receiving facility is source sending facility
-        ack.assign_field(str(source_msh(4)), 'MSH', 1, 6)
-        ack.assign_field(str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 'MSH', 1, 7)
+        ack.assign_field(str(source_msh(4)), "MSH", 1, 6)
+        ack.assign_field(
+            str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), "MSH", 1, 7
+        )
         # Message type code
-        ack.assign_field('ACK', 'MSH', 1, 9, 1, 1)
+        ack.assign_field("ACK", "MSH", 1, 9, 1, 1)
         # Copy trigger event from source
-        ack.assign_field(str(source_msh(9)(1)(2)), 'MSH', 1, 9, 1, 2)
-        ack.assign_field(message_id if message_id is not None else generate_message_control_id(), 'MSH', 1, 10)
-        ack.assign_field(str(source_msh(11)), 'MSH', 1, 11)
-        ack.assign_field(str(source_msh(12)), 'MSH', 1, 12)
+        ack.assign_field(str(source_msh(9)(1)(2)), "MSH", 1, 9, 1, 2)
+        ack.assign_field(
+            message_id if message_id is not None else generate_message_control_id(),
+            "MSH",
+            1,
+            10,
+        )
+        ack.assign_field(str(source_msh(11)), "MSH", 1, 11)
+        ack.assign_field(str(source_msh(12)), "MSH", 1, 12)
 
-        ack.assign_field(str(ack_code), 'MSA', 1, 1)
-        ack.assign_field(str(source_msh(10)), 'MSA', 1, 2)
+        ack.assign_field(str(ack_code), "MSA", 1, 1)
+        ack.assign_field(str(source_msh(10)), "MSA", 1, 2)
 
         return ack
 
@@ -482,14 +594,20 @@ class Segment(Container):
     return and is separated by pipes. It contains a list of
     :py:class:`hl7.Field` instances.
     """
+
     def _adjust_index(self, index):
         # First element is the segment name, so we don't need to adjust to get 1-based
         return index
 
     def __str__(self):
-        if str(self[0]) in ['MSH', 'FHS']:
-            return str(self[0]) + str(self[1]) + str(self[2]) + str(self[1]) + \
-                self.separator.join((str(x) for x in self[3:]))
+        if str(self[0]) in ["MSH", "FHS"]:
+            return (
+                str(self[0])
+                + str(self[1])
+                + str(self[2])
+                + str(self[1])
+                + self.separator.join((str(x) for x in self[3:]))
+            )
         return self.separator.join((str(x) for x in self))
 
 
@@ -517,8 +635,9 @@ class Factory(object):
 
     A subclass can be used to create specialized subclasses of each container.
     """
-    create_message = Message        #: Create an instance of :py:class:`hl7.Message`
-    create_segment = Segment        #: Create an instance of :py:class:`hl7.Segment`
-    create_field = Field            #: Create an instance of :py:class:`hl7.Field`
+
+    create_message = Message  #: Create an instance of :py:class:`hl7.Message`
+    create_segment = Segment  #: Create an instance of :py:class:`hl7.Segment`
+    create_field = Field  #: Create an instance of :py:class:`hl7.Field`
     create_repetition = Repetition  #: Create an instance of :py:class:`hl7.Repetition`
-    create_component = Component    #: Create an instance of :py:class:`hl7.Component`
+    create_component = Component  #: Create an instance of :py:class:`hl7.Component`
