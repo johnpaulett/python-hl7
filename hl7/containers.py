@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import datetime
 import logging
-import six
-from .compat import python_2_unicode_compatible
+
 from .accessor import Accessor
 from .util import generate_message_control_id
 
@@ -39,7 +37,6 @@ class Sequence(list):
             return index
 
 
-@python_2_unicode_compatible
 class Container(Sequence):
     """Abstract root class for the parts of the HL7 message."""
     def __init__(self, separator, sequence=[], esc='\\', separators='\r|~^&', factory=None):
@@ -78,7 +75,7 @@ class Container(Sequence):
         True
 
         """
-        return self.separator.join((six.text_type(x) for x in self))
+        return self.separator.join((str(x) for x in self))
 
 
 class Message(Container):
@@ -108,7 +105,7 @@ class Message(Container):
         If the key is an :py:class:`hl7.Accessor`, it is passed to
         :py:meth:`hl7.Message.extract_field`.
         """
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             if len(key) == 3:
                 return self.segments(key)
             return self.extract_field(*Accessor.parse_key(key))
@@ -133,7 +130,7 @@ class Message(Container):
         If the key is an :py:class:`hl7.Accessor`, it is passed to
         :py:meth:`hl7.Message.assign_field`.
         """
-        if isinstance(key, six.string_types) and len(key) > 3 and isinstance(value, six.string_types):
+        if isinstance(key, str) and len(key) > 3 and isinstance(value, str):
             return self.assign_field(value, *Accessor.parse_key(key))
         elif isinstance(key, Accessor):
             return self.assign_field(value, *key)
@@ -403,7 +400,7 @@ class Message(Container):
                         value = value[1:]
                         try:
                             for off in range(0, len(value), 2):
-                                rv.append(six.unichr(int(value[off:off + 2], 16)))
+                                rv.append(chr(int(value[off:off + 2], 16)))
                         except:
                             logger.exception('Error decoding hex value [%s], field [%s], offset [%s]', value, field, offset)
                     else:
@@ -413,7 +410,7 @@ class Message(Container):
             elif c == self.esc:
                 in_seq = True
             else:
-                rv.append(six.text_type(c))
+                rv.append(str(c))
 
         return ''.join(rv)
 
@@ -454,32 +451,31 @@ class Message(Container):
         msa = self.create_segment([self.create_field(['MSA'])])
         ack = self.create_message([msh, msa])
 
-        ack.assign_field(six.text_type(source_msh(1)), 'MSH', 1, 1)
-        ack.assign_field(six.text_type(source_msh(2)), 'MSH', 1, 2)
+        ack.assign_field(str(source_msh(1)), 'MSH', 1, 1)
+        ack.assign_field(str(source_msh(2)), 'MSH', 1, 2)
         # Sending application is source receving application
-        ack.assign_field(six.text_type(application) if application is not None else six.text_type(source_msh(5)), 'MSH', 1, 3)
+        ack.assign_field(str(application) if application is not None else str(source_msh(5)), 'MSH', 1, 3)
         # Sending facility is source receving facility
-        ack.assign_field(six.text_type(facility) if facility is not None else six.text_type(source_msh(6)), 'MSH', 1, 4)
+        ack.assign_field(str(facility) if facility is not None else str(source_msh(6)), 'MSH', 1, 4)
         # Receiving application is source sending application
-        ack.assign_field(six.text_type(source_msh(3)), 'MSH', 1, 5)
+        ack.assign_field(str(source_msh(3)), 'MSH', 1, 5)
         # Receiving facility is source sending facility
-        ack.assign_field(six.text_type(source_msh(4)), 'MSH', 1, 6)
-        ack.assign_field(six.text_type(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 'MSH', 1, 7)
+        ack.assign_field(str(source_msh(4)), 'MSH', 1, 6)
+        ack.assign_field(str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 'MSH', 1, 7)
         # Message type code
         ack.assign_field('ACK', 'MSH', 1, 9, 1, 1)
         # Copy trigger event from source
-        ack.assign_field(six.text_type(source_msh(9)(1)(2)), 'MSH', 1, 9, 1, 2)
+        ack.assign_field(str(source_msh(9)(1)(2)), 'MSH', 1, 9, 1, 2)
         ack.assign_field(message_id if message_id is not None else generate_message_control_id(), 'MSH', 1, 10)
-        ack.assign_field(six.text_type(source_msh(11)), 'MSH', 1, 11)
-        ack.assign_field(six.text_type(source_msh(12)), 'MSH', 1, 12)
+        ack.assign_field(str(source_msh(11)), 'MSH', 1, 11)
+        ack.assign_field(str(source_msh(12)), 'MSH', 1, 12)
 
-        ack.assign_field(six.text_type(ack_code), 'MSA', 1, 1)
-        ack.assign_field(six.text_type(source_msh(10)), 'MSA', 1, 2)
+        ack.assign_field(str(ack_code), 'MSA', 1, 1)
+        ack.assign_field(str(source_msh(10)), 'MSA', 1, 2)
 
         return ack
 
 
-@python_2_unicode_compatible
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.
     Traditionally this is a line of a message that ends with a carriage
@@ -491,10 +487,10 @@ class Segment(Container):
         return index
 
     def __str__(self):
-        if six.text_type(self[0]) in ['MSH', 'FHS']:
-            return six.text_type(self[0]) + six.text_type(self[1]) + six.text_type(self[2]) + six.text_type(self[1]) + \
-                self.separator.join((six.text_type(x) for x in self[3:]))
-        return self.separator.join((six.text_type(x) for x in self))
+        if str(self[0]) in ['MSH', 'FHS']:
+            return str(self[0]) + str(self[1]) + str(self[2]) + str(self[1]) + \
+                self.separator.join((str(x) for x in self[3:]))
+        return self.separator.join((str(x) for x in self))
 
 
 class Field(Container):

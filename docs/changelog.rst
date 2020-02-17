@@ -6,8 +6,7 @@ Changelog
 0.4.0 - unreleased
 ------------------
 
-* Dropped support for Python 2.6 & 3.3 (will likely end support for 2.7 & 3.4 prior
-  to 0.4.0 release)
+* Dropped support for Python 2.7, 3.3, & 3.4. Python 3.5 - 3.8 now supported.
 
 
 0.3.4 - June 2016

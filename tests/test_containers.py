@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-import six
 import hl7
 from hl7 import Segment, Field
-from .compat import unittest
+from unittest import TestCase
 from .samples import sample_hl7
 
 
-class ContainerTest(unittest.TestCase):
+class ContainerTest(TestCase):
     def test_unicode(self):
         msg = hl7.parse(sample_hl7)
-        self.assertEqual(six.text_type(msg), sample_hl7.strip())
+        self.assertEqual(str(msg), sample_hl7.strip())
         self.assertEqual(
-            six.text_type(msg[3][3]),
+            str(msg[3][3]),
             '1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN'
         )
 
     def test_container_unicode(self):
         c = hl7.Container('|')
         c.extend(['1', 'b', 'data'])
-        self.assertEqual(six.text_type(c), '1|b|data')
+        self.assertEqual(str(c), '1|b|data')
 
 
-class MessageTest(unittest.TestCase):
+class MessageTest(TestCase):
     def test_segments(self):
         msg = hl7.parse(sample_hl7)
         s = msg.segments('OBX')
@@ -111,7 +109,7 @@ class TestFactory(hl7.Factory):
     create_component = TestComponent
 
 
-class FactoryTest(unittest.TestCase):
+class FactoryTest(TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7, factory=TestFactory)
         self.assertIsInstance(msg, TestMessage)

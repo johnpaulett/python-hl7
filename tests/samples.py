@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 
 # Sample message from HL7 Normative Edition
 # http://healthinfo.med.dal.ca/hl7intro/CDA_R2_normativewebedition/help/v3guide/v3guide.htm#v3gexamples
@@ -17,7 +15,7 @@ rep_sample_hl7 = '\r'.join([
     'MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4',
     'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
     ''
-    ])
+])
 
 # Source: http://www.health.vic.gov.au/hdss/vinah/2006-07/appendix-a-sample-messages.pdf
 sample_file = '\r'.join([
@@ -32,4 +30,4 @@ sample_file = '\r'.join([
     'BTS|1',
     'FTS|1',
     ''
-    ])
+])

@@ -3,15 +3,15 @@ from hl7 import __version__ as hl7_version
 from optparse import Values
 from shutil import rmtree
 from tempfile import mkdtemp
-
-from .compat import Mock, patch, unittest
+from unittest import TestCase
+from unittest.mock import Mock, patch
 
 import hl7
 import os
 import socket
 
 
-class MLLPClientTest(unittest.TestCase):
+class MLLPClientTest(TestCase):
     def setUp(self):
         # use a mock version of socket
         self.socket_patch = patch('hl7.client.socket.socket')
@@ -77,19 +77,15 @@ class MLLPClientTest(unittest.TestCase):
         self.client.socket.close.assert_called_once_with()
 
     def test_context_manager_exception(self):
-        try:
+        with self.assertRaises(Exception):
             with MLLPClient('localhost', 6666):
                 raise Exception()
-            self.fail()
-        except:
-            # expected
-            pass
 
         # socket.close should be called via the with statement
         self.client.socket.close.assert_called_once_with()
 
 
-class MLLPSendTest(unittest.TestCase):
+class MLLPSendTest(TestCase):
     def setUp(self):
         # patch to avoid touching sys and socket
         self.socket_patch = patch('hl7.client.socket.socket')

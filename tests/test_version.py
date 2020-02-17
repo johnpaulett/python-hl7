@@ -1,9 +1,9 @@
 from hl7.version import get_version
+from unittest import TestCase
+from unittest.mock import patch
 
-from .compat import patch, unittest
 
-
-class GetVersionTest(unittest.TestCase):
+class GetVersionTest(TestCase):
     @patch('hl7.version.VERSION', new=(0, 4, 1))
     def test_no_modifier(self):
         self.assertEqual('0.4.1', get_version())

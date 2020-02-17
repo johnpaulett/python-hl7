@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from hl7 import Accessor
-from .compat import unittest
+from unittest import TestCase
 
 
-class AccessorTest(unittest.TestCase):
+class AccessorTest(TestCase):
     def test_key(self):
         self.assertEqual("FOO", Accessor("FOO").key)
         self.assertEqual("FOO2", Accessor("FOO", 2).key)

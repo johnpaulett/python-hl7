@@ -39,7 +39,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=['hl7'],
-    install_requires=['six'],
+    install_requires=[],
     test_suite='tests',
     tests_require=[],
     entry_points={

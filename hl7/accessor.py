@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from collections import namedtuple
-import six
-from .compat import python_2_unicode_compatible
 
 
-@python_2_unicode_compatible
 class Accessor(namedtuple('Accessor', ['segment', 'segment_num', 'field_num', 'repeat_num', 'component_num', 'subcomponent_num'])):
     __slots__ = ()
 
@@ -16,8 +12,8 @@ class Accessor(namedtuple('Accessor', ['segment', 'segment_num', 'field_num', 'r
     @property
     def key(self):
         """Return the string accessor key that represents this instance"""
-        seg = self.segment if self.segment_num == 1 else self.segment + six.text_type(self.segment_num)
-        return ".".join(six.text_type(f) for f in [seg, self.field_num, self.repeat_num, self.component_num, self.subcomponent_num] if f is not None)
+        seg = self.segment if self.segment_num == 1 else self.segment + str(self.segment_num)
+        return ".".join(str(f) for f in [seg, self.field_num, self.repeat_num, self.component_num, self.subcomponent_num] if f is not None)
 
     def __str__(self):
         return self.key
