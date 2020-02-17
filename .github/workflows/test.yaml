@@ -34,11 +34,12 @@ jobs:
       run: |
         make coverage
 
-    - name: Upload Coverage Report
+    - name: Upload to codecov.io
       # Only upload coverage report for single version
       if: matrix.python-version == env.primary-python-version
-      run: |
-        make codecov
+      uses: codecov/codecov-action@v1.0.5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Docs and Doctests
       # Only check docs on single version

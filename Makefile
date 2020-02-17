@@ -20,12 +20,8 @@ test: tests
 
 coverage:
 	$(BIN)/coverage run -m unittest discover -t . -s tests
-.PHONY: coverage
-
-codecov:
 	$(BIN)/coverage xml
-	$(BIN)/codecov --token=$(CODECOV_TOKEN)
-.PHONY: codecov
+.PHONY: coverage
 
 build:
 	$(PYTHON) setup.py sdist
