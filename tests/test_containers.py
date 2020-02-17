@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-import hl7
-from hl7 import Segment, Field
 from unittest import TestCase
+
+import hl7
+from hl7 import Field, Segment
+
 from .samples import sample_hl7
 
 

@@ -1,6 +1,7 @@
-from hl7.datatypes import parse_datetime, _UTCOffset
-from unittest import TestCase
 from datetime import datetime
+from unittest import TestCase
+
+from hl7.datatypes import _UTCOffset, parse_datetime
 
 
 class DatetimeTest(TestCase):

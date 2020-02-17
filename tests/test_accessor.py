@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from hl7 import Accessor
 from unittest import TestCase
+
+from hl7 import Accessor
 
 
 class AccessorTest(TestCase):

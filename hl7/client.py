@@ -1,11 +1,10 @@
-from optparse import OptionParser
-
-import hl7
 import io
 import os.path
 import socket
 import sys
+from optparse import OptionParser
 
+import hl7
 
 SB = b'\x0b'  # <SB>, vertical tab
 EB = b'\x1c'  # <EB>, file separator

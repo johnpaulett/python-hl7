@@ -35,6 +35,10 @@ jobs:
       run: |
         make coverage
 
+    - name: Check import sorting
+      run: |
+        CHECK_ONLY=true make isort
+
     - name: Upload to codecov.io
       # Only upload coverage report for single version
       if: matrix.python-version == env.primary-python-version

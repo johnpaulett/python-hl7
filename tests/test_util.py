@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-import hl7
 from unittest import TestCase
-from .samples import sample_hl7, sample_file
+
+import hl7
+
+from .samples import sample_file, sample_hl7
 
 
 class IsHL7Test(TestCase):

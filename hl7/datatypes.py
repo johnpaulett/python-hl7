@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
-import re
 import math
-
+import re
 
 DTM_TZ_RE = re.compile(r"(\d+(?:\.\d+)?)(?:([+-]\d{2})(\d{2}))?")
 

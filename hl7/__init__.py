@@ -5,6 +5,20 @@
 * Documentation: http://python-hl7.readthedocs.org
 * Source Code: http://github.com/johnpaulett/python-hl7
 """
+from .accessor import Accessor
+from .containers import (
+    Component,
+    Container,
+    Factory,
+    Field,
+    Message,
+    Repetition,
+    Segment,
+    Sequence,
+)
+from .datatypes import parse_datetime
+from .parser import parse
+from .util import generate_message_control_id, isfile, ishl7, split_file
 from .version import get_version
 
 __version__ = get_version()
@@ -16,11 +30,6 @@ __copyright__ = 'Copyright 2011, John Paulett <john -at- paulett.org>'
 #: This is the HL7 Null value. It means that a field is present and blank.
 NULL = '""'
 
-from .parser import parse
-from .containers import Sequence, Container, Message, Segment, Field, Repetition, Component, Factory
-from .accessor import Accessor
-from .util import ishl7, isfile, split_file, generate_message_control_id
-from .datatypes import parse_datetime
 
 __all__ = [
     "parse",

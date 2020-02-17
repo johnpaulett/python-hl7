@@ -1,5 +1,5 @@
-from hl7.client import MLLPClient, MLLPException, mllp_send, CR, SB, EB
-from hl7 import __version__ as hl7_version
+import os
+import socket
 from optparse import Values
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -7,8 +7,8 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import hl7
-import os
-import socket
+from hl7 import __version__ as hl7_version
+from hl7.client import CR, EB, SB, MLLPClient, MLLPException, mllp_send
 
 
 class MLLPClientTest(TestCase):
