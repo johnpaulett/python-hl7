@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+.. _changelog-0-4-0:
+
+0.4.0 - unreleased
+------------------
+
+* Dropped support for Python 2.6 & 3.3 (will likely end support for 2.7 & 3.4 prior
+  to 0.4.0 release)
+
+
 0.3.4 - June 2016
 -----------------
 * Fix bug under Python 3 when writing to stdout from `mllp_send`
