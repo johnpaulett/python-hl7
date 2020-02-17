@@ -22,7 +22,7 @@ coverage:
 	$(BIN)/coverage run -m unittest discover -t . -s tests
 .PHONY: coverage
 
-codecov: coverage
+codecov:
 	$(BIN)/coverage xml
 	$(BIN)/codecov --token=$(CODECOV_TOKEN)
 .PHONY: codecov

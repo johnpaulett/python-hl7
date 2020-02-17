@@ -2,6 +2,9 @@ name: Python package
 
 on: [push]
 
+env:
+  primary-python-version: 3.7
+
 jobs:
   build:
 
@@ -29,9 +32,16 @@ jobs:
     #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test
       run: |
-        # WARNING: with matrix build, we will upload run for Python version
-        make coverage codecov
+        make coverage
+
+    - name: Upload Coverage Report
+      # Only upload coverage report for single version
+      if: matrix.python-version == env.primary-python-version
+      run: |
+        make codecov
 
     - name: Docs and Doctests
+      # Only check docs on single version
+      if: matrix.python-version >= env.primary-python-version
       run: |
         make docs
