@@ -7,7 +7,7 @@ PIP = $(BIN)/pip
 SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
 
 env: requirements.txt
-	test -f $(PYTHON) || virtualenv --no-site-packages env
+	test -f $(PYTHON) || virtualenv env
 	$(PIP) install -U -r requirements.txt
 	$(PYTHON) setup.py develop
 
