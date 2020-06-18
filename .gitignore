@@ -3,6 +3,7 @@
 *.pyc
 *.egg-info/
 *.egg
+*.mypy_cache/
 .coverage
 coverage.xml
 /.tox/
