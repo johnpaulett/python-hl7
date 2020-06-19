@@ -100,6 +100,9 @@ class MLLPSendTest(TestCase):
         self.stderr_patch = patch("hl7.client.stderr")
         self.mock_stderr = self.stderr_patch.start()
 
+        self.exit_patch = patch("hl7.client.sys.exit")
+        self.mock_exit = self.exit_patch.start()
+
         # we need a temporary directory
         self.dir = mkdtemp()
         self.write(SB + b"foobar" + EB + CR)
@@ -127,6 +130,7 @@ class MLLPSendTest(TestCase):
         self.stdout_patch.stop()
         self.stdin_patch.stop()
         self.stderr_patch.stop()
+        self.exit_patch.stop()
 
         # clean up the temp directory
         rmtree(self.dir)
@@ -141,6 +145,7 @@ class MLLPSendTest(TestCase):
         self.mock_socket().connect.assert_called_once_with(("localhost", 6661))
         self.mock_socket().send.assert_called_once_with(SB + b"foobar" + EB + CR)
         self.mock_stdout.assert_called_once_with("thanks")
+        self.assertFalse(self.mock_exit.called)
 
     def test_send_multiple(self):
         self.mock_socket().recv.return_value = "thanks"
@@ -194,6 +199,7 @@ class MLLPSendTest(TestCase):
 
         self.assertFalse(self.mock_socket().send.called)
         self.mock_stderr().write.assert_called_with("--loose requires --file\n")
+        self.mock_exit.assert_called_with(1)
 
     def test_loose_windows_newline(self):
         self.option_values.loose = True

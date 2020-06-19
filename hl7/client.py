@@ -227,7 +227,8 @@ def mllp_send():
         # server not present
         parser.print_usage()
         stderr().write("server required\n")
-        return
+        sys.exit(1)
+        return  # for testing when sys.exit mocked
 
     if options.filename is not None:
         # Previously set stream to the open() handle, but then we did not
@@ -239,7 +240,9 @@ def mllp_send():
     else:
         if options.loose:
             stderr().write("--loose requires --file\n")
-            return
+            sys.exit(1)
+            return  # for testing when sys.exit mocked
+
         stream = stdin()
 
     with MLLPClient(host, options.port) as client:
