@@ -8,6 +8,9 @@ Changelog
 
 * Dropped support for Python 2.7, 3.3, & 3.4. Python 3.5 - 3.8 now supported.
 * Converted code style to use black.
+* Handle ASCII characters within :py:meth:`hl7.Message.escape` under Python 3.
+
+Thanks `Lucas Kahlert <https://github.com/f3anaro>`_!
 
 
 0.3.4 - June 2016
