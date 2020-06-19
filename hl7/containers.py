@@ -348,7 +348,7 @@ class Message(Container):
             elif c in DEFAULT_MAP:
                 rv.append(esc + DEFAULT_MAP[c] + esc)
             elif ord(c) >= 0x20 and ord(c) <= 0x7E:
-                rv.append(c.encode("ascii"))
+                rv.append(c)
             else:
                 rv.append("%sX%2x%s" % (esc, ord(c), esc))
 
