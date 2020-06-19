@@ -2,6 +2,7 @@
 import datetime
 import math
 import re
+from typing import Optional
 
 DTM_TZ_RE = re.compile(r"(\d+(?:\.\d+)?)(?:([+-]\d{2})(\d{2}))?")
 
@@ -9,24 +10,24 @@ DTM_TZ_RE = re.compile(r"(\d+(?:\.\d+)?)(?:([+-]\d{2})(\d{2}))?")
 class _UTCOffset(datetime.tzinfo):
     """Fixed offset timezone from UTC."""
 
-    def __init__(self, minutes):
+    def __init__(self, minutes: int):
         """``minutes`` is a offset from UTC, negative for west of UTC"""
         self.minutes = minutes
 
-    def utcoffset(self, dt):
+    def utcoffset(self, dt: Optional[datetime.datetime]) -> datetime.timedelta:
         return datetime.timedelta(minutes=self.minutes)
 
-    def tzname(self, dt):
+    def tzname(self, dt: Optional[datetime.datetime]) -> str:
         minutes = abs(self.minutes)
         return "{0}{1:02}{2:02}".format(
             "-" if self.minutes < 0 else "+", minutes // 60, minutes % 60
         )
 
-    def dst(self, dt):
+    def dst(self, dt: Optional[datetime.datetime]) -> datetime.timedelta:
         return datetime.timedelta(0)
 
 
-def parse_datetime(value):
+def parse_datetime(value: str) -> Optional[datetime.datetime]:
     """Parse hl7 DTM string ``value`` :py:class:`datetime.datetime`.
 
     ``value`` is of the format YYYY[MM[DD[HH[MM[SS[.S[S[S[S]]]]]]]]][+/-HHMM]
@@ -46,8 +47,8 @@ def parse_datetime(value):
     tzm = dt_match.group(3)
     if tzh and tzm:
         minutes = int(tzh) * 60
-        minutes += math.copysign(int(tzm), minutes)
-        tzinfo = _UTCOffset(minutes)
+        minutes += int(math.copysign(int(tzm), minutes))
+        tzinfo: Optional[_UTCOffset] = _UTCOffset(minutes)
     else:
         tzinfo = None
 

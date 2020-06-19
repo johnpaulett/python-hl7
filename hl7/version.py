@@ -9,7 +9,7 @@ element is equivalent to 'final'.
 VERSION = (0, 4, 0, "dev")
 
 
-def get_version():
+def get_version() -> str:
     """Provide version number
 
     Use verlib format [1]_:

@@ -40,6 +40,16 @@ To documentation is built by tox, but you can manually build via::
    ...
 
 
+Type Hints
+----------
+
+python-hl7 as of 0.4.0 provides `type hinting <https://docs.python.org/3/library/typing.html>`_
+which we check via `mypy <https://mypy.readthedocs.io/>`_.  Currently all code
+in :file:`hl7/` should not show any type warnings::
+
+    $ make mypy
+
+
 Formatting
 ----------
 

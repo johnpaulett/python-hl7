@@ -3,11 +3,12 @@ import datetime
 import logging
 import random
 import string
+from typing import List
 
 logger = logging.getLogger(__file__)
 
 
-def ishl7(line):
+def ishl7(line: str) -> bool:
     """Determines whether a *line* looks like an HL7 message.
     This method only does a cursory check and does not fully
     validate the message.
@@ -18,7 +19,7 @@ def ishl7(line):
     return line and (line.strip()[:3] in ["MSH"]) or False
 
 
-def isfile(line):
+def isfile(line: str) -> bool:
     """
         Files are wrapped in FHS / FTS
         FHS = file header segment
@@ -27,7 +28,7 @@ def isfile(line):
     return line and (line.strip()[:3] in ["FHS"]) or False
 
 
-def split_file(hl7file):
+def split_file(hl7file: str):
     """
         Given a file, split out the messages.
         Does not do any validation on the message.
@@ -56,7 +57,7 @@ def split_file(hl7file):
 alphanumerics = string.ascii_uppercase + string.digits
 
 
-def generate_message_control_id():
+def generate_message_control_id() -> str:
     """Generate a unique 20 character message id.
 
     See http://www.hl7resources.com/Public/index.html?a55433.htm

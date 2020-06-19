@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
+from typing import Any, List, Optional, TypeVar, Union
 
 from .accessor import Accessor
 from .util import generate_message_control_id
@@ -10,10 +11,13 @@ logger = logging.getLogger(__file__)
 _SENTINEL = object()
 
 
+C = TypeVar("C", bound="Container")
+
+
 class Sequence(list):
     """Base class for sequences that can be indexed using 1-based index"""
 
-    def __call__(self, index, value=_SENTINEL):
+    def __call__(self, index: int, value: Any = _SENTINEL) -> Union["Container", str]:
         """Support list access using HL7 compatible 1-based indices.
         Can be used to get and set values.
 
@@ -30,7 +34,7 @@ class Sequence(list):
         else:
             self[index] = value
 
-    def _adjust_index(self, index):
+    def _adjust_index(self, index: int) -> int:
         """Subclasses can override if they do not want HL7 1-based indexing when used as callable"""
         if index >= 1:
             return index - 1
@@ -42,7 +46,12 @@ class Container(Sequence):
     """Abstract root class for the parts of the HL7 message."""
 
     def __init__(
-        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
+        self,
+        separator: str,
+        sequence: List[Sequence] = [],
+        esc: str = "\\",
+        separators: str = "\r|~^&",
+        factory: "Factory" = None,
     ):
         # Initialize the list object, optionally passing in the
         # sequence.  Since list([]) == [], using the default
@@ -53,7 +62,7 @@ class Container(Sequence):
         self.separators = separators
         self.factory = factory if factory is not None else Factory
 
-    def __getitem__(self, item):
+    def __getitem__(self: C, item: str) -> C:
         # Python slice operator was returning a regular list, not a
         # Container subclass
         sequence = super(Container, self).__getitem__(item)
@@ -72,7 +81,7 @@ class Container(Sequence):
         # we want to wrap the logic from __getitem__ when handling slices
         return self.__getitem__(slice(i, j))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Join a the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
@@ -186,7 +195,7 @@ class Message(Container):
         repeat_num=1,
         component_num=1,
         subcomponent_num=1,
-    ):
+    ) -> str:
         """
             Extract a field using a future proofed approach, based on rules in:
             http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
@@ -269,12 +278,12 @@ class Message(Container):
         self,
         value,
         segment,
-        segment_num=1,
-        field_num=None,
-        repeat_num=None,
-        component_num=None,
-        subcomponent_num=None,
-    ):
+        segment_num: int = 1,
+        field_num: Optional[int] = None,
+        repeat_num: Optional[int] = None,
+        component_num: Optional[int] = None,
+        subcomponent_num: Optional[int] = None,
+    ) -> None:
         """
             Assign a value into a message using the tree based assignment notation.
             The segment must exist.
@@ -306,7 +315,7 @@ class Message(Container):
             component.append("")
         component(subcomponent_num, value)
 
-    def escape(self, field, app_map=None):
+    def escape(self, field: str, app_map=None) -> str:
         """
             See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
@@ -354,7 +363,7 @@ class Message(Container):
 
         return "".join(rv)
 
-    def unescape(self, field, app_map=None):  # noqa: C901
+    def unescape(self, field: str, app_map=None) -> str:  # noqa: C901
         """
             See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
@@ -480,7 +489,7 @@ class Message(Container):
 
         return "".join(rv)
 
-    def create_message(self, seq):
+    def create_message(self, seq) -> "Message":
         """Create a new :py:class:`hl7.Message` compatible with this message"""
         return self.factory.create_message(
             self.separators[0],
@@ -490,7 +499,7 @@ class Message(Container):
             factory=self.factory,
         )
 
-    def create_segment(self, seq):
+    def create_segment(self, seq) -> "Segment":
         """Create a new :py:class:`hl7.Segment` compatible with this message"""
         return self.factory.create_segment(
             self.separators[1],
@@ -500,7 +509,7 @@ class Message(Container):
             factory=self.factory,
         )
 
-    def create_field(self, seq):
+    def create_field(self, seq) -> "Field":
         """Create a new :py:class:`hl7.Field` compatible with this message"""
         return self.factory.create_field(
             self.separators[2],
@@ -510,7 +519,7 @@ class Message(Container):
             factory=self.factory,
         )
 
-    def create_repetition(self, seq):
+    def create_repetition(self, seq) -> "Repetition":
         """Create a new :py:class:`hl7.Repetition` compatible with this message"""
         return self.factory.create_repetition(
             self.separators[3],
@@ -520,7 +529,7 @@ class Message(Container):
             factory=self.factory,
         )
 
-    def create_component(self, seq):
+    def create_component(self, seq) -> "Component":
         """Create a new :py:class:`hl7.Component` compatible with this message"""
         return self.factory.create_component(
             self.separators[4],
@@ -531,8 +540,8 @@ class Message(Container):
         )
 
     def create_ack(
-        self, ack_code="AA", message_id=None, application=None, facility=None
-    ):
+        self, ack_code: str = "AA", message_id=None, application=None, facility=None
+    ) -> "Message":
         """
         Create an hl7 ACK response :py:class:`hl7.Message`, per spec 2.9.2, for this message.
 

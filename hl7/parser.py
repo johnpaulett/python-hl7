@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
-from .containers import Factory
+from typing import List, Optional, Union
+
+from . import containers
+
+Content = Union[str, bytes]
 
 
-def parse(line, encoding="utf-8", factory=Factory):
+def parse(
+    line: Content, encoding: str = "utf-8", factory=containers.Factory
+) -> containers.Message:
     """Returns a instance of the :py:class:`hl7.Message` that allows
     indexed access to the data elements.
 
@@ -45,7 +51,7 @@ def parse(line, encoding="utf-8", factory=Factory):
     return _split(strmsg, plan)
 
 
-def _split(text, plan):
+def _split(text: str, plan: "_ParsePlan") -> Union[containers.Container, str]:
     """Recursive function to split the *text* into an n-deep list,
     according to the :py:class:`hl7._ParsePlan`.
     """
@@ -79,7 +85,7 @@ def _split(text, plan):
     return plan.container(data)
 
 
-def create_parse_plan(strmsg, factory=Factory):
+def create_parse_plan(strmsg: str, factory=containers.Factory) -> "_ParsePlan":
     """Creates a plan on how to parse the HL7 message according to
     the details stored within the message.
     """
@@ -127,7 +133,13 @@ class _ParsePlan(object):
 
     # field, component, repetition, escape, subcomponent
 
-    def __init__(self, separators, containers, esc, factory):
+    def __init__(
+        self,
+        separators: List[str],
+        containers: List[containers.Container],
+        esc: str,
+        factory: containers.Factory,
+    ):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
@@ -138,11 +150,11 @@ class _ParsePlan(object):
         self.factory = factory
 
     @property
-    def separator(self):
+    def separator(self) -> str:
         """Return the current separator to use based on the plan."""
         return self.separators[0]
 
-    def container(self, data):
+    def container(self, data) -> containers.Container:
         """Return an instance of the approriate container for the *data*
         as specified by the current plan.
         """
@@ -150,7 +162,7 @@ class _ParsePlan(object):
             self.separator, data, self.esc, self.separators, self.factory
         )
 
-    def next(self):
+    def next(self) -> Optional["_ParsePlan"]:
         """Generate the next level of the plan (essentially generates
         a copy of this plan with the level of the container and the
         seperator starting at the next index.
@@ -166,7 +178,7 @@ class _ParsePlan(object):
         # which indicates that we have nothing further.
         return None
 
-    def applies(self, text):
+    def applies(self, text: str) -> bool:
         """return True if the separator or those if the children are in the text"""
         for s in self.separators:
             if text.find(s) >= 0:

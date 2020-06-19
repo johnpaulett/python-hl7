@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
+from typing import List, Optional
 
 
 class Accessor(
@@ -19,13 +20,13 @@ class Accessor(
 
     def __new__(
         cls,
-        segment,
-        segment_num=1,
-        field_num=None,
-        repeat_num=None,
-        component_num=None,
-        subcomponent_num=None,
-    ):
+        segment: str,
+        segment_num: int = 1,
+        field_num: int = None,
+        repeat_num: int = None,
+        component_num: int = None,
+        subcomponent_num: int = None,
+    ) -> "Accessor":
         """Create a new instance of Accessor for *segment*. Index numbers start from 1."""
         return super(Accessor, cls).__new__(
             cls,
@@ -38,7 +39,7 @@ class Accessor(
         )
 
     @property
-    def key(self):
+    def key(self) -> str:
         """Return the string accessor key that represents this instance"""
         seg = (
             self.segment
@@ -57,11 +58,11 @@ class Accessor(
             if f is not None
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.key
 
     @classmethod
-    def parse_key(cls, key):
+    def parse_key(cls, key: str) -> "Accessor":
         """Create an Accessor by parsing an accessor key.
 
         The key is defined as:
@@ -85,7 +86,7 @@ class Accessor(
             |   S2  (component 2 counting from 1)
         """
 
-        def parse_part(keyparts, index, prefix):
+        def parse_part(keyparts: List[str], index: int, prefix: str) -> Optional[int]:
             if len(keyparts) > index:
                 num = keyparts[index]
                 if num[0].upper() == prefix:
