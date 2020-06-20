@@ -172,13 +172,19 @@ class ParseTest(unittest.TestCase):
     def test_escape(self):
         msg = hl7.parse(rep_sample_hl7)
 
+        # Escape Separators
         self.assertEqual(msg.escape('\\'), '\\E\\')
         self.assertEqual(msg.escape('|'), '\\F\\')
         self.assertEqual(msg.escape('^'), '\\S\\')
         self.assertEqual(msg.escape('&'), '\\T\\')
         self.assertEqual(msg.escape('~'), '\\R\\')
 
+        # Escape ASCII characters
+        self.assertEqual(msg.escape('asdf'), 'asdf')
+
+        # Escape non-ASCII characters
         self.assertEqual(msg.escape('áéíóú'), '\\Xe1\\\\Xe9\\\\Xed\\\\Xf3\\\\Xfa\\')
+        self.assertEqual(msg.escape('äsdf'), '\\Xe4\\sdf')
 
     def test_file(self):
         # Extract message from file
