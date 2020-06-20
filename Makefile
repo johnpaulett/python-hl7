@@ -32,5 +32,7 @@ lint:
 	# E501 -- hl7 sample messages can be long, ignore long lines in tests
 	$(BIN)/flake8 --ignore=E501 tests
 
-upload: build
-	$(PYTHON) setup.py sdist bdist_wheel register upload
+upload:
+	rm -rf dist
+	$(PYTHON) setup.py sdist bdist_wheel
+	twine upload dist/*

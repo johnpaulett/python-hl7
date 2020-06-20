@@ -31,7 +31,7 @@ setup(
     * Source Code: http://github.com/johnpaulett/python-hl7
     """,
     author='John Paulett',
-    author_email='john -at- paulett.org',
+    author_email='john@paulett.org',
     url='http://python-hl7.readthedocs.org',
     license='BSD',
     platforms=['POSIX', 'Windows'],
