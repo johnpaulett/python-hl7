@@ -49,6 +49,8 @@ format:
 	$(BIN)/black $(BLACK_ARGS) hl7 tests
 .PHONY: isort
 
-upload: build
-	$(PYTHON) setup.py sdist bdist_wheel register upload
+upload:
+	rm -rf dist
+	$(PYTHON) setup.py sdist bdist_wheel
+	twine upload dist/*
 .PHONY: upload
