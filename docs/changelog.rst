@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+0.3.5 - June 2020
+-----------------
+* Handle ASCII characters within :py:meth:`hl7.Message.escape` under Python 3.
+
+Thanks `Lucas Kahlert <https://github.com/f3anaro>`_!
+
+
 0.3.4 - June 2016
 -----------------
 * Fix bug under Python 3 when writing to stdout from `mllp_send`
