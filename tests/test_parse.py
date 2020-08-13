@@ -26,8 +26,8 @@ class ParseTest(TestCase):
         # MSH-9 is the message type
         self.assertEqual(msg[0][9], [[["ORU"], ["R01"]]])
         # Do it twice to make sure text coercion is idempotent
-        self.assertEqual(str(msg), sample_hl7.strip())
-        self.assertEqual(str(msg), sample_hl7.strip())
+        self.assertEqual(str(msg), sample_hl7)
+        self.assertEqual(str(msg), sample_hl7)
 
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
@@ -55,7 +55,7 @@ class ParseTest(TestCase):
         self.assertIsInstance(msg[3][0][0], str)
 
     def test_nonstandard_separators(self):
-        nonstd = "MSH$%~\\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L"
+        nonstd = "MSH$%~\\&$GHH LAB\rPID$$$555-44-4444$$EVERYWOMAN%EVE%E%%%L\r"
         msg = hl7.parse(nonstd)
 
         self.assertEqual(str(msg), nonstd)
