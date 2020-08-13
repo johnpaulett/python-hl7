@@ -11,3 +11,4 @@ coverage.xml
 /dist/
 /env/
 /.eggs/
+.vscode

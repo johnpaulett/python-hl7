@@ -587,6 +587,9 @@ class Message(Container):
 
         return ack
 
+    def __str__(self):
+        return super(Message, self).__str__() + self.separator
+
 
 class Segment(Container):
     """Second level of an HL7 message, which represents an HL7 Segment.
@@ -608,7 +611,7 @@ class Segment(Container):
                 + str(self[1])
                 + self.separator.join((str(x) for x in self[3:]))
             )
-        return self.separator.join((str(x) for x in self))
+        return super(Segment, self).__str__()
 
 
 class Field(Container):
