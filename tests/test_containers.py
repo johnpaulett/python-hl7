@@ -52,6 +52,18 @@ class MessageTest(TestCase):
         self.assertEqual(s[0][0:3], [["OBX"], ["1"], ["SN"]])
         self.assertEqual(s[1][0:3], [["OBX"], ["2"], ["FN"]])
 
+    def test_MSH_1_field(self):
+        msg = hl7.parse(sample_hl7)
+        f = msg["MSH.1"]
+        self.assertEqual(len(f), 1)
+        self.assertEqual(f, "|")
+
+    def test_MSH_2_field(self):
+        msg = hl7.parse(sample_hl7)
+        f = msg["MSH.2"]
+        self.assertEqual(len(f), 4)
+        self.assertEqual(f, "^~\\&")
+
     def test_get_slice(self):
         msg = hl7.parse(sample_hl7)
         s = msg.segments("OBX")[0]
