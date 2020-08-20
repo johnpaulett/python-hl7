@@ -205,14 +205,14 @@ class HL7StreamReader(MLLPStreamReader):
     async def readmessage(self):
         """Reads a full HL7 message from the stream.
 
-        This will return an hl7.containers.Message.
+        This will return an :py:class:`hl7.Message`.
 
         If limit is reached, ValueError will be raised. In that case, if
         block termination separator was found, complete line including separator
         will be removed from internal buffer. Else, internal buffer will be cleared. Limit is
         compared against part of the line without separator.
 
-        If an invalid MLLP block is encountered, InvalidBlockError will be
+        If an invalid MLLP block is encountered, :py:class:`hl7.asyncio.InvalidBlockError` will be
         raised.
         """
         block = await self.readblock()
@@ -245,6 +245,6 @@ class HL7StreamWriter(MLLPStreamWriter):
         self._encoding_errors = encoding_errors or 'strict'
 
     def writemessage(self, message):
-        """Writes an hl7.containers.Message to the stream.
+        """Writes an :py:class:`hl7.Message` to the stream.
         """
         self.writeblock(str(message).encode(self.encoding, self.encoding_errors))
