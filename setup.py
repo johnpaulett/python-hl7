@@ -36,10 +36,10 @@ setup(
         "Topic :: Scientific/Engineering :: Medical Science Apps.",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    packages=["hl7"],
+    packages=["hl7", "hl7.asyncio"],
     install_requires=[],
     test_suite="tests",
     tests_require=[],
-    entry_points={"console_scripts": ["mllp_send=hl7.client:mllp_send",],},
+    entry_points={"console_scripts": ["mllp_send=hl7.client:run_sender"]},
     zip_safe=True,
 )
