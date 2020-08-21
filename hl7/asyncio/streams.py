@@ -1,21 +1,33 @@
 from asyncio.coroutines import iscoroutine
 from asyncio.events import get_event_loop
 from asyncio.exceptions import LimitOverrunError
-from asyncio.streams import StreamReader, StreamReaderProtocol, StreamWriter, _DEFAULT_LIMIT
+from asyncio.streams import (
+    StreamReader,
+    StreamReaderProtocol,
+    StreamWriter,
+    _DEFAULT_LIMIT,
+)
 import warnings
 
 from hl7.asyncio.exceptions import InvalidBlockError
 from hl7.parser import parse as hl7_parse
 
 
-START_BLOCK = b'\x0b'
-END_BLOCK = b'\x1c'
-CARRIAGE_RETURN = b'\x0d'
+START_BLOCK = b"\x0b"
+END_BLOCK = b"\x1c"
+CARRIAGE_RETURN = b"\x0d"
 
 
-async def open_hl7_connection(host=None, port=None, *,
-                              loop=None, limit=_DEFAULT_LIMIT,
-                              encoding=None, encoding_errors=None, **kwds):
+async def open_hl7_connection(
+    host=None,
+    port=None,
+    *,
+    loop=None,
+    limit=_DEFAULT_LIMIT,
+    encoding=None,
+    encoding_errors=None,
+    **kwds
+):
     """A wrapper for create_connection() returning a (reader, writer) pair.
     The reader returned is a HL7StreamReader instance; the writer is a
     HL7StreamWriter instance.
@@ -31,20 +43,36 @@ async def open_hl7_connection(host=None, port=None, *,
     if loop is None:
         loop = get_event_loop()
     else:
-        warnings.warn("The loop argument is deprecated since Python 3.8, "
-                      "and scheduled for removal in Python 3.10.",
-                      DeprecationWarning, stacklevel=2)
-    reader = HL7StreamReader(limit=limit, loop=loop, encoding=encoding, encoding_errors=encoding_errors)
-    protocol = HL7StreamProtocol(reader, loop=loop, encoding=encoding, encoding_errors=encoding_errors)
-    transport, _ = await loop.create_connection(
-        lambda: protocol, host, port, **kwds)
-    writer = HL7StreamWriter(transport, protocol, reader, loop, encoding, encoding_errors)
+        warnings.warn(
+            "The loop argument is deprecated since Python 3.8, "
+            "and scheduled for removal in Python 3.10.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    reader = HL7StreamReader(
+        limit=limit, loop=loop, encoding=encoding, encoding_errors=encoding_errors
+    )
+    protocol = HL7StreamProtocol(
+        reader, loop=loop, encoding=encoding, encoding_errors=encoding_errors
+    )
+    transport, _ = await loop.create_connection(lambda: protocol, host, port, **kwds)
+    writer = HL7StreamWriter(
+        transport, protocol, reader, loop, encoding, encoding_errors
+    )
     return reader, writer
 
 
-async def start_hl7_server(client_connected_cb, host=None, port=None, *,
-                           loop=None, limit=_DEFAULT_LIMIT,
-                           encoding=None, encoding_errors=None, **kwds):
+async def start_hl7_server(
+    client_connected_cb,
+    host=None,
+    port=None,
+    *,
+    loop=None,
+    limit=_DEFAULT_LIMIT,
+    encoding=None,
+    encoding_errors=None,
+    **kwds
+):
     """Start a socket server, call back for each client connected.
     The first parameter, `client_connected_cb`, takes two parameters:
     client_reader, client_writer.  client_reader is a HL7StreamReader
@@ -65,21 +93,30 @@ async def start_hl7_server(client_connected_cb, host=None, port=None, *,
     if loop is None:
         loop = get_event_loop()
     else:
-        warnings.warn("The loop argument is deprecated since Python 3.8, "
-                      "and scheduled for removal in Python 3.10.",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "The loop argument is deprecated since Python 3.8, "
+            "and scheduled for removal in Python 3.10.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def factory():
-        reader = HL7StreamReader(limit=limit, loop=loop, encoding=encoding, encoding_errors=encoding_errors)
-        protocol = HL7StreamProtocol(reader, client_connected_cb,
-                                     loop=loop, encoding=encoding, encoding_errors=encoding_errors)
+        reader = HL7StreamReader(
+            limit=limit, loop=loop, encoding=encoding, encoding_errors=encoding_errors
+        )
+        protocol = HL7StreamProtocol(
+            reader,
+            client_connected_cb,
+            loop=loop,
+            encoding=encoding,
+            encoding_errors=encoding_errors,
+        )
         return protocol
 
     return await loop.create_server(factory, host, port, **kwds)
 
 
 class MLLPStreamReader(StreamReader):
-
     def __init__(self, limit=_DEFAULT_LIMIT, loop=None):
         super().__init__(limit, loop)
 
@@ -118,18 +155,19 @@ class MLLPStreamReader(StreamReader):
             block = await self.readuntil(sep)
         except LimitOverrunError as loe:
             if self._buffer.startswith(sep, loe.consumed):
-                del self._buffer[:loe.consumed + seplen]
+                del self._buffer[: loe.consumed + seplen]
             else:
                 self._buffer.clear()
             self._maybe_resume_transport()
             raise ValueError(loe.args[0])
         if not block or block[0:1] != START_BLOCK:
-            raise InvalidBlockError('Block does not begin with Start Block character <VT>')
+            raise InvalidBlockError(
+                "Block does not begin with Start Block character <VT>"
+            )
         return block[1:-2]
 
 
 class MLLPStreamWriter(StreamWriter):
-
     def __init__(self, transport, protocol, reader, loop):
         super().__init__(transport, protocol, reader, loop)
 
@@ -142,8 +180,14 @@ class MLLPStreamWriter(StreamWriter):
 
 
 class HL7StreamProtocol(StreamReaderProtocol):
-
-    def __init__(self, stream_reader, client_connected_cb=None, loop=None, encoding=None, encoding_errors=None):
+    def __init__(
+        self,
+        stream_reader,
+        client_connected_cb=None,
+        loop=None,
+        encoding=None,
+        encoding_errors=None,
+    ):
         super().__init__(stream_reader, client_connected_cb, loop)
         self._encoding = encoding
         self._encoding_errors = encoding_errors
@@ -151,12 +195,14 @@ class HL7StreamProtocol(StreamReaderProtocol):
     def connection_made(self, transport):
         if self._reject_connection:
             context = {
-                'message': ('An open stream was garbage collected prior to '
-                            'establishing network connection; '
-                            'call "stream.close()" explicitly.')
+                "message": (
+                    "An open stream was garbage collected prior to "
+                    "establishing network connection; "
+                    'call "stream.close()" explicitly.'
+                )
             }
             if self._source_traceback:
-                context['source_traceback'] = self._source_traceback
+                context["source_traceback"] = self._source_traceback
             self._loop.call_exception_handler(context)
             transport.abort()
             return
@@ -164,22 +210,26 @@ class HL7StreamProtocol(StreamReaderProtocol):
         reader = self._stream_reader
         if reader is not None:
             reader.set_transport(transport)
-        self._over_ssl = transport.get_extra_info('sslcontext') is not None
+        self._over_ssl = transport.get_extra_info("sslcontext") is not None
         if self._client_connected_cb is not None:
-            self._stream_writer = HL7StreamWriter(transport, self,
-                                                  reader,
-                                                  self._loop,
-                                                  self._encoding, self._encoding_errors)
-            res = self._client_connected_cb(reader,
-                                            self._stream_writer)
+            self._stream_writer = HL7StreamWriter(
+                transport,
+                self,
+                reader,
+                self._loop,
+                self._encoding,
+                self._encoding_errors,
+            )
+            res = self._client_connected_cb(reader, self._stream_writer)
             if iscoroutine(res):
                 self._loop.create_task(res)
             self._strong_reader = None
 
 
 class HL7StreamReader(MLLPStreamReader):
-
-    def __init__(self, limit=_DEFAULT_LIMIT, loop=None, encoding=None, encoding_errors=None):
+    def __init__(
+        self, limit=_DEFAULT_LIMIT, loop=None, encoding=None, encoding_errors=None
+    ):
         super().__init__(limit=limit, loop=loop)
         self.encoding = encoding
         self.encoding_errors = encoding_errors
@@ -191,7 +241,7 @@ class HL7StreamReader(MLLPStreamReader):
     @encoding.setter
     def encoding(self, encoding):
         assert not encoding or isinstance(encoding, str)
-        self._encoding = encoding or 'ascii'
+        self._encoding = encoding or "ascii"
 
     @property
     def encoding_errors(self):
@@ -200,7 +250,7 @@ class HL7StreamReader(MLLPStreamReader):
     @encoding_errors.setter
     def encoding_errors(self, encoding_errors):
         assert not encoding_errors or isinstance(encoding_errors, str)
-        self._encoding_errors = encoding_errors or 'strict'
+        self._encoding_errors = encoding_errors or "strict"
 
     async def readmessage(self):
         """Reads a full HL7 message from the stream.
@@ -220,8 +270,9 @@ class HL7StreamReader(MLLPStreamReader):
 
 
 class HL7StreamWriter(MLLPStreamWriter):
-
-    def __init__(self, transport, protocol, reader, loop, encoding=None, encoding_errors=None):
+    def __init__(
+        self, transport, protocol, reader, loop, encoding=None, encoding_errors=None
+    ):
         super().__init__(transport, protocol, reader, loop)
         self.encoding = encoding
         self.encoding_errors = encoding_errors
@@ -233,7 +284,7 @@ class HL7StreamWriter(MLLPStreamWriter):
     @encoding.setter
     def encoding(self, encoding):
         assert not encoding or isinstance(encoding, str)
-        self._encoding = encoding or 'ascii'
+        self._encoding = encoding or "ascii"
 
     @property
     def encoding_errors(self):
@@ -242,7 +293,7 @@ class HL7StreamWriter(MLLPStreamWriter):
     @encoding_errors.setter
     def encoding_errors(self, encoding_errors):
         assert not encoding_errors or isinstance(encoding_errors, str)
-        self._encoding_errors = encoding_errors or 'strict'
+        self._encoding_errors = encoding_errors or "strict"
 
     def writemessage(self, message):
         """Writes an :py:class:`hl7.Message` to the stream.
