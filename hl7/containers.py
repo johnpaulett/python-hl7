@@ -573,6 +573,7 @@ class Message(Container):
         ack.assign_field("ACK", "MSH", 1, 9, 1, 1)
         # Copy trigger event from source
         ack.assign_field(str(source_msh(9)(1)(2)), "MSH", 1, 9, 1, 2)
+        ack.assign_field("ACK", "MSH", 1, 9, 1, 3)
         ack.assign_field(
             message_id if message_id is not None else generate_message_control_id(),
             "MSH",
