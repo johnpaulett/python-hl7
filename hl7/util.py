@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import datetime
 import logging
-import random
 import string
+from uuid import uuid4
 
 logger = logging.getLogger(__file__)
 
@@ -57,14 +56,6 @@ alphanumerics = string.ascii_uppercase + string.digits
 
 
 def generate_message_control_id():
-    """Generate a unique 20 character message id.
-
-    See http://www.hl7resources.com/Public/index.html?a55433.htm
+    """Generate a 32 character uuid hex message id.
     """
-    d = datetime.datetime.utcnow()
-    # Strip off the decade, ID only has to be unique for 3 years.
-    # So now we have a 16 char timestamp.
-    timestamp = d.strftime("%y%j%H%M%S%f")[1:]
-    # Add 4 chars of uniqueness
-    unique = "".join(random.sample(alphanumerics, 4))
-    return timestamp + unique
+    return uuid4().hex

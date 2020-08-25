@@ -69,7 +69,7 @@ class MessageTest(TestCase):
         self.assertNotEqual(msg["MSH.10"], ack["MSH.10"])
         self.assertEqual("AA", ack["MSA.1"])
         self.assertEqual(msg["MSH.10"], ack["MSA.2"])
-        self.assertEqual(20, len(ack["MSH.10"]))
+        self.assertEqual(32, len(ack["MSH.10"]))
         self.assertEqual(msg["MSH.5"], ack["MSH.3"])
         self.assertEqual(msg["MSH.6"], ack["MSH.4"])
         self.assertEqual(msg["MSH.3"], ack["MSH.5"])
