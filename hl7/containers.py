@@ -588,6 +588,8 @@ class Message(Container):
         return ack
 
     def __str__(self):
+        # Per spec, Message Construction Rules, Section 2.6 (v2.8), Message ends
+        # with the carriage return
         return super(Message, self).__str__() + self.separator
 
 
