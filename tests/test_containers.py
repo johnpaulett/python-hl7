@@ -10,7 +10,7 @@ from .samples import sample_hl7
 class ContainerTest(TestCase):
     def test_unicode(self):
         msg = hl7.parse(sample_hl7)
-        self.assertEqual(str(msg), sample_hl7.strip())
+        self.assertEqual(str(msg), sample_hl7)
         self.assertEqual(
             str(msg[3][3]), "1554-5^GLUCOSE^POST 12H CFST:MCNC:PT:SER/PLAS:QN"
         )

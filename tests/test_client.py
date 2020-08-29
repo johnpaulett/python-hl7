@@ -65,7 +65,7 @@ class MLLPClientTest(TestCase):
         self.assertEqual(result, "thanks")
 
         self.client.socket.send.assert_called_once_with(
-            b"\x0bMSH|^~\\&|GHH LAB|ELAB\x1c\x0d"
+            b"\x0bMSH|^~\\&|GHH LAB|ELAB\r\x1c\x0d"
         )
 
     def test_context_manager(self):
