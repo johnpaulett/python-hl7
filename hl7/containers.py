@@ -236,7 +236,11 @@ class Message(Container):
         if not isinstance(rep, Repetition):
             # leaf
             if component_num == 1 and subcomponent_num == 1:
-                return rep if accessor.segment == 'MSH' and accessor.field_num in (1, 2) else self.unescape(rep)
+                return (
+                    rep
+                    if accessor.segment == "MSH" and accessor.field_num in (1, 2)
+                    else self.unescape(rep)
+                )
             raise IndexError(
                 "Field reaches leaf node before completing path: {0}".format(
                     accessor.key
