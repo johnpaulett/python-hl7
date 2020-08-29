@@ -170,7 +170,7 @@ Create a response message.
     >>> response['MSH.F2.R1'] = SEP[1:]
 
     >>> str(response)
-    'MSH|^~\\&|\rMSA'
+    'MSH|^~\\&|\rMSA\r'
 
 Assign values into the message. You can only assign a string into the message (i.e. a leaf
 of the tree).
@@ -185,7 +185,7 @@ of the tree).
     >>> response['MSA.F3.R1'] = 'Application Message'
 
     >>> str(response)
-    'MSH|^~\\&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message'
+    'MSH|^~\\&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message\r'
 
 You can also assign values using :py:class:`hl7.Accessor`, or by directly calling
 :py:meth:`hl7.Message.assign_field`. The following are all equivalent:
