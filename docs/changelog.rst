@@ -10,7 +10,7 @@ Changelog
 * Converted code style to use black.
 * Handle ASCII characters within :py:meth:`hl7.Message.escape` under Python 3.
 * Message now ends with trailing carriage return, to be consistent with Message
-  Construction Rules (Section 2.6, v2.8)
+  Construction Rules (Section 2.6, v2.8). [`johnpaulett/python-hl7#26 <https://github.com/johnpaulett/python-hl7/issues/26>`]
 
 Thanks `Lucas Kahlert <https://github.com/f3anaro>`_ &
 `Joseph Wortmann <https://github.com/joseph-wortmann>`_!
