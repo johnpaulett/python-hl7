@@ -65,6 +65,7 @@ class MessageTest(TestCase):
         self.assertEqual(msg["MSH.2"], ack["MSH.2"])
         self.assertEqual("ACK", ack["MSH.9.1.1"])
         self.assertEqual(msg["MSH.9.1.2"], ack["MSH.9.1.2"])
+        self.assertEqual("ACK", ack["MSH.9.1.3"])
         self.assertNotEqual(msg["MSH.7"], ack["MSH.7"])
         self.assertNotEqual(msg["MSH.10"], ack["MSH.10"])
         self.assertEqual("AA", ack["MSA.1"])
