@@ -1,11 +1,10 @@
-import asyncio
 import io
 import os.path
+import socket
 import sys
 from optparse import OptionParser
 
 import hl7
-from hl7.asyncio import open_hl7_connection
 
 SB = b"\x0b"  # <SB>, vertical tab
 EB = b"\x1c"  # <EB>, file separator
@@ -14,6 +13,80 @@ CR = b"\x0d"  # <CR>, \r
 FF = b"\x0c"  # <FF>, new page form feed
 
 RECV_BUFFER = 4096
+
+
+class MLLPException(Exception):
+    pass
+
+
+class MLLPClient(object):
+    """
+    A basic, blocking, HL7 MLLP client based upon :py:mod:`socket`.
+
+    MLLPClient implements two methods for sending data to the server.
+
+    * :py:meth:`MLLPClient.send` for raw data that already is wrapped in the
+      appropriate MLLP container (e.g. *<SB>message<EB><CR>*).
+    * :py:meth:`MLLPClient.send_message` will wrap the message in the MLLP
+      container
+
+    Can be used by the ``with`` statement to ensure :py:meth:`MLLPClient.close`
+    is called::
+
+        with MLLPClient(host, port) as client:
+            client.send_message('MSH|...')
+
+    MLLPClient takes an optional ``encoding`` parameter, defaults to UTF-8,
+    for encoding unicode messages [#]_.
+
+    .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
+    """
+
+    def __init__(self, host, port, encoding="utf-8"):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((host, port))
+        self.encoding = encoding
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, trackeback):
+        self.close()
+
+    def close(self):
+        """Release the socket connection"""
+        self.socket.close()
+
+    def send_message(self, message):
+        """Wraps a byte string, unicode string, or :py:class:`hl7.Message`
+        in a MLLP container and send the message to the server
+
+        If message is a byte string, we assume it is already encoded properly.
+        If message is unicode or  :py:class:`hl7.Message`, it will be encoded
+        according to  :py:attr:`hl7.client.MLLPClient.encoding`
+
+        """
+        if isinstance(message, bytes):
+            # Assume we have the correct encoding
+            binary = message
+        else:
+            # Encode the unicode message into a bytestring
+            if isinstance(message, hl7.Message):
+                message = str(message)
+            binary = message.encode(self.encoding)
+
+        # wrap in MLLP message container
+        data = SB + binary + EB + CR
+        return self.send(data)
+
+    def send(self, data):
+        """Low-level, direct access to the socket.send (data must be already
+        wrapped in an MLLP container).  Blocks until the server returns.
+        """
+        # upload the data
+        self.socket.send(data)
+        # wait for the ACK/NACK
+        return self.socket.recv(RECV_BUFFER)
 
 
 # wrappers to make testing easier
@@ -58,7 +131,7 @@ def read_stream(stream):
             yield m.strip(SB + CR)
 
     if len(_buffer.strip()) > 0:
-        raise Exception("buffer not terminated: %s" % _buffer)
+        raise MLLPException("buffer not terminated: %s" % _buffer)
 
 
 def read_loose(stream):
@@ -92,7 +165,7 @@ def read_loose(stream):
         yield START_BLOCK + m
 
 
-async def mllp_send():
+def mllp_send():
     """Command line tool to send messages to an MLLP server"""
     # set up the command line options
     script_name = os.path.basename(sys.argv[0])
@@ -143,6 +216,8 @@ async def mllp_send():
     (options, args) = parser.parse_args()
 
     if options.version:
+        import hl7
+
         stdout(hl7.__version__)
         return
 
@@ -170,24 +245,16 @@ async def mllp_send():
 
         stream = stdin()
 
-    hl7_reader, hl7_writer = await open_hl7_connection(host, options.port)
+    with MLLPClient(host, options.port) as client:
+        message_stream = (
+            read_stream(stream) if not options.loose else read_loose(stream)
+        )
 
-    for message in read_stream(stream) if not options.loose else read_loose(stream):
-        if isinstance(message, (bytes, bytearray)):
-            message = message.decode()
-        hl7_writer.writemessage(hl7.parse(message))
-        await hl7_writer.drain()
-        ack = await hl7_reader.readmessage()
-        if options.verbose:
-            stdout(str(ack))
-
-    hl7_writer.close()
-    await hl7_writer.wait_closed()
-
-
-def run_sender():
-    asyncio.run(mllp_send())
+        for message in message_stream:
+            result = client.send_message(message)
+            if options.verbose:
+                stdout(result)
 
 
 if __name__ == "__main__":
-    run_sender()
+    mllp_send()
