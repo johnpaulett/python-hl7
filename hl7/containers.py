@@ -542,7 +542,9 @@ class Message(Container):
 
         See http://www.hl7standards.com/blog/2007/02/01/ack-message-original-mode-acknowledgement/
 
-        ``ack_code`` options are one of `AA` (accept), `AR` (reject), `AE` (error)
+        ``ack_code`` options are one of `AA` (Application Accept), `AR` (Application Reject),
+        `AE` (Application Error), `CA` (Commit Accept - Enhanced Mode),
+        `CR` (Commit Reject - Enhanced Mode), or `CE` (Commit Error - Enhanced Mode)
         (see HL7 Table 0008 - Acknowledgment Code)
         ``message_id`` control message ID for ACK, defaults to unique generated ID
         ``application`` name of sending application, defaults to receiving application of message
@@ -577,6 +579,7 @@ class Message(Container):
         ack.assign_field("ACK", "MSH", 1, 9, 1, 1)
         # Copy trigger event from source
         ack.assign_field(str(source_msh(9)(1)(2)), "MSH", 1, 9, 1, 2)
+        ack.assign_field("ACK", "MSH", 1, 9, 1, 3)
         ack.assign_field(
             message_id if message_id is not None else generate_message_control_id(),
             "MSH",
