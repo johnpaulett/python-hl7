@@ -4,6 +4,9 @@ from .streams import (
     start_hl7_server,
     HL7StreamReader,
     HL7StreamWriter,
+    HL7StreamProtocol,
+    MLLPStreamReader,
+    MLLPStreamWriter,
 )
 
 __all__ = [
