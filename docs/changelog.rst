@@ -3,8 +3,8 @@ Changelog
 
 .. _changelog-0-4-0:
 
-0.4.0 - unreleased
-------------------
+0.4.0 - September 2020
+----------------------
 
 * Message now ends with trailing carriage return, to be consistent with Message
   Construction Rules (Section 2.6, v2.8). [`python-hl7#26 <https://github.com/johnpaulett/python-hl7/issues/26>`]
