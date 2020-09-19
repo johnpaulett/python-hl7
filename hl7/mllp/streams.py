@@ -28,17 +28,20 @@ async def open_hl7_connection(
     encoding_errors=None,
     **kwds
 ):
-    """A wrapper for create_connection() returning a (reader, writer) pair.
-    The reader returned is a HL7StreamReader instance; the writer is a
-    HL7StreamWriter instance.
+    """A wrapper for `loop.create_connection()` returning a (reader, writer) pair.
+    
+    The reader returned is a :py:class:`hl7.mllp.HL7StreamReader` instance; the writer is a
+    :py:class:`hl7.mllp.HL7StreamWriter` instance.
+    
     The arguments are all the usual arguments to create_connection()
-    except protocol_factory; most common are positional host and port,
+    except `protocol_factory`; most common are positional `host` and `port`,
     with various optional keyword arguments following.
-    Additional optional keyword arguments are loop (to set the event loop
-    instance to use), limit (to set the buffer limit passed to the
-    HL7StreamReader), encoding (to set the encoding on the HL7StreamReader
-    and HL7StreamWriter) and encoding_errors (to set the encoding_errors on the HL7StreamReader
-    and HL7StreamWriter).
+
+    Additional optional keyword arguments are `loop` (to set the event loop
+    instance to use), `limit` (to set the buffer limit passed to the
+    :py:class:`hl7.mllp.HL7StreamReader`), `encoding` (to set the encoding on the :py:class:`hl7.mllp.HL7StreamReader`
+    and :py:class:`hl7.mllp.HL7StreamWriter`) and `encoding_errors` (to set the encoding_errors on the :py:class:`hl7.mllp.HL7StreamReader`
+    and :py:class:`hl7.mllp.HL7StreamWriter`).
     """
     if loop is None:
         loop = get_event_loop()
@@ -74,21 +77,27 @@ async def start_hl7_server(
     **kwds
 ):
     """Start a socket server, call back for each client connected.
+
     The first parameter, `client_connected_cb`, takes two parameters:
-    client_reader, client_writer.  client_reader is a HL7StreamReader
-    object, while client_writer is a HL7StreamWriter object.  This
+    `client_reader`, `client_writer`.  `client_reader` is a
+    :py:class:`hl7.mllp.HL7StreamReader` object, while `client_writer` 
+    is a :py:class:`hl7.mllp.HL7StreamWriter` object.  This
     parameter can either be a plain callback function or a coroutine;
     if it is a coroutine, it will be automatically converted into a
-    Task.
+    `Task`.
+
     The rest of the arguments are all the usual arguments to
-    loop.create_server() except protocol_factory; most common are
-    positional host and port, with various optional keyword arguments
-    following.  The return value is the same as loop.create_server().
-    Additional optional keyword arguments are loop (to set the event loop
-    instance to use) and limit (to set the buffer limit passed to the
+    `loop.create_server()` except `protocol_factory`; most common are
+    positional `host` and `port`, with various optional keyword arguments
+    following.
+    
+    The return value is the same as `loop.create_server()`.
+    Additional optional keyword arguments are `loop` (to set the event loop
+    instance to use) and `limit` (to set the buffer limit passed to the
     StreamReader).
-    The return value is the same as loop.create_server(), i.e. a
-    Server object which can be used to stop the service.
+
+    The return value is the same as `loop.create_server()`, i.e. a
+    `Server` object which can be used to stop the service.
     """
     if loop is None:
         loop = get_event_loop()
@@ -257,7 +266,7 @@ class HL7StreamReader(MLLPStreamReader):
 
         This will return an :py:class:`hl7.Message`.
 
-        If limit is reached, ValueError will be raised. In that case, if
+        If `limit` is reached, `ValueError` will be raised. In that case, if
         block termination separator was found, complete line including separator
         will be removed from internal buffer. Else, internal buffer will be cleared. Limit is
         compared against part of the line without separator.
