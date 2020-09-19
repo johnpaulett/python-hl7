@@ -57,3 +57,17 @@ MLLP Network Client
 .. autoclass:: hl7.client.MLLPClient
    :members: send_message, send, close
 
+MLLP Asyncio
+------------
+
+.. autofunction:: hl7.mllp.open_hl7_connection
+
+.. autofunction:: hl7.mllp.start_hl7_server
+
+.. autoclass:: hl7.mllp.HL7StreamReader
+   :members: readmessage
+
+.. autoclass:: hl7.mllp.HL7StreamWriter
+   :members: writemessage
+
+.. autoclass:: hl7.mllp.InvalidBlockError

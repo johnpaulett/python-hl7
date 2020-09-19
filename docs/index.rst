@@ -259,6 +259,7 @@ Contents
 
    api
    mllp_send
+   mllp
    accessors
    contribute
    changelog
