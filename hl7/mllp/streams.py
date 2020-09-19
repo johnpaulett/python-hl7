@@ -9,7 +9,7 @@ from asyncio.streams import (
 )
 import warnings
 
-from hl7.asyncio.exceptions import InvalidBlockError
+from hl7.mllp.exceptions import InvalidBlockError
 from hl7.parser import parse as hl7_parse
 
 
@@ -262,7 +262,7 @@ class HL7StreamReader(MLLPStreamReader):
         will be removed from internal buffer. Else, internal buffer will be cleared. Limit is
         compared against part of the line without separator.
 
-        If an invalid MLLP block is encountered, :py:class:`hl7.asyncio.InvalidBlockError` will be
+        If an invalid MLLP block is encountered, :py:class:`hl7.mllp.InvalidBlockError` will be
         raised.
         """
         block = await self.readblock()

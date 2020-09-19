@@ -4,7 +4,7 @@ from unittest.mock import create_autospec
 import asyncio
 import asyncio.streams
 import hl7
-import hl7.asyncio
+import hl7.mllp
 
 
 START_BLOCK = b"\x0b"
@@ -17,10 +17,10 @@ class MLLPStreamWriterTest(IsolatedAsyncioTestCase):
         self.transport = create_autospec(asyncio.Transport)
 
     async def asyncSetUp(self):
-        self.writer = hl7.asyncio.MLLPStreamWriter(
+        self.writer = hl7.mllp.MLLPStreamWriter(
             self.transport,
             create_autospec(asyncio.streams.StreamReaderProtocol),
-            create_autospec(hl7.asyncio.MLLPStreamReader),
+            create_autospec(hl7.mllp.MLLPStreamReader),
             asyncio.get_running_loop(),
         )
 
@@ -33,7 +33,7 @@ class MLLPStreamWriterTest(IsolatedAsyncioTestCase):
 
 class MLLPStreamReaderTest(IsolatedAsyncioTestCase):
     def setUp(self):
-        self.reader = hl7.asyncio.MLLPStreamReader()
+        self.reader = hl7.mllp.MLLPStreamReader()
 
     async def test_readblock(self):
         self.reader.feed_data(START_BLOCK + b"foobar" + END_BLOCK + CARRIAGE_RETURN)
@@ -51,9 +51,9 @@ class HL7StreamWriterTest(IsolatedAsyncioTestCase):
 
         reader = create_autospec(asyncio.streams.StreamReader)
 
-        self.writer = hl7.asyncio.HL7StreamWriter(
+        self.writer = hl7.mllp.HL7StreamWriter(
             self.transport,
-            hl7.asyncio.HL7StreamProtocol(reader, mock_cb, asyncio.get_running_loop()),
+            hl7.mllp.HL7StreamProtocol(reader, mock_cb, asyncio.get_running_loop()),
             reader,
             asyncio.get_running_loop(),
         )
@@ -70,7 +70,7 @@ class HL7StreamWriterTest(IsolatedAsyncioTestCase):
 
 class HL7StreamReaderTest(IsolatedAsyncioTestCase):
     def setUp(self):
-        self.reader = hl7.asyncio.HL7StreamReader()
+        self.reader = hl7.mllp.HL7StreamReader()
 
     async def test_readblock(self):
         message = "MSH|^~\&|LABADT|DH|EPICADT|DH|201301011228||ACK^A01^ACK|HL7ACK00001|P|2.3\r"
