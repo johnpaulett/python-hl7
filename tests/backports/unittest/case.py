@@ -1,26 +1,26 @@
+# flake8: noqa
 # TODO Remove once 3.7 support is dropped
 # .async_case.IsolatedAsyncioTestCase required Python 3.8 TestCase functionality
 # From https://github.com/python/cpython/blob/3.8/Lib/unittest/case.py
 
-import sys
-import functools
+import collections
+import contextlib
 import difflib
+import functools
 import logging
 import pprint
 import re
-import warnings
-import collections
-import contextlib
+import sys
 import traceback
 import types
-
+import warnings
 from unittest import result
 from unittest.util import (
-    strclass,
-    safe_repr,
+    _common_shorten_repr,
     _count_diff_all_purpose,
     _count_diff_hashable,
-    _common_shorten_repr,
+    safe_repr,
+    strclass,
 )
 
 __unittest = True
