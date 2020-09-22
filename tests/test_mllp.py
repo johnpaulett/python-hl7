@@ -1,11 +1,10 @@
+import asyncio
+import asyncio.streams
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import create_autospec
 
-import asyncio
-import asyncio.streams
 import hl7
 import hl7.mllp
-
 
 START_BLOCK = b"\x0b"
 END_BLOCK = b"\x1c"
@@ -59,7 +58,7 @@ class HL7StreamWriterTest(IsolatedAsyncioTestCase):
         )
 
     def test_writemessage(self):
-        message = "MSH|^~\&|LABADT|DH|EPICADT|DH|201301011228||ACK^A01^ACK|HL7ACK00001|P|2.3\r"
+        message = r"MSH|^~\&|LABADT|DH|EPICADT|DH|201301011228||ACK^A01^ACK|HL7ACK00001|P|2.3\r"
         message += "MSA|AA|HL7MSG00001\r"
         hl7_message = hl7.parse(message)
         self.writer.writemessage(hl7_message)
@@ -73,7 +72,7 @@ class HL7StreamReaderTest(IsolatedAsyncioTestCase):
         self.reader = hl7.mllp.HL7StreamReader()
 
     async def test_readblock(self):
-        message = "MSH|^~\&|LABADT|DH|EPICADT|DH|201301011228||ACK^A01^ACK|HL7ACK00001|P|2.3\r"
+        message = r"MSH|^~\&|LABADT|DH|EPICADT|DH|201301011228||ACK^A01^ACK|HL7ACK00001|P|2.3\r"
         message += "MSA|AA|HL7MSG00001\r"
         self.reader.feed_data(
             START_BLOCK + message.encode() + END_BLOCK + CARRIAGE_RETURN
