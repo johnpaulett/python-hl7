@@ -24,7 +24,12 @@ setup(
     license="BSD",
     platforms=["POSIX", "Windows"],
     keywords=[
-        "HL7", "Health Level 7", "healthcare", "health care", "medical record", "mllp"
+        "HL7",
+        "Health Level 7",
+        "healthcare",
+        "health care",
+        "medical record",
+        "mllp",
     ],
     classifiers=[
         "License :: OSI Approved :: BSD License",
