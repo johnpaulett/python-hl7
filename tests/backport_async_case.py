@@ -287,7 +287,14 @@ PERFORMANCE OF THIS SOFTWARE.
 
 import asyncio
 import inspect
+import sys
 from unittest import TestCase
+
+# asyncio.all_tasks added in 3.7, use backport for older code
+if sys.version_info.major <= 3 and sys.version_info.minor < 7:
+    all_tasks = asyncio.Task.all_tasks
+else:
+    all_tasks = asyncio.all_tasks
 
 
 class IsolatedAsyncioTestCase(TestCase):
@@ -412,7 +419,7 @@ class IsolatedAsyncioTestCase(TestCase):
 
         try:
             # cancel all tasks
-            to_cancel = asyncio.all_tasks(loop)
+            to_cancel = all_tasks(loop)
             if not to_cancel:
                 return
 
