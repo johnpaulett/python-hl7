@@ -1,4 +1,6 @@
-"""Test case implementation"""
+# TODO Remove once 3.7 support is dropped
+# .async_case.IsolatedAsyncioTestCase required Python 3.8 TestCase functionality
+# From https://github.com/python/cpython/blob/3.8/Lib/unittest/case.py
 
 import sys
 import functools

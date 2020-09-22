@@ -8,7 +8,7 @@ import hl7.mllp
 
 # IsolatedAsyncioTestCase added in 3.8, use backport for older code
 if sys.version_info.major <= 3 and sys.version_info.minor < 8:
-    from .backport_async_case import IsolatedAsyncioTestCase
+    from .backports.unittest.async_case import IsolatedAsyncioTestCase
 else:
     from unittest import IsolatedAsyncioTestCase
 
