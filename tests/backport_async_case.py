@@ -288,7 +288,7 @@ PERFORMANCE OF THIS SOFTWARE.
 import asyncio
 import inspect
 import sys
-from unittest import TestCase
+from .backport_case import TestCase
 
 # asyncio.all_tasks added in 3.7, use backport for older code
 if sys.version_info.major <= 3 and sys.version_info.minor < 7:
