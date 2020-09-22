@@ -1,11 +1,11 @@
 import warnings
 from asyncio import (
-    iscoroutine,
-    get_event_loop,
     LimitOverrunError,
     StreamReader,
     StreamReaderProtocol,
     StreamWriter,
+    get_event_loop,
+    iscoroutine,
 )
 from asyncio.streams import _DEFAULT_LIMIT
 

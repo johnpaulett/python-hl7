@@ -287,7 +287,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 import asyncio
 import inspect
-
 from unittest import TestCase
 
 
@@ -328,7 +327,7 @@ class IsolatedAsyncioTestCase(TestCase):
     async def asyncTearDown(self):
         pass
 
-    def addAsyncCleanup(self, func, /, *args, **kwargs):
+    def addAsyncCleanup(self, func, *args, **kwargs):
         # A trivial trampoline to addCleanup()
         # the function exists because it has a different semantics
         # and signature:
@@ -357,7 +356,7 @@ class IsolatedAsyncioTestCase(TestCase):
     def _callCleanup(self, function, *args, **kwargs):
         self._callMaybeAsync(function, *args, **kwargs)
 
-    def _callAsync(self, func, /, *args, **kwargs):
+    def _callAsync(self, func, *args, **kwargs):
         assert self._asyncioTestLoop is not None
         ret = func(*args, **kwargs)
         assert inspect.isawaitable(ret)
@@ -365,7 +364,7 @@ class IsolatedAsyncioTestCase(TestCase):
         self._asyncioCallsQueue.put_nowait((fut, ret))
         return self._asyncioTestLoop.run_until_complete(fut)
 
-    def _callMaybeAsync(self, func, /, *args, **kwargs):
+    def _callMaybeAsync(self, func, *args, **kwargs):
         assert self._asyncioTestLoop is not None
         ret = func(*args, **kwargs)
         if inspect.isawaitable(ret):
