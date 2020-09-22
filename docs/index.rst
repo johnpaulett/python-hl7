@@ -26,11 +26,8 @@ HL7 message as an n-dimensional list. Specifically, the subclasses of
 :py:class:`hl7.Segment`, :py:class:`hl7.Field`, :py:class:`hl7.Repetition`.
 and :py:class:`hl7.Component`.
 
-.. warning::
-
-  :ref:`0.3.0 <changelog-0-3-0>` breaks backwards compatibility by correcting
-  the indexing of the MSH segment and the introducing improved parsing down to
-  the repetition and sub-component level.
+python-hl7 includes experimental asyncio-based HL7 MLLP support in :doc:`mllp`,
+which aims to replace `txHL7 <https://txhl7.readthedocs.io/>`_.
 
 
 .. image::

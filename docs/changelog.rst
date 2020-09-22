@@ -1,6 +1,17 @@
 Changelog
 =========
 
+
+0.4.1 - September 2020
+----------------------
+
+* Experimental asyncio-based HL7 MLLP support. :doc:`mllp`, via
+  :py:func:`hl7.mllp.open_hl7_connection` and
+  :py:func:`hl7.mllp.start_hl7_server`
+
+Thanks `Joseph Wortmann <https://github.com/joseph-wortmann>`_!
+
+
 .. _changelog-0-4-0:
 
 0.4.0 - September 2020

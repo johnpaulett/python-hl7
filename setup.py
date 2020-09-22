@@ -23,7 +23,9 @@ setup(
     url="http://python-hl7.readthedocs.org",
     license="BSD",
     platforms=["POSIX", "Windows"],
-    keywords=["HL7", "Health Level 7", "healthcare", "health care", "medical record"],
+    keywords=[
+        "HL7", "Health Level 7", "healthcare", "health care", "medical record", "mllp"
+    ],
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
