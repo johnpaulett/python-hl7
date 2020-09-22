@@ -6,13 +6,14 @@ PIP = $(BIN)/pip
 
 SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
 
-env: requirements.txt
+env: requirements.txt setup.py
 	test -f $(PYTHON) || virtualenv env
 	$(PIP) install -U -r requirements.txt
 	$(PYTHON) setup.py develop
 
 tests: env
 	$(BIN)/tox
+.PHONY: tests
 
 # Alias for old-style invocation
 test: tests
@@ -30,6 +31,13 @@ build:
 clean-docs:
 	cd docs; make clean
 .PHONY: clean-docs
+
+clean: clean-docs
+	rm -rf *.egg-info .mypy_cache coverage.xml env
+	find . -name "*.pyc" -type f -delete
+	find . -type d -empty -delete
+.PHONY: clean-python
+
 
 docs:
 	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
