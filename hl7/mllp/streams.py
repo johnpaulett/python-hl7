@@ -1,13 +1,13 @@
 import warnings
-from asyncio.coroutines import iscoroutine
-from asyncio.events import get_event_loop
-from asyncio.exceptions import LimitOverrunError
-from asyncio.streams import (
-    _DEFAULT_LIMIT,
+from asyncio import (
+    iscoroutine,
+    get_event_loop,
+    LimitOverrunError,
     StreamReader,
     StreamReaderProtocol,
     StreamWriter,
 )
+from asyncio.streams import _DEFAULT_LIMIT
 
 from hl7.mllp.exceptions import InvalidBlockError
 from hl7.parser import parse as hl7_parse
