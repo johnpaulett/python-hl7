@@ -20,7 +20,7 @@ from .containers import (
 )
 from .datatypes import parse_datetime
 from .parser import parse
-from .util import generate_message_control_id, isfile, ishl7, split_file
+from .util import generate_message_control_id, isbatch, isfile, ishl7, split_file
 from .version import get_version
 
 __version__ = get_version()
@@ -47,6 +47,7 @@ __all__ = [
     "Factory",
     "Accessor",
     "ishl7",
+    "isbatch"
     "isfile",
     "split_file",
     "generate_message_control_id",
