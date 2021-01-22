@@ -53,6 +53,76 @@ class Container(Sequence):
         self.separators = separators
         self.factory = factory if factory is not None else Factory
 
+    def create_file(self, seq):
+        """Create a new :py:class:`hl7.File` compatible with this container"""
+        return self.factory.create_file(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_batch(self, seq):
+        """Create a new :py:class:`hl7.Batch` compatible with this container"""
+        return self.factory.create_batch(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_message(self, seq):
+        """Create a new :py:class:`hl7.Message` compatible with this container"""
+        return self.factory.create_message(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_segment(self, seq):
+        """Create a new :py:class:`hl7.Segment` compatible with this container"""
+        return self.factory.create_segment(
+            self.separators[1],
+            seq,
+            esc=self.esc,
+            separators=self.separators[1:],
+            factory=self.factory,
+        )
+
+    def create_field(self, seq):
+        """Create a new :py:class:`hl7.Field` compatible with this container"""
+        return self.factory.create_field(
+            self.separators[2],
+            seq,
+            esc=self.esc,
+            separators=self.separators[2:],
+            factory=self.factory,
+        )
+
+    def create_repetition(self, seq):
+        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
+        return self.factory.create_repetition(
+            self.separators[3],
+            seq,
+            esc=self.esc,
+            separators=self.separators[3:],
+            factory=self.factory,
+        )
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this container"""
+        return self.factory.create_component(
+            self.separators[4],
+            seq,
+            esc=self.esc,
+            separators=self.separators[4:],
+            factory=self.factory,
+        )
+
     def __getitem__(self, item):
         # Python slice operator was returning a regular list, not a
         # Container subclass
@@ -84,6 +154,158 @@ class Container(Sequence):
 
         """
         return self.separator.join((str(x) for x in self))
+
+
+class File(Container):
+    """Representation of an HL7 file from the batch protocol. 
+    It contains a list of :py:class:`hl7.Message` or :py:class:`hl7.Batch` 
+    instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
+
+    Files may or may not be wrapped in FHS/FTS segements
+    deliniating the start/end of the batch. These are optional.
+    """
+
+    def __init__(
+        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
+    ):
+        super(File, self).__init__(
+            separator,
+            sequence=sequence,
+            esc=esc,
+            separators=separators,
+            factory=factory,
+        )
+        self.header = None
+        self.trailer = None
+
+    @property
+    def header(self):
+        return self._batch_header_segment
+
+    @header.setter
+    def header(self, segment):
+        assert not segment or segment[0][0] == "FHS", 'header must begin with "FHS"'
+        self._batch_header_segment = segment
+
+    @property
+    def trailer(self):
+        return self.trailer
+
+    @trailer.setter
+    def trailer(self, segment):
+        assert not segment or segment[0][0] == "FTS", 'trailer must begin with "FTS"'
+        self.trailer = segment
+
+    def create_header(self):
+        """Create a new :py:class:`hl7.Segment` FHS compatible with this batch"""
+        return self.create_segment(
+            [
+                self.create_field(["FHS"]),
+                self.create_field([self.separators[1]]),
+                self.create_field(
+                    [
+                        self.separators[3]
+                        + self.separators[2]
+                        + self.esc
+                        + self.separators[4]
+                    ]
+                ),
+            ]
+        )
+
+    def create_trailer(self):
+        """Create a new :py:class:`hl7.Segment` FTS compatible with this batch"""
+        return self.create_segment([self.create_field(["FTS"])])
+
+    def __str__(self):
+        assert (self.header and self.trailer) or not (
+            self.header or self.trailer
+        ), "Either both header and trailer must be present or neither"
+        return (
+            super(Batch, self).__str__()
+            if not self.header
+            else str(self.header)
+            + self.separator
+            + super(Batch, self).__str__()
+            + str(self.trailer)
+            + self.separator
+        )
+
+
+class Batch(Container):
+    """Representation of an HL7 batch from the batch protocol. 
+    It contains a list of :py:class:`hl7.Message` instances.
+    It may contain BHS/BTS :py:class:`hl7.Segment` instances.
+
+    Batches may or may not be wrapped in BHS/BTS segements
+    deliniating the start/end of the batch. These are optional.
+    """
+
+    def __init__(
+        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
+    ):
+        super(Batch, self).__init__(
+            separator,
+            sequence=sequence,
+            esc=esc,
+            separators=separators,
+            factory=factory,
+        )
+        self.header = None
+        self.trailer = None
+
+    @property
+    def header(self):
+        return self._batch_header_segment
+
+    @header.setter
+    def header(self, segment):
+        assert not segment or segment[0][0] == "BHS", 'header must begin with "BHS"'
+        self._batch_header_segment = segment
+
+    @property
+    def trailer(self):
+        return self.trailer
+
+    @trailer.setter
+    def trailer(self, segment):
+        assert not segment or segment[0][0] == "BTS", 'trailer must begin with "BTS"'
+        self.trailer = segment
+
+    def create_header(self):
+        """Create a new :py:class:`hl7.Segment` BHS compatible with this batch"""
+        return self.create_segment(
+            [
+                self.create_field(["BHS"]),
+                self.create_field([self.separators[1]]),
+                self.create_field(
+                    [
+                        self.separators[3]
+                        + self.separators[2]
+                        + self.esc
+                        + self.separators[4]
+                    ]
+                ),
+            ]
+        )
+
+    def create_trailer(self):
+        """Create a new :py:class:`hl7.Segment` BHS compatible with this batch"""
+        return self.create_segment([self.create_field(["BTS"])])
+
+    def __str__(self):
+        assert (self.header and self.trailer) or not (
+            self.header or self.trailer
+        ), "Either both header and trailer must be present or neither"
+        return (
+            super(Batch, self).__str__()
+            if not self.header
+            else str(self.header)
+            + self.separator
+            + super(Batch, self).__str__()
+            + str(self.trailer)
+            + self.separator
+        )
 
 
 class Message(Container):
@@ -484,56 +706,6 @@ class Message(Container):
 
         return "".join(rv)
 
-    def create_message(self, seq):
-        """Create a new :py:class:`hl7.Message` compatible with this message"""
-        return self.factory.create_message(
-            self.separators[0],
-            seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_segment(self, seq):
-        """Create a new :py:class:`hl7.Segment` compatible with this message"""
-        return self.factory.create_segment(
-            self.separators[1],
-            seq,
-            esc=self.esc,
-            separators=self.separators[1:],
-            factory=self.factory,
-        )
-
-    def create_field(self, seq):
-        """Create a new :py:class:`hl7.Field` compatible with this message"""
-        return self.factory.create_field(
-            self.separators[2],
-            seq,
-            esc=self.esc,
-            separators=self.separators[2:],
-            factory=self.factory,
-        )
-
-    def create_repetition(self, seq):
-        """Create a new :py:class:`hl7.Repetition` compatible with this message"""
-        return self.factory.create_repetition(
-            self.separators[3],
-            seq,
-            esc=self.esc,
-            separators=self.separators[3:],
-            factory=self.factory,
-        )
-
-    def create_component(self, seq):
-        """Create a new :py:class:`hl7.Component` compatible with this message"""
-        return self.factory.create_component(
-            self.separators[4],
-            seq,
-            esc=self.esc,
-            separators=self.separators[4:],
-            factory=self.factory,
-        )
-
     def create_ack(
         self, ack_code="AA", message_id=None, application=None, facility=None
     ):
@@ -612,7 +784,7 @@ class Segment(Container):
         return index
 
     def __str__(self):
-        if str(self[0]) in ["MSH", "FHS"]:
+        if str(self[0]) in ["MSH", "FHS", "BHS"]:
             return (
                 str(self[0])
                 + str(self[1])
@@ -648,6 +820,8 @@ class Factory(object):
     A subclass can be used to create specialized subclasses of each container.
     """
 
+    create_file = File  #: Create an instance of :py:class:`hl7.File`
+    create_batch = Batch  #: Create an instance of :py:class:`hl7.Batch`
     create_message = Message  #: Create an instance of :py:class:`hl7.Message`
     create_segment = Segment  #: Create an instance of :py:class:`hl7.Segment`
     create_field = Field  #: Create an instance of :py:class:`hl7.Field`

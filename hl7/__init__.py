@@ -7,10 +7,12 @@
 """
 from .accessor import Accessor
 from .containers import (
+    Batch,
     Component,
     Container,
     Factory,
     Field,
+    File,
     Message,
     Repetition,
     Segment,
@@ -35,6 +37,8 @@ __all__ = [
     "parse",
     "Sequence",
     "Container",
+    "File",
+    "Batch",
     "Message",
     "Segment",
     "Field",
