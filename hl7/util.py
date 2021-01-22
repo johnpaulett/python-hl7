@@ -15,7 +15,16 @@ def ishl7(line):
     :rtype: bool
     """
     # Prevent issues if the line is empty
-    return line and (line.strip()[:3] in ["MSH"]) or False
+    return line and (line.strip()[:3] in ["MSH"])
+
+
+def isbatch(line):
+    """
+        Batches are wrapped in BHS / BTS
+        BHS = batch header segment
+        BTS = batch trailer segment
+    """
+    return line and (line.strip()[:3] in ["BHS"])
 
 
 def isfile(line):
@@ -24,7 +33,7 @@ def isfile(line):
         FHS = file header segment
         FTS = file trailer segment
     """
-    return line and (line.strip()[:3] in ["FHS"]) or False
+    return line and (line.strip()[:3] in ["FHS"])
 
 
 def split_file(hl7file):
