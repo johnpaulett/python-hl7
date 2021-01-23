@@ -1,8 +1,64 @@
 # -*- coding: utf-8 -*-
+from logging import getLogger
+from string import whitespace
+
 from .containers import Factory
+from .util import isbatch, isfile, ishl7
+
+hl7_whitespace = whitespace.replace("\r", "")
+logger = getLogger(__file__)
 
 
-def parse(line, encoding="utf-8", factory=Factory):
+def parse_hl7(line, encoding="utf-8", factory=Factory):
+    """Returns a instance of the :py:class:`hl7.Message`, :py:class:`hl7.Batch`
+    or :py:class:`hl7.File` that allows indexed access to the data elements or
+    messages or batches respectively..
+
+    A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
+    constructing the message/batch/file and it's components.
+
+    .. note::
+
+        HL7 usually contains only ASCII, but can use other character
+        sets (HL7 Standards Document, Section 1.7.1), however as of v2.8,
+        UTF-8 is the preferred character set [#]_.
+
+        python-hl7 works on Python unicode strings. :py:func:`hl7.parse`
+        will accept unicode string or will attempt to convert bytestrings
+        into unicode strings using the optional ``encoding`` parameter.
+        ``encoding`` defaults to UTF-8, so no work is needed for bytestrings
+        in UTF-8, but for other character sets like 'cp1252' or 'latin1',
+        ``encoding`` must be set appropriately.
+
+    >>> h = hl7.parse_hl7(message)
+
+    To decode a non-UTF-8 byte string::
+
+       hl7.parse_hl7(message, encoding='latin1')
+
+    :rtype: :py:class:`hl7.Message` | :py:class:`hl7.Batch` | :py:class:`hl7.File`
+
+    .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
+
+    """
+    # Ensure we are working with unicode data, decode the bytestring
+    # if needed
+    if isinstance(line, bytes):
+        line = line.decode(encoding)
+    # If it is an HL7 message, parse as normal
+    if ishl7(line):
+        return parse(line, encoding=encoding, factory=factory)
+    # If we have a batch, then parse the batch
+    elif isbatch(line):
+        return parse_batch(line, encoding=encoding, factory=factory)
+    # If we have a file, parse the HL7 file
+    elif isfile(line):
+        return parse_file(line, encoding=encoding, factory=factory)
+    # Not an HL7 message
+    raise ValueError("line is not HL7")
+
+
+def parse(lines, encoding="utf-8", factory=Factory):
     """Returns a instance of the :py:class:`hl7.Message` that allows
     indexed access to the data elements.
 
@@ -35,14 +91,136 @@ def parse(line, encoding="utf-8", factory=Factory):
     """
     # Ensure we are working with unicode data, decode the bytestring
     # if needed
-    if isinstance(line, bytes):
-        line = line.decode(encoding)
+    if isinstance(lines, bytes):
+        lines = lines.decode(encoding)
     # Strip out unnecessary whitespace
-    strmsg = line.strip()
+    strmsg = lines.strip(hl7_whitespace)
     # The method for parsing the message
     plan = create_parse_plan(strmsg, factory)
     # Start spliting the methods based upon the ParsePlan
     return _split(strmsg, plan)
+
+
+def _create_batch(batch, messages, encoding, factory):
+    kwargs = {
+        "separator": "\r",
+        "sequence": [
+            parse(message, encoding=encoding, factory=factory) for message in messages
+        ],
+    }
+    if batch:
+        batch = parse(batch, encoding=encoding, factory=factory)
+        kwargs["esc"] = batch.esc
+        kwargs["separators"] = batch.separators
+        kwargs["factory"] = batch.factory
+    parsed = factory.create_batch(**kwargs)
+    if batch:
+        parsed.header = batch.segment("BHS")
+        try:
+            parsed.trailer = batch.segment("BTS")
+        except KeyError:
+            logger.warning("Missing BTS segment")
+    return parsed
+
+
+def parse_batch(lines, encoding="utf-8", factory=Factory):
+    # Ensure we are working with unicode data, decode the bytestring
+    # if needed
+    if isinstance(lines, bytes):
+        lines = lines.decode(encoding)
+    batch = None
+    messages = []
+    for line in lines.strip(hl7_whitespace).splitlines(keepends=True):
+        line = line.strip(hl7_whitespace)
+        if line[:3] == "BHS":
+            if batch:
+                raise ValueError("Batch cannot have more than one BHS segment")
+            batch = line
+        elif line[:3] == "BTS":
+            if not batch:
+                logger.warning(f"BTS received before BHS: {line}")
+                continue
+            if "\rBTS" in batch:
+                raise ValueError("Batch cannot hace more than one BTS segment")
+            batch += line
+        elif line[:3] == "MSH":
+            messages.append(line)
+        else:
+            if not messages:
+                logger.error(f"Segment received before message header {line}")
+                continue
+            messages[-1] += line
+    return _create_batch(batch, messages, encoding, factory)
+
+
+def parse_file(lines, encoding="utf-8", factory=Factory):
+    # Ensure we are working with unicode data, decode the bytestring
+    # if needed
+    if isinstance(lines, bytes):
+        lines = lines.decode(encoding)
+    file = None
+    batches = []
+    messages = []
+    in_batch = False
+    for line in lines.strip(hl7_whitespace).splitlines(keepends=True):
+        line = line.strip(hl7_whitespace)
+        if line[:3] == "FHS":
+            if file:
+                raise ValueError("File cannot have more than one FHS segment")
+            file = line
+        elif line[:3] == "FTS":
+            if not file:
+                logger.warning(f"FTS received before FHS: {line}")
+                continue
+            if "\rFTS" in file:
+                raise ValueError("File cannot have more than one FTS segment")
+            file += line
+        elif line[:3] == "BHS":
+            batches.append([line, []])
+            in_batch = True
+        elif line[:3] == "BTS":
+            if not in_batch:
+                logger.warning(f"BTS received before BHS: {line}")
+                continue
+            batches[-1][0] += line
+            in_batch = False
+        elif line[:3] == "MSH":
+            if in_batch:
+                batches[-1][1].append(line)
+            else:
+                messages.append(line)
+        else:
+            if in_batch:
+                if not batches[-1][1]:
+                    logger.error(f"Segment received before message header {line}")
+                    continue
+                batches[-1][1][-1] += line
+            else:
+                if not messages:
+                    logger.error(f"Segment received before message header {line}")
+                    continue
+                messages[-1] += line
+    if messages:
+        batches.append([None, messages])
+    kwargs = {
+        "separator": "\r",
+        "sequence": [
+            _create_batch(batch[0], batch[1], encoding, factory) for batch in batches
+        ],
+    }
+    if file:
+        file = parse(file, encoding=encoding, factory=factory)
+        kwargs["esc"] = file.esc
+        kwargs["separators"] = file.separators
+        kwargs["factory"] = file.factory
+    parsed = factory.create_file(**kwargs)
+    if file:
+        parsed.header = file.segment("FHS")
+        try:
+            parsed.trailer = file.segment("FTS")
+        except KeyError:
+            logger.warning("Missing FTS segment")
+    return parsed
 
 
 def _split(text, plan):
@@ -58,7 +236,11 @@ def _split(text, plan):
 
     # Parsing of the first segment is awkward because it contains
     # the separator characters in a field
-    if plan.containers[0] == plan.factory.create_segment and text[:3] in ["MSH", "FHS"]:
+    if plan.containers[0] == plan.factory.create_segment and text[:3] in [
+        "MSH",
+        "BHS",
+        "FHS",
+    ]:
         seg = text[:3]
         sep0 = text[3]
         sep_end_off = text.find(sep0, 4)
@@ -87,7 +269,7 @@ def create_parse_plan(strmsg, factory=Factory):
     separators = ["\r"]
 
     # Extract the rest of the separators. Defaults used if not present.
-    assert strmsg[:3] in ("MSH")
+    assert strmsg[:3] in ("MSH", "FHS", "BHS")
     sep0 = strmsg[3]
     seps = list(strmsg[3 : strmsg.find(sep0, 4)])
 

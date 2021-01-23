@@ -19,7 +19,7 @@ from .containers import (
     Sequence,
 )
 from .datatypes import parse_datetime
-from .parser import parse
+from .parser import parse, parse_batch, parse_file, parse_hl7
 from .util import generate_message_control_id, isbatch, isfile, ishl7, split_file
 from .version import get_version
 
@@ -35,6 +35,9 @@ NULL = '""'
 
 __all__ = [
     "parse",
+    "parse_hl7",
+    "parse_batch",
+    "parse_file",
     "Sequence",
     "Container",
     "File",
@@ -47,7 +50,7 @@ __all__ = [
     "Factory",
     "Accessor",
     "ishl7",
-    "isbatch"
+    "isbatch",
     "isfile",
     "split_file",
     "generate_message_control_id",
