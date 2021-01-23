@@ -53,6 +53,44 @@ class Container(Sequence):
         self.separators = separators
         self.factory = factory if factory is not None else Factory
 
+    def __getitem__(self, item):
+        # Python slice operator was returning a regular list, not a
+        # Container subclass
+        sequence = super(Container, self).__getitem__(item)
+        if isinstance(item, slice):
+            return self.__class__(
+                self.separator,
+                sequence,
+                self.esc,
+                self.separators,
+                factory=self.factory,
+            )
+        return sequence
+
+    def __getslice__(self, i, j):
+        # Python 2.x compatibility.  __getslice__ is deprecated, and
+        # we want to wrap the logic from __getitem__ when handling slices
+        return self.__getitem__(slice(i, j))
+
+    def __str__(self):
+        """Join a the child containers into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
+
+        >>> str(h) == message
+        True
+
+        """
+        return self.separator.join((str(x) for x in self))
+
+
+class Builder(object):
+    """Mixin class that allows for the create functions
+    in the top-level container classes
+    """
+
     def create_file(self, seq):
         """Create a new :py:class:`hl7.File` compatible with this container"""
         return self.factory.create_file(
@@ -123,42 +161,10 @@ class Container(Sequence):
             factory=self.factory,
         )
 
-    def __getitem__(self, item):
-        # Python slice operator was returning a regular list, not a
-        # Container subclass
-        sequence = super(Container, self).__getitem__(item)
-        if isinstance(item, slice):
-            return self.__class__(
-                self.separator,
-                sequence,
-                self.esc,
-                self.separators,
-                factory=self.factory,
-            )
-        return sequence
 
-    def __getslice__(self, i, j):
-        # Python 2.x compatibility.  __getslice__ is deprecated, and
-        # we want to wrap the logic from __getitem__ when handling slices
-        return self.__getitem__(slice(i, j))
-
-    def __str__(self):
-        """Join a the child containers into a single string, separated
-        by the self.separator.  This method acts recursively, calling
-        the children's __unicode__ method.  Thus ``unicode()`` is the
-        approriate method for turning the python-hl7 representation of
-        HL7 into a standard string.
-
-        >>> str(h) == message
-        True
-
-        """
-        return self.separator.join((str(x) for x in self))
-
-
-class File(Container):
+class File(Container, Builder):
     """Representation of an HL7 file from the batch protocol. 
-    It contains a list of :py:class:`hl7.Message` or :py:class:`hl7.Batch` 
+    It contains a list of :py:class:`hl7.Batch` 
     instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
 
     Files may or may not be wrapped in FHS/FTS segements
@@ -222,17 +228,17 @@ class File(Container):
             self.header or self.trailer
         ), "Either both header and trailer must be present or neither"
         return (
-            super(Batch, self).__str__()
+            super(File, self).__str__()
             if not self.header
             else str(self.header)
             + self.separator
-            + super(Batch, self).__str__()
+            + super(File, self).__str__()
             + str(self.trailer)
             + self.separator
         )
 
 
-class Batch(Container):
+class Batch(Container, Builder):
     """Representation of an HL7 batch from the batch protocol. 
     It contains a list of :py:class:`hl7.Message` instances.
     It may contain BHS/BTS :py:class:`hl7.Segment` instances.
@@ -308,7 +314,7 @@ class Batch(Container):
         )
 
 
-class Message(Container):
+class Message(Container, Builder):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
