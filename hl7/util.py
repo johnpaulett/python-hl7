@@ -15,7 +15,7 @@ def ishl7(line):
     :rtype: bool
     """
     # Prevent issues if the line is empty
-    return line and line.strip()[:3] == "MSH"
+    return line and line.strip()[:3] == "MSH" and line.count("MSH") == 1
 
 
 def isbatch(line):
@@ -24,7 +24,10 @@ def isbatch(line):
         BHS = batch header segment
         BTS = batch trailer segment
     """
-    return line and (line.strip()[:3] == "BHS" or (line.count("MSH") and line.strip()[:3] != "FHS"))
+    return line and (
+        line.strip()[:3] == "BHS"
+        or (line.count("MSH") > 1 and line.strip()[:3] != "FHS")
+    )
 
 
 def isfile(line):
