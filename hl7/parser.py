@@ -261,12 +261,12 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
         else:
             if in_batch:
                 if not batches[-1][1]:
-                    logger.error(f"Segment received before message header {line}")
+                    logger.error("Segment received before message header {}".format(line))
                     continue
                 batches[-1][1][-1] += line
             else:
                 if not messages:
-                    logger.error(f"Segment received before message header {line}")
+                    logger.error("Segment received before message header {}".format(line))
                     continue
                 messages[-1] += line
     if messages:  # add the default batch, if we have one
