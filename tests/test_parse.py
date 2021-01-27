@@ -64,6 +64,43 @@ class ParseTest(TestCase):
         self.assertFalse(batch.header)
         self.assertFalse(batch.trailer)
 
+    def test_parse_file(self):
+        file = hl7.parse_file(sample_file)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "1")
+
+    def test_parse_file1(self):
+        file = hl7.parse_file(sample_file1)
+        self.assertEqual(len(file), 2)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertEqual(file[0].trailer[1][0], "2")
+        self.assertIsInstance(file[1], hl7.Batch)
+        self.assertEqual(file[1].trailer[1][0], "1")
+        self.assertNotEqual(file[0], file[1])
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "2")
+
+    def test_parse_file2(self):
+        file = hl7.parse_file(sample_file2)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "1")
+
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
         self.assertEqual(len(msg), 5)
