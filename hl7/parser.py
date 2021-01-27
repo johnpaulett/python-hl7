@@ -94,7 +94,7 @@ def parse(lines, encoding="utf-8", factory=Factory):
     if isinstance(lines, bytes):
         lines = lines.decode(encoding)
     # Strip out unnecessary whitespace
-    strmsg = lines.strip(hl7_whitespace)
+    strmsg = lines.strip()
     # The method for parsing the message
     plan = create_parse_plan(strmsg, factory)
     # Start spliting the methods based upon the ParsePlan
@@ -178,7 +178,7 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
                 logger.warning(f"BTS received before BHS: {line}")
                 continue
             if "\rBTS" in batch:
-                raise ValueError("Batch cannot hace more than one BTS segment")
+                raise ValueError("Batch cannot have more than one BTS segment")
             batch += line
         elif line[:3] == "MSH":
             messages.append(line)
