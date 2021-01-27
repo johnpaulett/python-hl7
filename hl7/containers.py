@@ -195,12 +195,12 @@ class File(Container, Builder):
 
     @property
     def trailer(self):
-        return self.trailer
+        return self._batch_trailer_segment
 
     @trailer.setter
     def trailer(self, segment):
         assert not segment or segment[0][0] == "FTS", 'trailer must begin with "FTS"'
-        self.trailer = segment
+        self._batch_trailer_segment = segment
 
     def create_header(self):
         """Create a new :py:class:`hl7.Segment` FHS compatible with this batch"""
@@ -271,12 +271,12 @@ class Batch(Container, Builder):
 
     @property
     def trailer(self):
-        return self.trailer
+        return self._batch_trailer_segment
 
     @trailer.setter
     def trailer(self, segment):
         assert not segment or segment[0][0] == "BTS", 'trailer must begin with "BTS"'
-        self.trailer = segment
+        self._batch_trailer_segment = segment
 
     def create_header(self):
         """Create a new :py:class:`hl7.Segment` BHS compatible with this batch"""

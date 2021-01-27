@@ -4,7 +4,7 @@ from unittest import TestCase
 import hl7
 from hl7 import Accessor, Component, Field, Message, Repetition, Segment
 
-from .samples import rep_sample_hl7, sample_file, sample_hl7
+from .samples import rep_sample_hl7, sample_batch, sample_batch1, sample_batch2, sample_file, sample_file1, sample_file2, sample_hl7
 
 
 class ParseTest(TestCase):
@@ -28,6 +28,41 @@ class ParseTest(TestCase):
         # Do it twice to make sure text coercion is idempotent
         self.assertEqual(str(msg), sample_hl7)
         self.assertEqual(str(msg), sample_hl7)
+
+    def test_parse_batch(self):
+        batch = hl7.parse_batch(sample_batch)
+        self.assertEqual(len(batch), 1)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertIsInstance(batch.header, hl7.Segment)
+        self.assertEqual(batch.header[0][0], "BHS")
+        self.assertEqual(batch.header[4][0], "ABCHS")
+        self.assertIsInstance(batch.trailer, hl7.Segment)
+        self.assertEqual(batch.trailer[0][0], "BTS")
+        self.assertEqual(batch.trailer[1][0], "1")
+
+    def test_parse_batch1(self):
+        batch = hl7.parse_batch(sample_batch1)
+        self.assertEqual(len(batch), 2)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertEqual(batch[0][0][10][0], "12334456778890")
+        self.assertIsInstance(batch[1], hl7.Message)
+        self.assertEqual(batch[1][0][10][0], "12334456778891")
+        self.assertIsInstance(batch.header, hl7.Segment)
+        self.assertEqual(batch.header[0][0], "BHS")
+        self.assertEqual(batch.header[4][0], "ABCHS")
+        self.assertIsInstance(batch.trailer, hl7.Segment)
+        self.assertEqual(batch.trailer[0][0], "BTS")
+        self.assertEqual(batch.trailer[1][0], "2")
+
+    def test_parse_batch2(self):
+        batch = hl7.parse_batch(sample_batch2)
+        self.assertEqual(len(batch), 2)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertEqual(batch[0][0][10][0], "12334456778890")
+        self.assertIsInstance(batch[1], hl7.Message)
+        self.assertEqual(batch[1][0][10][0], "12334456778891")
+        self.assertFalse(batch.header)
+        self.assertFalse(batch.trailer)
 
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
