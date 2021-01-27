@@ -190,7 +190,7 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
     return _create_batch(batch, messages, encoding, factory)
 
 
-def parse_file(lines, encoding="utf-8", factory=Factory):
+def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
     """Returns a instance of the :py:class:`hl7.File` that allows
     indexed access to the batches.
 
