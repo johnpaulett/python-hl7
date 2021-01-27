@@ -175,7 +175,7 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
             batch = line
         elif line[:3] == "BTS":
             if not batch:
-                logger.warning(f"BTS received before BHS: {line}")
+                logger.warning("BTS received before BHS: {}".format(line))
                 continue
             if "\rBTS" in batch:
                 raise ValueError("Batch cannot have more than one BTS segment")
@@ -184,7 +184,7 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
             messages.append(line)
         else:
             if not messages:
-                logger.error(f"Segment received before message header {line}")
+                logger.error("Segment received before message header {}".format(line))
                 continue
             messages[-1] += line
     return _create_batch(batch, messages, encoding, factory)
@@ -239,7 +239,7 @@ def parse_file(lines, encoding="utf-8", factory=Factory):
             file = line
         elif line[:3] == "FTS":
             if not file:
-                logger.warning(f"FTS received before FHS: {line}")
+                logger.warning("FTS received before FHS: {}".format(line))
                 continue
             if "\rFTS" in file:
                 raise ValueError("File cannot have more than one FTS segment")
@@ -249,7 +249,7 @@ def parse_file(lines, encoding="utf-8", factory=Factory):
             in_batch = True
         elif line[:3] == "BTS":
             if not in_batch:
-                logger.warning(f"BTS received before BHS: {line}")
+                logger.warning("BTS received before BHS: {}".format(line))
                 continue
             batches[-1][0] += line
             in_batch = False
