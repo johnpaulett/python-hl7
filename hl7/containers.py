@@ -224,10 +224,6 @@ class File(Container, Builder):
 
         If this batch has FHS/FTS segments, they will be added to the
         beginning/end of the returned string.
-
-        >>> str(h) == file
-        True
-
         """
         assert (self.header and self.trailer) or not (
             self.header or self.trailer
@@ -315,10 +311,6 @@ class Batch(Container, Builder):
 
         If this batch has BHS/BTS segments, they will be added to the
         beginning/end of the returned string.
-
-        >>> str(h) == batch
-        True
-
         """
         assert (self.header and self.trailer) or not (
             self.header or self.trailer
@@ -799,7 +791,7 @@ class Message(Container, Builder):
         approriate method for turning the python-hl7 representation of
         HL7 into a standard string.
 
-        >>> str(h) == message
+        >>> str(hl7.parse(message)) == message
         True
 
         """
