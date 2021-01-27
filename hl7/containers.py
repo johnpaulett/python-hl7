@@ -73,16 +73,6 @@ class Container(Sequence):
         return self.__getitem__(slice(i, j))
 
     def __str__(self):
-        """Join a the child containers into a single string, separated
-        by the self.separator.  This method acts recursively, calling
-        the children's __unicode__ method.  Thus ``unicode()`` is the
-        approriate method for turning the python-hl7 representation of
-        HL7 into a standard string.
-
-        >>> str(h) == message
-        True
-
-        """
         return self.separator.join((str(x) for x in self))
 
 
@@ -186,6 +176,7 @@ class File(Container, Builder):
 
     @property
     def header(self):
+        """FHS :py:class:`hl7.Segment`"""
         return self._batch_header_segment
 
     @header.setter
@@ -195,6 +186,7 @@ class File(Container, Builder):
 
     @property
     def trailer(self):
+        """FTS :py:class:`hl7.Segment`"""
         return self._batch_trailer_segment
 
     @trailer.setter
@@ -203,7 +195,7 @@ class File(Container, Builder):
         self._batch_trailer_segment = segment
 
     def create_header(self):
-        """Create a new :py:class:`hl7.Segment` FHS compatible with this batch"""
+        """Create a new :py:class:`hl7.Segment` FHS compatible with this file"""
         return self.create_segment(
             [
                 self.create_field(["FHS"]),
@@ -220,10 +212,23 @@ class File(Container, Builder):
         )
 
     def create_trailer(self):
-        """Create a new :py:class:`hl7.Segment` FTS compatible with this batch"""
+        """Create a new :py:class:`hl7.Segment` FTS compatible with this file"""
         return self.create_segment([self.create_field(["FTS"])])
 
     def __str__(self):
+        """Join a the child batches into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
+
+        If this batch has FHS/FTS segments, they will be added to the
+        beginning/end of the returned string.
+
+        >>> str(h) == file
+        True
+
+        """
         assert (self.header and self.trailer) or not (
             self.header or self.trailer
         ), "Either both header and trailer must be present or neither"
@@ -262,6 +267,7 @@ class Batch(Container, Builder):
 
     @property
     def header(self):
+        """BHS :py:class:`hl7.Segment`"""
         return self._batch_header_segment
 
     @header.setter
@@ -271,6 +277,7 @@ class Batch(Container, Builder):
 
     @property
     def trailer(self):
+        """BTS :py:class:`hl7.Segment`"""
         return self._batch_trailer_segment
 
     @trailer.setter
@@ -300,6 +307,19 @@ class Batch(Container, Builder):
         return self.create_segment([self.create_field(["BTS"])])
 
     def __str__(self):
+        """Join a the child messages into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
+
+        If this batch has BHS/BTS segments, they will be added to the
+        beginning/end of the returned string.
+
+        >>> str(h) == batch
+        True
+
+        """
         assert (self.header and self.trailer) or not (
             self.header or self.trailer
         ), "Either both header and trailer must be present or neither"
@@ -773,6 +793,16 @@ class Message(Container, Builder):
         return ack
 
     def __str__(self):
+        """Join a the child containers into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
+
+        >>> str(h) == message
+        True
+
+        """
         # Per spec, Message Construction Rules, Section 2.6 (v2.8), Message ends
         # with the carriage return
         return super(Message, self).__str__() + self.separator

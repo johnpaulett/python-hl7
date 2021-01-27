@@ -13,7 +13,15 @@ python-hl7 API
 
 .. autofunction:: hl7.parse
 
+.. autofunction:: hl7.parse_batch
+
+.. autofunction:: hl7.parse_file
+
+.. autofunction:: hl7.parse_hl7
+
 .. autofunction:: hl7.ishl7
+
+.. autofunction:: hl7.isbatch
 
 .. autofunction:: hl7.isfile
 
@@ -36,8 +44,14 @@ Data Types
 .. autoclass:: hl7.Accessor
    :members: __new__, parse_key, key, _replace, _make, _asdict, segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
 
+.. autoclass:: hl7.Batch
+   :members: __str__, header, trailer, create_header, create_trailer, create_file, create_batch, create_message, create_segment, create_field, create_repetition, create_component
+
+.. autoclass:: hl7.File
+   :members: __str__, header, trailer, create_header, create_trailer, create_file, create_batch, create_message, create_segment, create_field, create_repetition, create_component
+
 .. autoclass:: hl7.Message
-   :members: segments, segment, __getitem__, __setitem__, escape, unescape, extract_field, assign_field, create_message, create_segment, create_field, create_repetition, create_component, create_ack
+   :members: segments, segment, __getitem__, __setitem__, __str__, escape, unescape, extract_field, assign_field, create_file, create_batch, create_message, create_segment, create_field, create_repetition, create_component, create_ack
 
 .. autoclass:: hl7.Segment
 
