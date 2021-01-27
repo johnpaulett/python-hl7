@@ -153,8 +153,8 @@ class Builder(object):
 
 
 class File(Container, Builder):
-    """Representation of an HL7 file from the batch protocol. 
-    It contains a list of :py:class:`hl7.Batch` 
+    """Representation of an HL7 file from the batch protocol.
+    It contains a list of :py:class:`hl7.Batch`
     instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
 
     Files may or may not be wrapped in FHS/FTS segements
@@ -244,7 +244,7 @@ class File(Container, Builder):
 
 
 class Batch(Container, Builder):
-    """Representation of an HL7 batch from the batch protocol. 
+    """Representation of an HL7 batch from the batch protocol.
     It contains a list of :py:class:`hl7.Message` instances.
     It may contain BHS/BTS :py:class:`hl7.Segment` instances.
 
