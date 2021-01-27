@@ -20,7 +20,8 @@ def ishl7(line):
 
 def isbatch(line):
     """
-        Batches are wrapped in BHS / BTS
+        Batches are wrapped in BHS / BTS or have more than one
+        message
         BHS = batch header segment
         BTS = batch trailer segment
     """
@@ -32,7 +33,7 @@ def isbatch(line):
 
 def isfile(line):
     """
-        Files are wrapped in FHS / FTS
+        Files are wrapped in FHS / FTS, or may be a batch
         FHS = file header segment
         FTS = file trailer segment
     """

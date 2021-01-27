@@ -12,7 +12,7 @@ logger = getLogger(__file__)
 def parse_hl7(line, encoding="utf-8", factory=Factory):
     """Returns a instance of the :py:class:`hl7.Message`, :py:class:`hl7.Batch`
     or :py:class:`hl7.File` that allows indexed access to the data elements or
-    messages or batches respectively..
+    messages or batches respectively.
 
     A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
     constructing the message/batch/file and it's components.
@@ -23,7 +23,7 @@ def parse_hl7(line, encoding="utf-8", factory=Factory):
         sets (HL7 Standards Document, Section 1.7.1), however as of v2.8,
         UTF-8 is the preferred character set [#]_.
 
-        python-hl7 works on Python unicode strings. :py:func:`hl7.parse`
+        python-hl7 works on Python unicode strings. :py:func:`hl7.parse_hl7`
         will accept unicode string or will attempt to convert bytestrings
         into unicode strings using the optional ``encoding`` parameter.
         ``encoding`` defaults to UTF-8, so no work is needed for bytestrings
@@ -102,18 +102,23 @@ def parse(lines, encoding="utf-8", factory=Factory):
 
 
 def _create_batch(batch, messages, encoding, factory):
+    """Creates a :py:class:`hl7.Batch`
+    """
     kwargs = {
         "separator": "\r",
         "sequence": [
             parse(message, encoding=encoding, factory=factory) for message in messages
         ],
     }
+    # If the BHS/BTS were present, use those to set up the batch
+    # otherwise default
     if batch:
         batch = parse(batch, encoding=encoding, factory=factory)
         kwargs["esc"] = batch.esc
         kwargs["separators"] = batch.separators
         kwargs["factory"] = batch.factory
     parsed = factory.create_batch(**kwargs)
+    # If the BHS/BTS were present then set them
     if batch:
         parsed.header = batch.segment("BHS")
         try:
@@ -124,13 +129,45 @@ def _create_batch(batch, messages, encoding, factory):
 
 
 def parse_batch(lines, encoding="utf-8", factory=Factory):
+    """Returns a instance of a :py:class:`hl7.Batch`
+    that allows indexed access to the messages.
+
+    A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
+    constructing the batch and it's components.
+
+    .. note::
+
+        HL7 usually contains only ASCII, but can use other character
+        sets (HL7 Standards Document, Section 1.7.1), however as of v2.8,
+        UTF-8 is the preferred character set [#]_.
+
+        python-hl7 works on Python unicode strings. :py:func:`hl7.parse_batch`
+        will accept unicode string or will attempt to convert bytestrings
+        into unicode strings using the optional ``encoding`` parameter.
+        ``encoding`` defaults to UTF-8, so no work is needed for bytestrings
+        in UTF-8, but for other character sets like 'cp1252' or 'latin1',
+        ``encoding`` must be set appropriately.
+
+    >>> h = hl7.parse_batch(message)
+
+    To decode a non-UTF-8 byte string::
+
+       hl7.parse_batch(message, encoding='latin1')
+
+    :rtype: :py:class:`hl7.Batch`
+
+    .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
+
+    """
     # Ensure we are working with unicode data, decode the bytestring
     # if needed
     if isinstance(lines, bytes):
         lines = lines.decode(encoding)
     batch = None
     messages = []
+    # Split the batch into lines, retaining the ends
     for line in lines.strip(hl7_whitespace).splitlines(keepends=True):
+        # strip out all whitespace MINUS the '\r'
         line = line.strip(hl7_whitespace)
         if line[:3] == "BHS":
             if batch:
@@ -154,6 +191,36 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
 
 
 def parse_file(lines, encoding="utf-8", factory=Factory):
+    """Returns a instance of the :py:class:`hl7.File` that allows 
+    indexed access to the batches.
+
+    A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
+    constructing the file and it's components.
+
+    .. note::
+
+        HL7 usually contains only ASCII, but can use other character
+        sets (HL7 Standards Document, Section 1.7.1), however as of v2.8,
+        UTF-8 is the preferred character set [#]_.
+
+        python-hl7 works on Python unicode strings. :py:func:`hl7.parse_file`
+        will accept unicode string or will attempt to convert bytestrings
+        into unicode strings using the optional ``encoding`` parameter.
+        ``encoding`` defaults to UTF-8, so no work is needed for bytestrings
+        in UTF-8, but for other character sets like 'cp1252' or 'latin1',
+        ``encoding`` must be set appropriately.
+
+    >>> h = hl7.parse_file(message)
+
+    To decode a non-UTF-8 byte string::
+
+       hl7.parse_file(message, encoding='latin1')
+
+    :rtype: :py:class:`hl7.File`
+
+    .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
+
+    """
     # Ensure we are working with unicode data, decode the bytestring
     # if needed
     if isinstance(lines, bytes):
@@ -162,7 +229,9 @@ def parse_file(lines, encoding="utf-8", factory=Factory):
     batches = []
     messages = []
     in_batch = False
+    # Split the file into lines, reatining the ends
     for line in lines.strip(hl7_whitespace).splitlines(keepends=True):
+        # strip out all whitespace MINUS the '\r'
         line = line.strip(hl7_whitespace)
         if line[:3] == "FHS":
             if file:
@@ -187,7 +256,7 @@ def parse_file(lines, encoding="utf-8", factory=Factory):
         elif line[:3] == "MSH":
             if in_batch:
                 batches[-1][1].append(line)
-            else:
+            else:  # Messages outside of a batch go into the "default" batch
                 messages.append(line)
         else:
             if in_batch:
@@ -200,7 +269,7 @@ def parse_file(lines, encoding="utf-8", factory=Factory):
                     logger.error(f"Segment received before message header {line}")
                     continue
                 messages[-1] += line
-    if messages:
+    if messages:  # add the default batch, if we have one
         batches.append([None, messages])
     kwargs = {
         "separator": "\r",
@@ -208,12 +277,14 @@ def parse_file(lines, encoding="utf-8", factory=Factory):
             _create_batch(batch[0], batch[1], encoding, factory) for batch in batches
         ],
     }
+    # If the FHS/FTS are present, use them to set up the file
     if file:
         file = parse(file, encoding=encoding, factory=factory)
         kwargs["esc"] = file.esc
         kwargs["separators"] = file.separators
         kwargs["factory"] = file.factory
     parsed = factory.create_file(**kwargs)
+    # If the FHS/FTS are present, add them
     if file:
         parsed.header = file.segment("FHS")
         try:
