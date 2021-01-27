@@ -4,7 +4,16 @@ from unittest import TestCase
 import hl7
 from hl7 import Accessor, Component, Field, Message, Repetition, Segment
 
-from .samples import rep_sample_hl7, sample_batch, sample_batch1, sample_batch2, sample_file, sample_file1, sample_file2, sample_hl7
+from .samples import (
+    rep_sample_hl7,
+    sample_batch,
+    sample_batch1,
+    sample_batch2,
+    sample_file,
+    sample_file1,
+    sample_file2,
+    sample_hl7,
+)
 
 
 class ParseTest(TestCase):

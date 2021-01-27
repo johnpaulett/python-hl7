@@ -191,7 +191,7 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
 
 
 def parse_file(lines, encoding="utf-8", factory=Factory):
-    """Returns a instance of the :py:class:`hl7.File` that allows 
+    """Returns a instance of the :py:class:`hl7.File` that allows
     indexed access to the batches.
 
     A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
