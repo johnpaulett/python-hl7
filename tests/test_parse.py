@@ -101,6 +101,22 @@ class ParseTest(TestCase):
         self.assertEqual(file.trailer[0][0], "FTS")
         self.assertEqual(file.trailer[1][0], "1")
 
+    def test_parse_hl7(self):
+        obj = hl7.parse_hl7(sample_hl7)
+        self.assertIsInstance(obj, hl7.Message)
+        obj = hl7.parse_hl7(sample_batch)
+        self.assertIsInstance(obj, hl7.Batch)
+        obj = hl7.parse_hl7(sample_batch1)
+        self.assertIsInstance(obj, hl7.Batch)
+        obj = hl7.parse_hl7(sample_batch2)
+        self.assertIsInstance(obj, hl7.Batch)
+        obj = hl7.parse_hl7(sample_file)
+        self.assertIsInstance(obj, hl7.File)
+        obj = hl7.parse_hl7(sample_file1)
+        self.assertIsInstance(obj, hl7.File)
+        obj = hl7.parse_hl7(sample_file2)
+        self.assertIsInstance(obj, hl7.File)
+
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
         self.assertEqual(len(msg), 5)
