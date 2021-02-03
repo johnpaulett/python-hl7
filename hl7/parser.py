@@ -3,6 +3,7 @@ from logging import getLogger
 from string import whitespace
 
 from .containers import Factory
+from .exceptions import ParseException
 from .util import isbatch, isfile, ishl7
 
 hl7_whitespace = whitespace.replace("\r", "")
@@ -344,7 +345,10 @@ def create_parse_plan(strmsg, factory=Factory):
     separators = ["\r"]
 
     # Extract the rest of the separators. Defaults used if not present.
-    assert strmsg[:3] in ("MSH", "FHS", "BHS")
+    if strmsg[:3] not in ("MSH", "FHS", "BHS"):
+        raise ParseException(
+            "First segment is {}, must be one of MHS, FHS or BHS".format(strmsg[:3])
+        )
     sep0 = strmsg[3]
     seps = list(strmsg[3 : strmsg.find(sep0, 4)])
 

@@ -248,7 +248,8 @@ class HL7StreamReader(MLLPStreamReader):
 
     @encoding.setter
     def encoding(self, encoding):
-        assert not encoding or isinstance(encoding, str)
+        if encoding and not isinstance(encoding, str):
+            raise TypeError("encoding must be a str or None")
         self._encoding = encoding or "ascii"
 
     @property
@@ -257,7 +258,8 @@ class HL7StreamReader(MLLPStreamReader):
 
     @encoding_errors.setter
     def encoding_errors(self, encoding_errors):
-        assert not encoding_errors or isinstance(encoding_errors, str)
+        if encoding_errors and not isinstance(encoding_errors, str):
+            raise TypeError("encoding_errors must be a str or None")
         self._encoding_errors = encoding_errors or "strict"
 
     async def readmessage(self):
@@ -291,7 +293,8 @@ class HL7StreamWriter(MLLPStreamWriter):
 
     @encoding.setter
     def encoding(self, encoding):
-        assert not encoding or isinstance(encoding, str)
+        if encoding and not isinstance(encoding, str):
+            raise TypeError("encoding must be a str or None")
         self._encoding = encoding or "ascii"
 
     @property
@@ -300,7 +303,8 @@ class HL7StreamWriter(MLLPStreamWriter):
 
     @encoding_errors.setter
     def encoding_errors(self, encoding_errors):
-        assert not encoding_errors or isinstance(encoding_errors, str)
+        if encoding_errors and not isinstance(encoding_errors, str):
+            raise TypeError("encoding_errors must be a str or None")
         self._encoding_errors = encoding_errors or "strict"
 
     def writemessage(self, message):

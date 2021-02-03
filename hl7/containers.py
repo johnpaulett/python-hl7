@@ -3,6 +3,11 @@ import datetime
 import logging
 
 from .accessor import Accessor
+from .exceptions import (
+    MalformedSegmentException,
+    MalformedFileException,
+    MalformedBatchException,
+)
 from .util import generate_message_control_id
 
 logger = logging.getLogger(__file__)
@@ -181,7 +186,8 @@ class File(Container, BuilderMixin):
 
     @header.setter
     def header(self, segment):
-        assert not segment or segment[0][0] == "FHS", 'header must begin with "FHS"'
+        if segment and segment[0][0] != "FHS":
+            raise MalformedSegmentException('header must begin with "FHS"')
         self._batch_header_segment = segment
 
     @property
@@ -191,7 +197,8 @@ class File(Container, BuilderMixin):
 
     @trailer.setter
     def trailer(self, segment):
-        assert not segment or segment[0][0] == "FTS", 'trailer must begin with "FTS"'
+        if segment and segment[0][0] != "FTS":
+            raise MalformedSegmentException('trailer must begin with "FTS"')
         self._batch_trailer_segment = segment
 
     def create_header(self):
@@ -225,9 +232,10 @@ class File(Container, BuilderMixin):
         If this batch has FHS/FTS segments, they will be added to the
         beginning/end of the returned string.
         """
-        assert (self.header and self.trailer) or not (
-            self.header or self.trailer
-        ), "Either both header and trailer must be present or neither"
+        if (self.header and not self.trailer) or (not self.header and self.trailer):
+            raise MalformedFileException(
+                "Either both header and trailer must be present or neither"
+            )
         return (
             super(File, self).__str__()
             if not self.header
@@ -268,7 +276,8 @@ class Batch(Container, BuilderMixin):
 
     @header.setter
     def header(self, segment):
-        assert not segment or segment[0][0] == "BHS", 'header must begin with "BHS"'
+        if segment and segment[0][0] != "BHS":
+            raise MalformedSegmentException('header must begin with "BHS"')
         self._batch_header_segment = segment
 
     @property
@@ -278,7 +287,8 @@ class Batch(Container, BuilderMixin):
 
     @trailer.setter
     def trailer(self, segment):
-        assert not segment or segment[0][0] == "BTS", 'trailer must begin with "BTS"'
+        if segment and segment[0][0] != "BTS":
+            raise MalformedSegmentException('trailer must begin with "BTS"')
         self._batch_trailer_segment = segment
 
     def create_header(self):
@@ -312,9 +322,10 @@ class Batch(Container, BuilderMixin):
         If this batch has BHS/BTS segments, they will be added to the
         beginning/end of the returned string.
         """
-        assert (self.header and self.trailer) or not (
-            self.header or self.trailer
-        ), "Either both header and trailer must be present or neither"
+        if (self.header and not self.trailer) or (not self.header and self.trailer):
+            raise MalformedBatchException(
+                "Either both header and trailer must be present or neither"
+            )
         return (
             super(Batch, self).__str__()
             if not self.header

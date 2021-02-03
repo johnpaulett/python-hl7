@@ -19,6 +19,13 @@ from .containers import (
     Sequence,
 )
 from .datatypes import parse_datetime
+from .exceptions import (
+    HL7Exception,
+    MalformedBatchException,
+    MalformedFileException,
+    MalformedSegmentException,
+    ParseException,
+)
 from .parser import parse, parse_batch, parse_file, parse_hl7
 from .util import generate_message_control_id, isbatch, isfile, ishl7, split_file
 from .version import get_version
@@ -55,4 +62,9 @@ __all__ = [
     "split_file",
     "generate_message_control_id",
     "parse_datetime",
+    "HL7Exception",
+    "MalformedBatchException",
+    "MalformedFileException",
+    "MalformedSegmentException",
+    "ParseException",
 ]
