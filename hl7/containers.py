@@ -76,7 +76,7 @@ class Container(Sequence):
         return self.separator.join((str(x) for x in self))
 
 
-class Builder(object):
+class BuilderMixin(object):
     """Mixin class that allows for the create functions
     in the top-level container classes
     """
@@ -152,7 +152,7 @@ class Builder(object):
         )
 
 
-class File(Container, Builder):
+class File(Container, BuilderMixin):
     """Representation of an HL7 file from the batch protocol.
     It contains a list of :py:class:`hl7.Batch`
     instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
@@ -239,7 +239,7 @@ class File(Container, Builder):
         )
 
 
-class Batch(Container, Builder):
+class Batch(Container, BuilderMixin):
     """Representation of an HL7 batch from the batch protocol.
     It contains a list of :py:class:`hl7.Message` instances.
     It may contain BHS/BTS :py:class:`hl7.Segment` instances.
@@ -326,7 +326,7 @@ class Batch(Container, Builder):
         )
 
 
-class Message(Container, Builder):
+class Message(Container, BuilderMixin):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
