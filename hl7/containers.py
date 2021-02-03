@@ -4,9 +4,9 @@ import logging
 
 from .accessor import Accessor
 from .exceptions import (
-    MalformedSegmentException,
-    MalformedFileException,
     MalformedBatchException,
+    MalformedFileException,
+    MalformedSegmentException,
 )
 from .util import generate_message_control_id
 
