@@ -125,7 +125,7 @@ def _create_batch(batch, messages, encoding, factory):
         try:
             parsed.trailer = batch.segment("BTS")
         except KeyError:
-            logger.warning("Missing BTS segment")
+            parsed.trailer = parsed.create_segment([parsed.create_field(["BTS"])])
     return parsed
 
 
@@ -172,23 +172,45 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
         line = line.strip(hl7_whitespace)
         if line[:3] == "BHS":
             if batch:
-                raise ValueError("Batch cannot have more than one BHS segment")
+                raise ParseException("Batch cannot have more than one BHS segment")
             batch = line
         elif line[:3] == "BTS":
-            if not batch:
-                logger.warning("BTS received before BHS: {}".format(line))
+            if not batch or "\rBTS" in batch:
                 continue
-            if "\rBTS" in batch:
-                raise ValueError("Batch cannot have more than one BTS segment")
             batch += line
         elif line[:3] == "MSH":
             messages.append(line)
         else:
             if not messages:
-                logger.error("Segment received before message header {}".format(line))
-                continue
+                raise ParseException(
+                    "Segment received before message header {}".format(line)
+                )
             messages[-1] += line
     return _create_batch(batch, messages, encoding, factory)
+
+
+def _create_file(file, batches, encoding, factory):
+    kwargs = {
+        "separator": "\r",
+        "sequence": [
+            _create_batch(batch[0], batch[1], encoding, factory) for batch in batches
+        ],
+    }
+    # If the FHS/FTS are present, use them to set up the file
+    if file:
+        file = parse(file, encoding=encoding, factory=factory)
+        kwargs["esc"] = file.esc
+        kwargs["separators"] = file.separators
+        kwargs["factory"] = file.factory
+    parsed = factory.create_file(**kwargs)
+    # If the FHS/FTS are present, add them
+    if file:
+        parsed.header = file.segment("FHS")
+        try:
+            parsed.trailer = file.segment("FTS")
+        except KeyError:
+            parsed.trailer = parsed.create_segment([parsed.create_field(["FTS"])])
+    return parsed
 
 
 def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
@@ -236,21 +258,17 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
         line = line.strip(hl7_whitespace)
         if line[:3] == "FHS":
             if file:
-                raise ValueError("File cannot have more than one FHS segment")
+                raise ParseException("File cannot have more than one FHS segment")
             file = line
         elif line[:3] == "FTS":
-            if not file:
-                logger.warning("FTS received before FHS: {}".format(line))
+            if not file or "\rFTS" in file:
                 continue
-            if "\rFTS" in file:
-                raise ValueError("File cannot have more than one FTS segment")
             file += line
         elif line[:3] == "BHS":
             batches.append([line, []])
             in_batch = True
         elif line[:3] == "BTS":
             if not in_batch:
-                logger.warning("BTS received before BHS: {}".format(line))
                 continue
             batches[-1][0] += line
             in_batch = False
@@ -262,41 +280,19 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
         else:
             if in_batch:
                 if not batches[-1][1]:
-                    logger.error(
+                    raise ParseException(
                         "Segment received before message header {}".format(line)
                     )
-                    continue
                 batches[-1][1][-1] += line
             else:
                 if not messages:
-                    logger.error(
+                    raise ParseException(
                         "Segment received before message header {}".format(line)
                     )
-                    continue
                 messages[-1] += line
     if messages:  # add the default batch, if we have one
         batches.append([None, messages])
-    kwargs = {
-        "separator": "\r",
-        "sequence": [
-            _create_batch(batch[0], batch[1], encoding, factory) for batch in batches
-        ],
-    }
-    # If the FHS/FTS are present, use them to set up the file
-    if file:
-        file = parse(file, encoding=encoding, factory=factory)
-        kwargs["esc"] = file.esc
-        kwargs["separators"] = file.separators
-        kwargs["factory"] = file.factory
-    parsed = factory.create_file(**kwargs)
-    # If the FHS/FTS are present, add them
-    if file:
-        parsed.header = file.segment("FHS")
-        try:
-            parsed.trailer = file.segment("FTS")
-        except KeyError:
-            logger.warning("Missing FTS segment")
-    return parsed
+    return _create_file(file, batches, encoding, factory)
 
 
 def _split(text, plan):
