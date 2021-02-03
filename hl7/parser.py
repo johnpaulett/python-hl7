@@ -265,6 +265,8 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
                 continue
             file += line
         elif line[:3] == "BHS":
+            if in_batch:
+                raise ParseException("Batch cannot have more than one BHS segment")
             batches.append([line, []])
             in_batch = True
         elif line[:3] == "BTS":
