@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.4.2 - February 2021
+---------------------
+
+* Added support for :py:class:`hl7.Batch` and :py:class:`hl7.File`, via
+  :py:func:`hl7.parse_hl7` or the more specific :py:func:`hl7.parse_batch`
+  and :py:func:`parse_file`.
+
+Thanks `Joseph Wortmann <https://github.com/joseph-wortmann>`_!
+
 
 0.4.1 - September 2020
 ----------------------
