@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-from logging import getLogger
 from string import whitespace
 
 from .containers import Factory
 from .exceptions import ParseException
 from .util import isbatch, isfile, ishl7
 
-hl7_whitespace = whitespace.replace("\r", "")
-logger = getLogger(__file__)
+_HL7_WHITESPACE = whitespace.replace("\r", "")
 
 
 def parse_hl7(line, encoding="utf-8", factory=Factory):
@@ -167,9 +165,9 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
     batch = None
     messages = []
     # Split the batch into lines, retaining the ends
-    for line in lines.strip(hl7_whitespace).splitlines(keepends=True):
+    for line in lines.strip(_HL7_WHITESPACE).splitlines(keepends=True):
         # strip out all whitespace MINUS the '\r'
-        line = line.strip(hl7_whitespace)
+        line = line.strip(_HL7_WHITESPACE)
         if line[:3] == "BHS":
             if batch:
                 raise ParseException("Batch cannot have more than one BHS segment")
@@ -253,9 +251,9 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
     messages = []
     in_batch = False
     # Split the file into lines, reatining the ends
-    for line in lines.strip(hl7_whitespace).splitlines(keepends=True):
+    for line in lines.strip(_HL7_WHITESPACE).splitlines(keepends=True):
         # strip out all whitespace MINUS the '\r'
-        line = line.strip(hl7_whitespace)
+        line = line.strip(_HL7_WHITESPACE)
         if line[:3] == "FHS":
             if file:
                 raise ParseException("File cannot have more than one FHS segment")
