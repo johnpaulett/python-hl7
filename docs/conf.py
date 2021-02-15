@@ -104,6 +104,7 @@ html_theme_options = {
     "github_repo": "python-hl7",
     "codecov_button": True,
     "github_banner": True,
+    "badge_branch": "main",
     # "page_width": "940",
 }
 
