@@ -3,6 +3,11 @@ import datetime
 import logging
 
 from .accessor import Accessor
+from .exceptions import (
+    MalformedBatchException,
+    MalformedFileException,
+    MalformedSegmentException,
+)
 from .util import generate_message_control_id
 
 logger = logging.getLogger(__file__)
@@ -73,20 +78,266 @@ class Container(Sequence):
         return self.__getitem__(slice(i, j))
 
     def __str__(self):
-        """Join a the child containers into a single string, separated
+        return self.separator.join((str(x) for x in self))
+
+
+class BuilderMixin(object):
+    """Mixin class that allows for the create functions
+    in the top-level container classes
+    """
+
+    def create_file(self, seq):
+        """Create a new :py:class:`hl7.File` compatible with this container"""
+        return self.factory.create_file(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_batch(self, seq):
+        """Create a new :py:class:`hl7.Batch` compatible with this container"""
+        return self.factory.create_batch(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_message(self, seq):
+        """Create a new :py:class:`hl7.Message` compatible with this container"""
+        return self.factory.create_message(
+            self.separators[0],
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_segment(self, seq):
+        """Create a new :py:class:`hl7.Segment` compatible with this container"""
+        return self.factory.create_segment(
+            self.separators[1],
+            seq,
+            esc=self.esc,
+            separators=self.separators[1:],
+            factory=self.factory,
+        )
+
+    def create_field(self, seq):
+        """Create a new :py:class:`hl7.Field` compatible with this container"""
+        return self.factory.create_field(
+            self.separators[2],
+            seq,
+            esc=self.esc,
+            separators=self.separators[2:],
+            factory=self.factory,
+        )
+
+    def create_repetition(self, seq):
+        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
+        return self.factory.create_repetition(
+            self.separators[3],
+            seq,
+            esc=self.esc,
+            separators=self.separators[3:],
+            factory=self.factory,
+        )
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this container"""
+        return self.factory.create_component(
+            self.separators[4],
+            seq,
+            esc=self.esc,
+            separators=self.separators[4:],
+            factory=self.factory,
+        )
+
+
+class File(Container, BuilderMixin):
+    """Representation of an HL7 file from the batch protocol.
+    It contains a list of :py:class:`hl7.Batch`
+    instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
+
+    Files may or may not be wrapped in FHS/FTS segements
+    deliniating the start/end of the batch. These are optional.
+    """
+
+    def __init__(
+        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
+    ):
+        super(File, self).__init__(
+            separator,
+            sequence=sequence,
+            esc=esc,
+            separators=separators,
+            factory=factory,
+        )
+        self.header = None
+        self.trailer = None
+
+    @property
+    def header(self):
+        """FHS :py:class:`hl7.Segment`"""
+        return self._batch_header_segment
+
+    @header.setter
+    def header(self, segment):
+        if segment and segment[0][0] != "FHS":
+            raise MalformedSegmentException('header must begin with "FHS"')
+        self._batch_header_segment = segment
+
+    @property
+    def trailer(self):
+        """FTS :py:class:`hl7.Segment`"""
+        return self._batch_trailer_segment
+
+    @trailer.setter
+    def trailer(self, segment):
+        if segment and segment[0][0] != "FTS":
+            raise MalformedSegmentException('trailer must begin with "FTS"')
+        self._batch_trailer_segment = segment
+
+    def create_header(self):
+        """Create a new :py:class:`hl7.Segment` FHS compatible with this file"""
+        return self.create_segment(
+            [
+                self.create_field(["FHS"]),
+                self.create_field([self.separators[1]]),
+                self.create_field(
+                    [
+                        self.separators[3]
+                        + self.separators[2]
+                        + self.esc
+                        + self.separators[4]
+                    ]
+                ),
+            ]
+        )
+
+    def create_trailer(self):
+        """Create a new :py:class:`hl7.Segment` FTS compatible with this file"""
+        return self.create_segment([self.create_field(["FTS"])])
+
+    def __str__(self):
+        """Join a the child batches into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
         approriate method for turning the python-hl7 representation of
         HL7 into a standard string.
 
-        >>> str(h) == message
-        True
-
+        If this batch has FHS/FTS segments, they will be added to the
+        beginning/end of the returned string.
         """
-        return self.separator.join((str(x) for x in self))
+        if (self.header and not self.trailer) or (not self.header and self.trailer):
+            raise MalformedFileException(
+                "Either both header and trailer must be present or neither"
+            )
+        return (
+            super(File, self).__str__()
+            if not self.header
+            else str(self.header)
+            + self.separator
+            + super(File, self).__str__()
+            + str(self.trailer)
+            + self.separator
+        )
 
 
-class Message(Container):
+class Batch(Container, BuilderMixin):
+    """Representation of an HL7 batch from the batch protocol.
+    It contains a list of :py:class:`hl7.Message` instances.
+    It may contain BHS/BTS :py:class:`hl7.Segment` instances.
+
+    Batches may or may not be wrapped in BHS/BTS segements
+    deliniating the start/end of the batch. These are optional.
+    """
+
+    def __init__(
+        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
+    ):
+        super(Batch, self).__init__(
+            separator,
+            sequence=sequence,
+            esc=esc,
+            separators=separators,
+            factory=factory,
+        )
+        self.header = None
+        self.trailer = None
+
+    @property
+    def header(self):
+        """BHS :py:class:`hl7.Segment`"""
+        return self._batch_header_segment
+
+    @header.setter
+    def header(self, segment):
+        if segment and segment[0][0] != "BHS":
+            raise MalformedSegmentException('header must begin with "BHS"')
+        self._batch_header_segment = segment
+
+    @property
+    def trailer(self):
+        """BTS :py:class:`hl7.Segment`"""
+        return self._batch_trailer_segment
+
+    @trailer.setter
+    def trailer(self, segment):
+        if segment and segment[0][0] != "BTS":
+            raise MalformedSegmentException('trailer must begin with "BTS"')
+        self._batch_trailer_segment = segment
+
+    def create_header(self):
+        """Create a new :py:class:`hl7.Segment` BHS compatible with this batch"""
+        return self.create_segment(
+            [
+                self.create_field(["BHS"]),
+                self.create_field([self.separators[1]]),
+                self.create_field(
+                    [
+                        self.separators[3]
+                        + self.separators[2]
+                        + self.esc
+                        + self.separators[4]
+                    ]
+                ),
+            ]
+        )
+
+    def create_trailer(self):
+        """Create a new :py:class:`hl7.Segment` BHS compatible with this batch"""
+        return self.create_segment([self.create_field(["BTS"])])
+
+    def __str__(self):
+        """Join a the child messages into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
+
+        If this batch has BHS/BTS segments, they will be added to the
+        beginning/end of the returned string.
+        """
+        if (self.header and not self.trailer) or (not self.header and self.trailer):
+            raise MalformedBatchException(
+                "Either both header and trailer must be present or neither"
+            )
+        return (
+            super(Batch, self).__str__()
+            if not self.header
+            else str(self.header)
+            + self.separator
+            + super(Batch, self).__str__()
+            + str(self.trailer)
+            + self.separator
+        )
+
+
+class Message(Container, BuilderMixin):
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
@@ -484,56 +735,6 @@ class Message(Container):
 
         return "".join(rv)
 
-    def create_message(self, seq):
-        """Create a new :py:class:`hl7.Message` compatible with this message"""
-        return self.factory.create_message(
-            self.separators[0],
-            seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_segment(self, seq):
-        """Create a new :py:class:`hl7.Segment` compatible with this message"""
-        return self.factory.create_segment(
-            self.separators[1],
-            seq,
-            esc=self.esc,
-            separators=self.separators[1:],
-            factory=self.factory,
-        )
-
-    def create_field(self, seq):
-        """Create a new :py:class:`hl7.Field` compatible with this message"""
-        return self.factory.create_field(
-            self.separators[2],
-            seq,
-            esc=self.esc,
-            separators=self.separators[2:],
-            factory=self.factory,
-        )
-
-    def create_repetition(self, seq):
-        """Create a new :py:class:`hl7.Repetition` compatible with this message"""
-        return self.factory.create_repetition(
-            self.separators[3],
-            seq,
-            esc=self.esc,
-            separators=self.separators[3:],
-            factory=self.factory,
-        )
-
-    def create_component(self, seq):
-        """Create a new :py:class:`hl7.Component` compatible with this message"""
-        return self.factory.create_component(
-            self.separators[4],
-            seq,
-            esc=self.esc,
-            separators=self.separators[4:],
-            factory=self.factory,
-        )
-
     def create_ack(
         self, ack_code="AA", message_id=None, application=None, facility=None
     ):
@@ -595,6 +796,16 @@ class Message(Container):
         return ack
 
     def __str__(self):
+        """Join a the child containers into a single string, separated
+        by the self.separator.  This method acts recursively, calling
+        the children's __unicode__ method.  Thus ``unicode()`` is the
+        approriate method for turning the python-hl7 representation of
+        HL7 into a standard string.
+
+        >>> str(hl7.parse(message)) == message
+        True
+
+        """
         # Per spec, Message Construction Rules, Section 2.6 (v2.8), Message ends
         # with the carriage return
         return super(Message, self).__str__() + self.separator
@@ -612,7 +823,7 @@ class Segment(Container):
         return index
 
     def __str__(self):
-        if str(self[0]) in ["MSH", "FHS"]:
+        if str(self[0]) in ["MSH", "FHS", "BHS"]:
             return (
                 str(self[0])
                 + str(self[1])
@@ -648,6 +859,8 @@ class Factory(object):
     A subclass can be used to create specialized subclasses of each container.
     """
 
+    create_file = File  #: Create an instance of :py:class:`hl7.File`
+    create_batch = Batch  #: Create an instance of :py:class:`hl7.Batch`
     create_message = Message  #: Create an instance of :py:class:`hl7.Message`
     create_segment = Segment  #: Create an instance of :py:class:`hl7.Segment`
     create_field = Field  #: Create an instance of :py:class:`hl7.Field`

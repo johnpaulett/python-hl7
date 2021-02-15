@@ -2,9 +2,30 @@
 from unittest import TestCase
 
 import hl7
-from hl7 import Accessor, Component, Field, Message, Repetition, Segment
+from hl7 import Accessor, Component, Field, Message, ParseException, Repetition, Segment
 
-from .samples import rep_sample_hl7, sample_file, sample_hl7
+from .samples import (
+    rep_sample_hl7,
+    sample_bad_batch,
+    sample_bad_batch1,
+    sample_bad_file,
+    sample_bad_file1,
+    sample_bad_file2,
+    sample_bad_file3,
+    sample_batch,
+    sample_batch1,
+    sample_batch2,
+    sample_batch3,
+    sample_batch4,
+    sample_file,
+    sample_file1,
+    sample_file2,
+    sample_file3,
+    sample_file4,
+    sample_file5,
+    sample_file6,
+    sample_hl7,
+)
 
 
 class ParseTest(TestCase):
@@ -28,6 +49,186 @@ class ParseTest(TestCase):
         # Do it twice to make sure text coercion is idempotent
         self.assertEqual(str(msg), sample_hl7)
         self.assertEqual(str(msg), sample_hl7)
+
+    def test_parse_batch(self):
+        batch = hl7.parse_batch(sample_batch)
+        self.assertEqual(len(batch), 1)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertIsInstance(batch.header, hl7.Segment)
+        self.assertEqual(batch.header[0][0], "BHS")
+        self.assertEqual(batch.header[4][0], "ABCHS")
+        self.assertIsInstance(batch.trailer, hl7.Segment)
+        self.assertEqual(batch.trailer[0][0], "BTS")
+        self.assertEqual(batch.trailer[1][0], "1")
+
+    def test_parse_batch1(self):
+        batch = hl7.parse_batch(sample_batch1)
+        self.assertEqual(len(batch), 2)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertEqual(batch[0][0][10][0], "12334456778890")
+        self.assertIsInstance(batch[1], hl7.Message)
+        self.assertEqual(batch[1][0][10][0], "12334456778891")
+        self.assertIsInstance(batch.header, hl7.Segment)
+        self.assertEqual(batch.header[0][0], "BHS")
+        self.assertEqual(batch.header[4][0], "ABCHS")
+        self.assertIsInstance(batch.trailer, hl7.Segment)
+        self.assertEqual(batch.trailer[0][0], "BTS")
+        self.assertEqual(batch.trailer[1][0], "2")
+
+    def test_parse_batch2(self):
+        batch = hl7.parse_batch(sample_batch2)
+        self.assertEqual(len(batch), 2)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertEqual(batch[0][0][10][0], "12334456778890")
+        self.assertIsInstance(batch[1], hl7.Message)
+        self.assertEqual(batch[1][0][10][0], "12334456778891")
+        self.assertFalse(batch.header)
+        self.assertFalse(batch.trailer)
+
+    def test_parse_batch3(self):
+        batch = hl7.parse_batch(sample_batch3)
+        self.assertEqual(len(batch), 1)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertIsInstance(batch.header, hl7.Segment)
+        self.assertEqual(batch.header[0][0], "BHS")
+        self.assertEqual(batch.header[4][0], "ABCHS")
+        self.assertIsInstance(batch.trailer, hl7.Segment)
+        self.assertEqual(batch.trailer[0][0], "BTS")
+
+    def test_parse_batch4(self):
+        batch = hl7.parse_batch(sample_batch4)
+        self.assertEqual(len(batch), 1)
+        self.assertIsInstance(batch[0], hl7.Message)
+        self.assertIsNone(batch.header)
+        self.assertIsNone(batch.trailer)
+
+    def test_parse_bad_batch(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parse_batch(sample_bad_batch)
+        self.assertIn("Segment received before message header", cm.exception.args[0])
+
+    def test_parse_bad_batch1(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parse_batch(sample_bad_batch1)
+        self.assertIn(
+            "Batch cannot have more than one BHS segment", cm.exception.args[0]
+        )
+
+    def test_parse_file(self):
+        file = hl7.parse_file(sample_file)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "1")
+
+    def test_parse_file1(self):
+        file = hl7.parse_file(sample_file1)
+        self.assertEqual(len(file), 2)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertEqual(file[0].trailer[1][0], "2")
+        self.assertIsInstance(file[1], hl7.Batch)
+        self.assertEqual(file[1].trailer[1][0], "1")
+        self.assertNotEqual(file[0], file[1])
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "2")
+
+    def test_parse_file2(self):
+        file = hl7.parse_file(sample_file2)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "1")
+
+    def test_parse_file3(self):
+        file = hl7.parse_file(sample_file3)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+
+    def test_parse_file4(self):
+        file = hl7.parse_file(sample_file4)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsNone(file.header)
+        self.assertIsNone(file.trailer)
+
+    def test_parse_file5(self):
+        file = hl7.parse_file(sample_file5)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "1")
+
+    def test_parse_file6(self):
+        file = hl7.parse_file(sample_file6)
+        self.assertEqual(len(file), 1)
+        self.assertIsInstance(file[0], hl7.Batch)
+        self.assertIsInstance(file.header, hl7.Segment)
+        self.assertEqual(file.header[0][0], "FHS")
+        self.assertEqual(file.header[4][0], "ABCHS")
+        self.assertIsInstance(file.trailer, hl7.Segment)
+        self.assertEqual(file.trailer[0][0], "FTS")
+        self.assertEqual(file.trailer[1][0], "1")
+
+    def test_parse_bad_file(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parse_file(sample_bad_file)
+        self.assertIn("Segment received before message header", cm.exception.args[0])
+
+    def test_parse_bad_file1(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parse_file(sample_bad_file1)
+        self.assertIn(
+            "Batch cannot have more than one BHS segment", cm.exception.args[0]
+        )
+
+    def test_parse_bad_file2(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parse_file(sample_bad_file2)
+        self.assertIn(
+            "File cannot have more than one FHS segment", cm.exception.args[0]
+        )
+
+    def test_parse_bad_file3(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parse_file(sample_bad_file3)
+        self.assertIn("Segment received before message header", cm.exception.args[0])
+
+    def test_parse_hl7(self):
+        obj = hl7.parse_hl7(sample_hl7)
+        self.assertIsInstance(obj, hl7.Message)
+        obj = hl7.parse_hl7(sample_batch)
+        self.assertIsInstance(obj, hl7.Batch)
+        obj = hl7.parse_hl7(sample_batch1)
+        self.assertIsInstance(obj, hl7.Batch)
+        obj = hl7.parse_hl7(sample_batch2)
+        self.assertIsInstance(obj, hl7.Batch)
+        obj = hl7.parse_hl7(sample_file)
+        self.assertIsInstance(obj, hl7.File)
+        obj = hl7.parse_hl7(sample_file1)
+        self.assertIsInstance(obj, hl7.File)
+        obj = hl7.parse_hl7(sample_file2)
+        self.assertIsInstance(obj, hl7.File)
 
     def test_bytestring_converted_to_unicode(self):
         msg = hl7.parse(str(sample_hl7))
