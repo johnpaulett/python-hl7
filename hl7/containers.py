@@ -566,7 +566,7 @@ class Message(Container, BuilderMixin):
         # Sending facility is source receving facility
         msh.assign_field(str(facility) if facility is not None else str(source_msh(6)), 4)
         # Receiving application is source sending application
-        msh.assign_field(str(source_msh(3)),  5)
+        msh.assign_field(str(source_msh(3)), 5)
         # Receiving facility is source sending facility
         msh.assign_field(str(source_msh(4)), 6)
         msh.assign_field(
