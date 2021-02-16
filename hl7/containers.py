@@ -8,7 +8,7 @@ from .exceptions import (
     MalformedFileException,
     MalformedSegmentException,
 )
-from .util import generate_message_control_id
+from .util import escape, generate_message_control_id, unescape
 
 logger = logging.getLogger(__file__)
 
@@ -439,86 +439,34 @@ class Message(Container, BuilderMixin):
         subcomponent_num=1,
     ):
         """
-            Extract a field using a future proofed approach, based on rules in:
-            http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+        Extract a field using a future proofed approach, based on rules in:
+        http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
 
-            'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
+        'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
 
-                |   PID.F3.R1.C2.S2 = 'Sub-Component2'
-                |   PID.F4.R2.C1 = 'Repeat1'
+            |   PID.F3.R1.C2.S2 = 'Sub-Component2'
+            |   PID.F4.R2.C1 = 'Repeat1'
 
-            Compatibility Rules:
+        Compatibility Rules:
 
-                If the parse tree is deeper than the specified path continue
-                following the first child branch until a leaf of the tree is
-                encountered and return that value (which could be blank).
+            If the parse tree is deeper than the specified path continue
+            following the first child branch until a leaf of the tree is
+            encountered and return that value (which could be blank).
 
-                Example:
+            Example:
 
-                    |   PID.F3.R1.C2 = 'Sub-Component1' (assume .SC1)
+                |   PID.F3.R1.C2 = 'Sub-Component1' (assume .SC1)
 
-                If the parse tree terminates before the full path is satisfied
-                check each of the subsequent paths and if every one is specified
-                at position 1 then the leaf value reached can be returned as the
-                result.
+            If the parse tree terminates before the full path is satisfied
+            check each of the subsequent paths and if every one is specified
+            at position 1 then the leaf value reached can be returned as the
+            result.
 
-                    |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
+                |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
-        # Save original values for error messages
-        accessor = Accessor(
-            segment, segment_num, field_num, repeat_num, component_num, subcomponent_num
+        return self.segments(segment)(segment_num).extract_field(
+            segment_num, field_num, repeat_num, component_num, subcomponent_num
         )
-
-        field_num = field_num or 1
-        repeat_num = repeat_num or 1
-        component_num = component_num or 1
-        subcomponent_num = subcomponent_num or 1
-
-        segment = self.segments(segment)(segment_num)
-        if field_num < len(segment):
-            field = segment(field_num)
-        else:
-            if repeat_num == 1 and component_num == 1 and subcomponent_num == 1:
-                return ""  # Assume non-present optional value
-            raise IndexError("Field not present: {0}".format(accessor.key))
-
-        rep = field(repeat_num)
-
-        if not isinstance(rep, Repetition):
-            # leaf
-            if component_num == 1 and subcomponent_num == 1:
-                return (
-                    rep
-                    if accessor.segment == "MSH" and accessor.field_num in (1, 2)
-                    else self.unescape(rep)
-                )
-            raise IndexError(
-                "Field reaches leaf node before completing path: {0}".format(
-                    accessor.key
-                )
-            )
-
-        if component_num > len(rep):
-            if subcomponent_num == 1:
-                return ""  # Assume non-present optional value
-            raise IndexError("Component not present: {0}".format(accessor.key))
-
-        component = rep(component_num)
-        if not isinstance(component, Component):
-            # leaf
-            if subcomponent_num == 1:
-                return self.unescape(component)
-            raise IndexError(
-                "Field reaches leaf node before completing path: {0}".format(
-                    accessor.key
-                )
-            )
-
-        if subcomponent_num <= len(component):
-            subcomponent = component(subcomponent_num)
-            return self.unescape(subcomponent)
-        else:
-            return ""  # Assume non-present optional value
 
     def assign_field(
         self,
@@ -531,209 +479,66 @@ class Message(Container, BuilderMixin):
         subcomponent_num=None,
     ):
         """
-            Assign a value into a message using the tree based assignment notation.
-            The segment must exist.
+        Assign a value into a message using the tree based assignment notation.
+        The segment must exist.
 
-            Extract a field using a future proofed approach, based on rules in:
-            http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+        Extract a field using a future proofed approach, based on rules in:
+        http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
         """
-        segment = self.segments(segment)(segment_num)
-
-        while len(segment) <= field_num:
-            segment.append(self.create_field([]))
-        field = segment(field_num)
-        if repeat_num is None:
-            field[:] = [value]
-            return
-        while len(field) < repeat_num:
-            field.append(self.create_repetition([]))
-        repetition = field(repeat_num)
-        if component_num is None:
-            repetition[:] = [value]
-            return
-        while len(repetition) < component_num:
-            repetition.append(self.create_component([]))
-        component = repetition(component_num)
-        if subcomponent_num is None:
-            component[:] = [value]
-            return
-        while len(component) < subcomponent_num:
-            component.append("")
-        component(subcomponent_num, value)
+        self.segments(segment)(segment_num).assign_field(
+            value, field_num, repeat_num, component_num, subcomponent_num
+        )
 
     def escape(self, field, app_map=None):
         """
-            See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+        See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
-            To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
+        To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
 
-            Pass through the message. Replace recognised characters with their escaped
-            version. Return an ascii encoded string.
+        Pass through the message. Replace recognised characters with their escaped
+        version. Return an ascii encoded string.
 
-            Functionality:
+        Functionality:
 
-            *   Replace separator characters (2.10.4)
-            *   replace application defined characters (2.10.7)
-            *   Replace non-ascii values with hex versions using HL7 conventions.
+        *   Replace separator characters (2.10.4)
+        *   replace application defined characters (2.10.7)
+        *   Replace non-ascii values with hex versions using HL7 conventions.
 
-            Incomplete:
+        Incomplete:
 
-            *   replace highlight characters (2.10.3)
-            *   How to handle the rich text substitutions.
-            *   Merge contiguous hex values
+        *   replace highlight characters (2.10.3)
+        *   How to handle the rich text substitutions.
+        *   Merge contiguous hex values
         """
-        if not field:
-            return field
+        return escape(self, field, app_map)
 
-        esc = str(self.esc)
-
-        DEFAULT_MAP = {
-            self.separators[1]: "F",  # 2.10.4
-            self.separators[2]: "R",
-            self.separators[3]: "S",
-            self.separators[4]: "T",
-            self.esc: "E",
-            "\r": ".br",  # 2.10.6
-        }
-
-        rv = []
-        for offset, c in enumerate(field):
-            if app_map and c in app_map:
-                rv.append(esc + app_map[c] + esc)
-            elif c in DEFAULT_MAP:
-                rv.append(esc + DEFAULT_MAP[c] + esc)
-            elif ord(c) >= 0x20 and ord(c) <= 0x7E:
-                rv.append(c)
-            else:
-                rv.append("%sX%2x%s" % (esc, ord(c), esc))
-
-        return "".join(rv)
-
-    def unescape(self, field, app_map=None):  # noqa: C901
+    def unescape(self, field, app_map=None):
         """
-            See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
+        See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
-            To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
+        To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
 
-            This will convert the identifiable sequences.
-            If the application provides mapping, these are also used.
-            Items which cannot be mapped are removed
+        This will convert the identifiable sequences.
+        If the application provides mapping, these are also used.
+        Items which cannot be mapped are removed
 
-            For example, the App Map count provide N, H, Zxxx values
+        For example, the App Map count provide N, H, Zxxx values
 
-            Chapter 2: Section 2.10
+        Chapter 2: Section 2.10
 
-            At the moment, this functionality can:
+        At the moment, this functionality can:
 
-            *   replace the parsing characters (2.10.4)
-            *   replace highlight characters (2.10.3)
-            *   replace hex characters. (2.10.5)
-            *   replace rich text characters (2.10.6)
-            *   replace application defined characters (2.10.7)
+        *   replace the parsing characters (2.10.4)
+        *   replace highlight characters (2.10.3)
+        *   replace hex characters. (2.10.5)
+        *   replace rich text characters (2.10.6)
+        *   replace application defined characters (2.10.7)
 
-            It cannot:
+        It cannot:
 
-            *   switch code pages / ISO IR character sets
+        *   switch code pages / ISO IR character sets
         """
-        if not field or field.find(self.esc) == -1:
-            return field
-
-        DEFAULT_MAP = {
-            "H": "_",  # Override using the APP MAP: 2.10.3
-            "N": "_",  # Override using the APP MAP
-            "F": self.separators[1],  # 2.10.4
-            "R": self.separators[2],
-            "S": self.separators[3],
-            "T": self.separators[4],
-            "E": self.esc,
-            ".br": "\r",  # 2.10.6
-            ".sp": "\r",
-            ".fi": "",
-            ".nf": "",
-            ".in": "    ",
-            ".ti": "    ",
-            ".sk": " ",
-            ".ce": "\r",
-        }
-
-        rv = []
-        collecting = []
-        in_seq = False
-        for offset, c in enumerate(field):
-            if in_seq:
-                if c == self.esc:
-                    in_seq = False
-                    value = "".join(collecting)
-                    collecting = []
-                    if not value:
-                        logger.warn(
-                            "Error unescaping value [%s], empty sequence found at %d",
-                            field,
-                            offset,
-                        )
-                        continue
-                    if app_map and value in app_map:
-                        rv.append(app_map[value])
-                    elif value in DEFAULT_MAP:
-                        rv.append(DEFAULT_MAP[value])
-                    elif value.startswith(".") and (
-                        (app_map and value[:3] in app_map) or value[:3] in DEFAULT_MAP
-                    ):
-                        # Substitution with a number of repetitions defined (2.10.6)
-                        if app_map and value[:3] in app_map:
-                            ch = app_map[value[:3]]
-                        else:
-                            ch = DEFAULT_MAP[value[:3]]
-                        count = int(value[3:])
-                        rv.append(ch * count)
-
-                    elif (
-                        value[0] == "C"
-                    ):  # Convert to new Single Byte character set : 2.10.2
-                        # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
-                        logger.warn(
-                            "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
-                            value,
-                            field,
-                            offset,
-                        )
-                    elif (
-                        value[0] == "M"
-                    ):  # Switch to new Multi Byte character set : 2.10.2
-                        # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
-                        logger.warn(
-                            "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
-                            value,
-                            field,
-                            offset,
-                        )
-                    elif value[0] == "X":  # Hex encoded Bytes: 2.10.5
-                        value = value[1:]
-                        try:
-                            for off in range(0, len(value), 2):
-                                rv.append(chr(int(value[off : off + 2], 16)))
-                        except Exception:
-                            logger.exception(
-                                "Error decoding hex value [%s], field [%s], offset [%s]",
-                                value,
-                                field,
-                                offset,
-                            )
-                    else:
-                        logger.exception(
-                            "Error decoding value [%s], field [%s], offset [%s]",
-                            value,
-                            field,
-                            offset,
-                        )
-                else:
-                    collecting.append(c)
-            elif c == self.esc:
-                in_seq = True
-            else:
-                rv.append(str(c))
-
-        return "".join(rv)
+        return unescape(self, field, app_map)
 
     def create_ack(
         self, ack_code="AA", message_id=None, application=None, facility=None
@@ -753,45 +558,33 @@ class Message(Container, BuilderMixin):
         """
         source_msh = self.segment("MSH")
         msh = self.create_segment([self.create_field(["MSH"])])
-        msa = self.create_segment([self.create_field(["MSA"])])
-        ack = self.create_message([msh, msa])
 
-        ack.assign_field(str(source_msh(1)), "MSH", 1, 1)
-        ack.assign_field(str(source_msh(2)), "MSH", 1, 2)
+        msh.assign_field(str(source_msh(1)), 1)
+        msh.assign_field(str(source_msh(2)), 2)
         # Sending application is source receving application
-        ack.assign_field(
-            str(application) if application is not None else str(source_msh(5)),
-            "MSH",
-            1,
-            3,
-        )
+        msh.assign_field(str(application) if application is not None else str(source_msh(5)), 3)
         # Sending facility is source receving facility
-        ack.assign_field(
-            str(facility) if facility is not None else str(source_msh(6)), "MSH", 1, 4
-        )
+        msh.assign_field(str(facility) if facility is not None else str(source_msh(6)), 4)
         # Receiving application is source sending application
-        ack.assign_field(str(source_msh(3)), "MSH", 1, 5)
+        msh.assign_field(str(source_msh(3)),  5)
         # Receiving facility is source sending facility
-        ack.assign_field(str(source_msh(4)), "MSH", 1, 6)
-        ack.assign_field(
-            str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), "MSH", 1, 7
+        msh.assign_field(str(source_msh(4)), 6)
+        msh.assign_field(
+            str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 7
         )
         # Message type code
-        ack.assign_field("ACK", "MSH", 1, 9, 1, 1)
+        msh.assign_field("ACK", 9, 1, 1)
         # Copy trigger event from source
-        ack.assign_field(str(source_msh(9)(1)(2)), "MSH", 1, 9, 1, 2)
-        ack.assign_field("ACK", "MSH", 1, 9, 1, 3)
-        ack.assign_field(
-            message_id if message_id is not None else generate_message_control_id(),
-            "MSH",
-            1,
-            10,
-        )
-        ack.assign_field(str(source_msh(11)), "MSH", 1, 11)
-        ack.assign_field(str(source_msh(12)), "MSH", 1, 12)
+        msh.assign_field(str(source_msh(9)(1)(2)), 9, 1, 2)
+        msh.assign_field("ACK", 9, 1, 3)
+        msh.assign_field(message_id if message_id is not None else generate_message_control_id(), 10)
+        msh.assign_field(str(source_msh(11)), 11)
+        msh.assign_field(str(source_msh(12)), 12)
 
-        ack.assign_field(str(ack_code), "MSA", 1, 1)
-        ack.assign_field(str(source_msh(10)), "MSA", 1, 2)
+        msa = self.create_segment([self.create_field(["MSA"])])
+        msa.assign_field(str(ack_code), 1)
+        msa.assign_field(str(source_msh(10)), 2)
+        ack = self.create_message([msh, msa])
 
         return ack
 
@@ -818,6 +611,178 @@ class Segment(Container):
     :py:class:`hl7.Field` instances.
     """
 
+    def extract_field(
+        self,
+        segment_num=1,
+        field_num=1,
+        repeat_num=1,
+        component_num=1,
+        subcomponent_num=1,
+    ):
+        """
+        Extract a field using a future proofed approach, based on rules in:
+        http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+
+        'PID|Field1|Component1^Component2|Component1^Sub-Component1&Sub-Component2^Component3|Repeat1~Repeat2',
+
+            |   F3.R1.C2.S2 = 'Sub-Component2'
+            |   F4.R2.C1 = 'Repeat1'
+
+        Compatibility Rules:
+
+            If the parse tree is deeper than the specified path continue
+            following the first child branch until a leaf of the tree is
+            encountered and return that value (which could be blank).
+
+            Example:
+
+                |   F3.R1.C2 = 'Sub-Component1' (assume .SC1)
+
+            If the parse tree terminates before the full path is satisfied
+            check each of the subsequent paths and if every one is specified
+            at position 1 then the leaf value reached can be returned as the
+            result.
+
+                |   F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
+        """
+        # Save original values for error messages
+        accessor = Accessor(
+            self[0][0],
+            segment_num,
+            field_num,
+            repeat_num,
+            component_num,
+            subcomponent_num,
+        )
+
+        field_num = field_num or 1
+        repeat_num = repeat_num or 1
+        component_num = component_num or 1
+        subcomponent_num = subcomponent_num or 1
+
+        if field_num < len(self):
+            field = self(field_num)
+        else:
+            if repeat_num == 1 and component_num == 1 and subcomponent_num == 1:
+                return ""  # Assume non-present optional value
+            raise IndexError("Field not present: {0}".format(accessor.key))
+
+        rep = field(repeat_num)
+
+        if not isinstance(rep, Repetition):
+            # leaf
+            if component_num == 1 and subcomponent_num == 1:
+                return (
+                    rep
+                    if accessor.segment == "MSH" and accessor.field_num in (1, 2)
+                    else unescape(self, rep)
+                )
+            raise IndexError(
+                "Field reaches leaf node before completing path: {0}".format(
+                    accessor.key
+                )
+            )
+
+        if component_num > len(rep):
+            if subcomponent_num == 1:
+                return ""  # Assume non-present optional value
+            raise IndexError("Component not present: {0}".format(accessor.key))
+
+        component = rep(component_num)
+        if not isinstance(component, Component):
+            # leaf
+            if subcomponent_num == 1:
+                return unescape(self, component)
+            raise IndexError(
+                "Field reaches leaf node before completing path: {0}".format(
+                    accessor.key
+                )
+            )
+
+        if subcomponent_num <= len(component):
+            subcomponent = component(subcomponent_num)
+            return unescape(self, subcomponent)
+        else:
+            return ""  # Assume non-present optional value
+
+    def assign_field(
+        self,
+        value,
+        field_num=None,
+        repeat_num=None,
+        component_num=None,
+        subcomponent_num=None,
+    ):
+        """
+        Assign a value into a message using the tree based assignment notation.
+        The segment must exist.
+
+        Extract a field using a future proofed approach, based on rules in:
+        http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+        """
+
+        while len(self) <= field_num:
+            self.append(self.create_field([]))
+        field = self(field_num)
+        if repeat_num is None:
+            field[:] = [value]
+            return
+        while len(field) < repeat_num:
+            field.append(self.create_repetition([]))
+        repetition = field(repeat_num)
+        if component_num is None:
+            repetition[:] = [value]
+            return
+        while len(repetition) < component_num:
+            repetition.append(self.create_component([]))
+        component = repetition(component_num)
+        if subcomponent_num is None:
+            component[:] = [value]
+            return
+        while len(component) < subcomponent_num:
+            component.append("")
+        component(subcomponent_num, value)
+
+    def create_segment(self, seq):
+        """Create a new :py:class:`hl7.Segment` compatible with this container"""
+        return self.factory.create_segment(
+            self.separator,
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_field(self, seq):
+        """Create a new :py:class:`hl7.Field` compatible with this container"""
+        return self.factory.create_field(
+            self.separators[1],
+            seq,
+            esc=self.esc,
+            separators=self.separators[1:],
+            factory=self.factory,
+        )
+
+    def create_repetition(self, seq):
+        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
+        return self.factory.create_repetition(
+            self.separators[2],
+            seq,
+            esc=self.esc,
+            separators=self.separators[2:],
+            factory=self.factory,
+        )
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this container"""
+        return self.factory.create_component(
+            self.separators[3],
+            seq,
+            esc=self.esc,
+            separators=self.separators[3:],
+            factory=self.factory,
+        )
+
     def _adjust_index(self, index):
         # First element is the segment name, so we don't need to adjust to get 1-based
         return index
@@ -840,17 +805,77 @@ class Field(Container):
     or :py:class:`hl7.Repetition` instances.
     """
 
+    def create_field(self, seq):
+        """Create a new :py:class:`hl7.Field` compatible with this container"""
+        return self.factory.create_field(
+            self.separator,
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_repetition(self, seq):
+        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
+        return self.factory.create_repetition(
+            self.separators[1],
+            seq,
+            esc=self.esc,
+            separators=self.separators[1:],
+            factory=self.factory,
+        )
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this container"""
+        return self.factory.create_component(
+            self.separators[2],
+            seq,
+            esc=self.esc,
+            separators=self.separators[2:],
+            factory=self.factory,
+        )
+
 
 class Repetition(Container):
     """Fourth level of an HL7 message. A field can repeat.
     It contains a list of strings or :py:class:`hl7.Component` instances.
     """
 
+    def create_repetition(self, seq):
+        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
+        return self.factory.create_repetition(
+            self.separator,
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this container"""
+        return self.factory.create_component(
+            self.separators[1],
+            seq,
+            esc=self.esc,
+            separators=self.separators[1:],
+            factory=self.factory,
+        )
+
 
 class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
     It contains a list of string sub-components.
     """
+
+    def create_component(self, seq):
+        """Create a new :py:class:`hl7.Component` compatible with this container"""
+        return self.factory.create_component(
+            self.separator,
+            seq,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
+        )
 
 
 class Factory(object):
