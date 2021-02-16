@@ -22,14 +22,14 @@ class AccessorTest(TestCase):
         self.assertNotEqual(Accessor("FOO", 1), Accessor("FOO", 2))
 
     def test_string(self):
-        SEP = "|^~\&"
+        SEP = "|^~&"
         CR_SEP = "\r"
         MSH = Segment(SEP[0], [Field(SEP[1], ["MSH"])])
         MSA = Segment(SEP[0], [Field(SEP[1], ["MSA"])])
         response = Message(CR_SEP, [MSH, MSA])
         response["MSH.F1.R1"] = SEP[0]
         response["MSH.F2.R1"] = SEP[1:]
-        self.assertEqual(str(response), "MSH|^~\\&|\rMSA\r")
+        self.assertEqual(str(response), "MSH|^~&|\rMSA\r")
 
         response["MSH.F9.R1.C1"] = "ORU"
         response["MSH.F9.R1.C2"] = "R01"
@@ -39,5 +39,5 @@ class AccessorTest(TestCase):
         response["MSA.F3.R1"] = "Application Message"
         self.assertEqual(
             str(response),
-            "MSH|^~\\&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message\r",
+            "MSH|^~&|||||||ORU^R01^|||2.4\rMSA|AA||Application Message\r",
         )
