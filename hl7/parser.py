@@ -101,8 +101,7 @@ def parse(lines, encoding="utf-8", factory=Factory):
 
 
 def _create_batch(batch, messages, encoding, factory):
-    """Creates a :py:class:`hl7.Batch`
-    """
+    """Creates a :py:class:`hl7.Batch`"""
     kwargs = {
         "separator": "\r",
         "sequence": [

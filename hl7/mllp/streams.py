@@ -308,6 +308,5 @@ class HL7StreamWriter(MLLPStreamWriter):
         self._encoding_errors = encoding_errors or "strict"
 
     def writemessage(self, message):
-        """Writes an :py:class:`hl7.Message` to the stream.
-        """
+        """Writes an :py:class:`hl7.Message` to the stream."""
         self.writeblock(str(message).encode(self.encoding, self.encoding_errors))

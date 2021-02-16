@@ -47,6 +47,10 @@ setup(
     install_requires=[],
     test_suite="tests",
     tests_require=[],
-    entry_points={"console_scripts": ["mllp_send=hl7.client:mllp_send",],},
+    entry_points={
+        "console_scripts": [
+            "mllp_send=hl7.client:mllp_send",
+        ],
+    },
     zip_safe=True,
 )
