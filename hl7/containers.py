@@ -59,34 +59,6 @@ class Container(Sequence):
         self.separators = separators
         self.factory = factory if factory is not None else Factory
 
-    def __getitem__(self, item):
-        # Python slice operator was returning a regular list, not a
-        # Container subclass
-        sequence = super(Container, self).__getitem__(item)
-        if isinstance(item, slice):
-            return self.__class__(
-                self.separator,
-                sequence,
-                self.esc,
-                self.separators,
-                factory=self.factory,
-            )
-        return sequence
-
-    def __getslice__(self, i, j):
-        # Python 2.x compatibility.  __getslice__ is deprecated, and
-        # we want to wrap the logic from __getitem__ when handling slices
-        return self.__getitem__(slice(i, j))
-
-    def __str__(self):
-        return self.separator.join((str(x) for x in self))
-
-
-class BuilderMixin(object):
-    """Mixin class that allows for the create functions
-    in the top-level container classes
-    """
-
     def create_file(self, seq):
         """Create a new :py:class:`hl7.File` compatible with this container"""
         return self.factory.create_file(
@@ -150,8 +122,30 @@ class BuilderMixin(object):
             factory=self.factory,
         )
 
+    def __getitem__(self, item):
+        # Python slice operator was returning a regular list, not a
+        # Container subclass
+        sequence = super(Container, self).__getitem__(item)
+        if isinstance(item, slice):
+            return self.__class__(
+                self.separator,
+                sequence,
+                self.esc,
+                self.separators,
+                factory=self.factory,
+            )
+        return sequence
 
-class File(Container, BuilderMixin):
+    def __getslice__(self, i, j):
+        # Python 2.x compatibility.  __getslice__ is deprecated, and
+        # we want to wrap the logic from __getitem__ when handling slices
+        return self.__getitem__(slice(i, j))
+
+    def __str__(self):
+        return self.separator.join((str(x) for x in self))
+
+
+class File(Container):
     """Representation of an HL7 file from the batch protocol.
     It contains a list of :py:class:`hl7.Batch`
     instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
@@ -242,7 +236,7 @@ class File(Container, BuilderMixin):
         )
 
 
-class Batch(Container, BuilderMixin):
+class Batch(Container):
     """Representation of an HL7 batch from the batch protocol.
     It contains a list of :py:class:`hl7.Message` instances.
     It may contain BHS/BTS :py:class:`hl7.Segment` instances.
@@ -333,7 +327,7 @@ class Batch(Container, BuilderMixin):
         )
 
 
-class Message(Container, BuilderMixin):
+class Message(Container):
     def __init__(
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
@@ -767,42 +761,6 @@ class Segment(Container):
             component.append("")
         component(subcomponent_num, value)
 
-    def create_segment(self, seq):
-        """Create a new :py:class:`hl7.Segment` compatible with this container"""
-        return self.factory.create_segment(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_field(self, seq):
-        """Create a new :py:class:`hl7.Field` compatible with this container"""
-        return self.factory.create_field(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_repetition(self, seq):
-        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
-        return self.factory.create_repetition(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_component(self, seq):
-        """Create a new :py:class:`hl7.Component` compatible with this container"""
-        return self.factory.create_component(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
     def _adjust_index(self, index):
         # First element is the segment name, so we don't need to adjust to get 1-based
         return index
@@ -837,33 +795,6 @@ class Field(Container):
     or :py:class:`hl7.Repetition` instances.
     """
 
-    def create_field(self, seq):
-        """Create a new :py:class:`hl7.Field` compatible with this container"""
-        return self.factory.create_field(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_repetition(self, seq):
-        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
-        return self.factory.create_repetition(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_component(self, seq):
-        """Create a new :py:class:`hl7.Component` compatible with this container"""
-        return self.factory.create_component(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
 
 class Repetition(Container):
     def __init__(
@@ -882,24 +813,6 @@ class Repetition(Container):
     It contains a list of strings or :py:class:`hl7.Component` instances.
     """
 
-    def create_repetition(self, seq):
-        """Create a new :py:class:`hl7.Repetition` compatible with this container"""
-        return self.factory.create_repetition(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
-    def create_component(self, seq):
-        """Create a new :py:class:`hl7.Component` compatible with this container"""
-        return self.factory.create_component(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
-
 
 class Component(Container):
     def __init__(
@@ -917,15 +830,6 @@ class Component(Container):
     """Fifth level of an HL7 message. A component is a composite datatypes.
     It contains a list of string sub-components.
     """
-
-    def create_component(self, seq):
-        """Create a new :py:class:`hl7.Component` compatible with this container"""
-        return self.factory.create_component(
-            sequence=seq,
-            esc=self.esc,
-            separators=self.separators,
-            factory=self.factory,
-        )
 
 
 class Factory(object):
