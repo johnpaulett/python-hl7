@@ -562,22 +562,26 @@ class Message(Container, BuilderMixin):
         msh.assign_field(str(source_msh(1)), 1)
         msh.assign_field(str(source_msh(2)), 2)
         # Sending application is source receving application
-        msh.assign_field(str(application) if application is not None else str(source_msh(5)), 3)
+        msh.assign_field(
+            str(application) if application is not None else str(source_msh(5)), 3
+        )
         # Sending facility is source receving facility
-        msh.assign_field(str(facility) if facility is not None else str(source_msh(6)), 4)
+        msh.assign_field(
+            str(facility) if facility is not None else str(source_msh(6)), 4
+        )
         # Receiving application is source sending application
         msh.assign_field(str(source_msh(3)), 5)
         # Receiving facility is source sending facility
         msh.assign_field(str(source_msh(4)), 6)
-        msh.assign_field(
-            str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 7
-        )
+        msh.assign_field(str(datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")), 7)
         # Message type code
         msh.assign_field("ACK", 9, 1, 1)
         # Copy trigger event from source
         msh.assign_field(str(source_msh(9)(1)(2)), 9, 1, 2)
         msh.assign_field("ACK", 9, 1, 3)
-        msh.assign_field(message_id if message_id is not None else generate_message_control_id(), 10)
+        msh.assign_field(
+            message_id if message_id is not None else generate_message_control_id(), 10
+        )
         msh.assign_field(str(source_msh(11)), 11)
         msh.assign_field(str(source_msh(12)), 12)
 
