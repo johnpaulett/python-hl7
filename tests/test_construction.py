@@ -12,8 +12,8 @@ CR_SEP = "\r"
 class ConstructionTest(TestCase):
     def test_create_msg(self):
         # Create a message
-        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ["MSH"])])
-        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ["MSA"])])
+        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSH"])])
+        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSA"])])
         response = hl7.Message(CR_SEP, [MSH, MSA])
         response["MSH.F1.R1"] = SEP[0]
         response["MSH.F2.R1"] = SEP[1:]
@@ -21,18 +21,18 @@ class ConstructionTest(TestCase):
 
     def test_append(self):
         # Append a segment to a message
-        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ["MSH"])])
+        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSH"])])
         response = hl7.Message(CR_SEP, [MSH])
         response["MSH.F1.R1"] = SEP[0]
         response["MSH.F2.R1"] = SEP[1:]
-        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ["MSA"])])
+        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSA"])])
         response.append(MSA)
         self.assertEqual(str(response), "MSH|^~\\&|\rMSA\r")
 
     def test_append_from_source(self):
         # Copy a segment between messages
-        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ["MSH"])])
-        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ["MSA"])])
+        MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSH"])])
+        MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSA"])])
         response = hl7.Message(CR_SEP, [MSH, MSA])
         response["MSH.F1.R1"] = SEP[0]
         response["MSH.F2.R1"] = SEP[1:]

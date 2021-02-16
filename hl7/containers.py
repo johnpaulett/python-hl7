@@ -47,13 +47,14 @@ class Container(Sequence):
     """Abstract root class for the parts of the HL7 message."""
 
     def __init__(
-        self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
+        self, separator, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert separator in separators
         # Initialize the list object, optionally passing in the
         # sequence.  Since list([]) == [], using the default
         # parameter will not cause any issues.
         super(Container, self).__init__(sequence)
-        self.separator = separator or separators[0]
+        self.separator = separator
         self.esc = esc
         self.separators = separators
         self.factory = factory if factory is not None else Factory
@@ -118,7 +119,7 @@ class BuilderMixin(object):
         return self.factory.create_segment(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[1:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -127,7 +128,7 @@ class BuilderMixin(object):
         return self.factory.create_field(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[2:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -136,7 +137,7 @@ class BuilderMixin(object):
         return self.factory.create_repetition(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[3:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -145,7 +146,7 @@ class BuilderMixin(object):
         return self.factory.create_component(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[4:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -162,8 +163,9 @@ class File(Container, BuilderMixin):
     def __init__(
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert not separator or separator == separators[0]
         super(File, self).__init__(
-            separator=separator,
+            separator=separators[0],
             sequence=sequence,
             esc=esc,
             separators=separators,
@@ -252,8 +254,9 @@ class Batch(Container, BuilderMixin):
     def __init__(
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert not separator or separator == separators[0]
         super(Batch, self).__init__(
-            separator=separator,
+            separator=separators[0],
             sequence=sequence,
             esc=esc,
             separators=separators,
@@ -331,6 +334,18 @@ class Batch(Container, BuilderMixin):
 
 
 class Message(Container, BuilderMixin):
+    def __init__(
+        self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
+    ):
+        assert not separator or separator == separators[0]
+        super(Message, self).__init__(
+            separator=separators[0],
+            sequence=sequence,
+            esc=esc,
+            separators=separators,
+            factory=factory,
+        )
+
     """Representation of an HL7 message. It contains a list
     of :py:class:`hl7.Segment` instances.
     """
@@ -372,7 +387,7 @@ class Message(Container, BuilderMixin):
         If key is an integer, ``__setitem__`` acts list a list, setting
         the :py:class:`hl7.Segment` held at that index:
 
-        >>> h[1] = hl7.Segment("|", [hl7.Field("^", ['PID'], [''])])
+        >>> h[1] = hl7.Segment("|", [hl7.Field("~", ['PID'], [''])])
 
         If the key is a string of length greater than 3,
         the key is parsed into an :py:class:`hl7.Accessor` and passed
@@ -603,10 +618,11 @@ class Message(Container, BuilderMixin):
 
 class Segment(Container):
     def __init__(
-        self, separator=None, sequence=[], esc="\\", separators="|~^&", factory=None
+        self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert not separator or separator == separators[1]
         super(Segment, self).__init__(
-            separator=separator,
+            separator=separators[1],
             sequence=sequence,
             esc=esc,
             separators=separators,
@@ -765,7 +781,7 @@ class Segment(Container):
         return self.factory.create_field(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[1:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -774,7 +790,7 @@ class Segment(Container):
         return self.factory.create_repetition(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[2:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -783,7 +799,7 @@ class Segment(Container):
         return self.factory.create_component(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[3:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -805,10 +821,11 @@ class Segment(Container):
 
 class Field(Container):
     def __init__(
-        self, separator=None, sequence=[], esc="\\", separators="~^&", factory=None
+        self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert not separator or separator == separators[2]
         super(Field, self).__init__(
-            separator=separator,
+            separator=separators[2],
             sequence=sequence,
             esc=esc,
             separators=separators,
@@ -834,7 +851,7 @@ class Field(Container):
         return self.factory.create_repetition(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[1:],
+            separators=self.separators,
             factory=self.factory,
         )
 
@@ -843,17 +860,18 @@ class Field(Container):
         return self.factory.create_component(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[2:],
+            separators=self.separators,
             factory=self.factory,
         )
 
 
 class Repetition(Container):
     def __init__(
-        self, separator=None, sequence=[], esc="\\", separators="^&", factory=None
+        self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert not separator or separator == separators[3]
         super(Repetition, self).__init__(
-            separator=separator,
+            separator=separators[3],
             sequence=sequence,
             esc=esc,
             separators=separators,
@@ -878,17 +896,18 @@ class Repetition(Container):
         return self.factory.create_component(
             sequence=seq,
             esc=self.esc,
-            separators=self.separators[1:],
+            separators=self.separators,
             factory=self.factory,
         )
 
 
 class Component(Container):
     def __init__(
-        self, separator=None, sequence=[], esc="\\", separators="&", factory=None
+        self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
+        assert not separator or separator == separators[4]
         super(Component, self).__init__(
-            separator=separator,
+            separator=separators[4],
             sequence=sequence,
             esc=esc,
             separators=separators,
