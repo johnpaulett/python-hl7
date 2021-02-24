@@ -413,7 +413,7 @@ class ParsePlanTest(TestCase):
     def test_create_parse_plan(self):
         plan = hl7.parser.create_parse_plan(sample_hl7)
 
-        self.assertEqual(plan.separators, ["\r", "|", "~", "^", "&"])
+        self.assertEqual(plan.separators, "\r|~^&")
         self.assertEqual(
             plan.containers, [Message, Segment, Field, Repetition, Component]
         )
@@ -431,19 +431,23 @@ class ParsePlanTest(TestCase):
         plan = hl7.parser.create_parse_plan(sample_hl7)
 
         n1 = plan.next()
-        self.assertEqual(n1.separators, ["|", "~", "^", "&"])
+        self.assertEqual(n1.separators, "\r|~^&")
+        self.assertEqual(n1.separator, "|")
         self.assertEqual(n1.containers, [Segment, Field, Repetition, Component])
 
         n2 = n1.next()
-        self.assertEqual(n2.separators, ["~", "^", "&"])
+        self.assertEqual(n2.separators, "\r|~^&")
+        self.assertEqual(n2.separator, "~")
         self.assertEqual(n2.containers, [Field, Repetition, Component])
 
         n3 = n2.next()
-        self.assertEqual(n3.separators, ["^", "&"])
+        self.assertEqual(n3.separators, "\r|~^&")
+        self.assertEqual(n3.separator, "^")
         self.assertEqual(n3.containers, [Repetition, Component])
 
         n4 = n3.next()
-        self.assertEqual(n4.separators, ["&"])
+        self.assertEqual(n4.separators, "\r|~^&")
+        self.assertEqual(n4.separator, "&")
         self.assertEqual(n4.containers, [Component])
 
         n5 = n4.next()

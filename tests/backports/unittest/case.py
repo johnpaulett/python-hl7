@@ -449,8 +449,8 @@ class TestCase(object):
 
     def __init__(self, methodName="runTest"):
         """Create an instance of the class that will use the named test
-           method when executed. Raises a ValueError if the instance does
-           not have a method with the specified name.
+        method when executed. Raises a ValueError if the instance does
+        not have a method with the specified name.
         """
         self._testMethodName = methodName
         self._outcome = None
@@ -829,29 +829,29 @@ class TestCase(object):
 
     def assertRaises(self, expected_exception, *args, **kwargs):
         """Fail unless an exception of class expected_exception is raised
-           by the callable when invoked with specified positional and
-           keyword arguments. If a different type of exception is
-           raised, it will not be caught, and the test case will be
-           deemed to have suffered an error, exactly as for an
-           unexpected exception.
+        by the callable when invoked with specified positional and
+        keyword arguments. If a different type of exception is
+        raised, it will not be caught, and the test case will be
+        deemed to have suffered an error, exactly as for an
+        unexpected exception.
 
-           If called with the callable and arguments omitted, will return a
-           context object used like this::
+        If called with the callable and arguments omitted, will return a
+        context object used like this::
 
-                with self.assertRaises(SomeException):
-                    do_something()
+             with self.assertRaises(SomeException):
+                 do_something()
 
-           An optional keyword argument 'msg' can be provided when assertRaises
-           is used as a context object.
+        An optional keyword argument 'msg' can be provided when assertRaises
+        is used as a context object.
 
-           The context manager keeps a reference to the exception as
-           the 'exception' attribute. This allows you to inspect the
-           exception after the assertion::
+        The context manager keeps a reference to the exception as
+        the 'exception' attribute. This allows you to inspect the
+        exception after the assertion::
 
-               with self.assertRaises(SomeException) as cm:
-                   do_something()
-               the_exception = cm.exception
-               self.assertEqual(the_exception.error_code, 3)
+            with self.assertRaises(SomeException) as cm:
+                do_something()
+            the_exception = cm.exception
+            self.assertEqual(the_exception.error_code, 3)
         """
         context = _AssertRaisesContext(expected_exception, self)
         try:
@@ -862,31 +862,31 @@ class TestCase(object):
 
     def assertWarns(self, expected_warning, *args, **kwargs):
         """Fail unless a warning of class warnClass is triggered
-           by the callable when invoked with specified positional and
-           keyword arguments.  If a different type of warning is
-           triggered, it will not be handled: depending on the other
-           warning filtering rules in effect, it might be silenced, printed
-           out, or raised as an exception.
+        by the callable when invoked with specified positional and
+        keyword arguments.  If a different type of warning is
+        triggered, it will not be handled: depending on the other
+        warning filtering rules in effect, it might be silenced, printed
+        out, or raised as an exception.
 
-           If called with the callable and arguments omitted, will return a
-           context object used like this::
+        If called with the callable and arguments omitted, will return a
+        context object used like this::
 
-                with self.assertWarns(SomeWarning):
-                    do_something()
+             with self.assertWarns(SomeWarning):
+                 do_something()
 
-           An optional keyword argument 'msg' can be provided when assertWarns
-           is used as a context object.
+        An optional keyword argument 'msg' can be provided when assertWarns
+        is used as a context object.
 
-           The context manager keeps a reference to the first matching
-           warning as the 'warning' attribute; similarly, the 'filename'
-           and 'lineno' attributes give you information about the line
-           of Python code from which the warning was triggered.
-           This allows you to inspect the warning after the assertion::
+        The context manager keeps a reference to the first matching
+        warning as the 'warning' attribute; similarly, the 'filename'
+        and 'lineno' attributes give you information about the line
+        of Python code from which the warning was triggered.
+        This allows you to inspect the warning after the assertion::
 
-               with self.assertWarns(SomeWarning) as cm:
-                   do_something()
-               the_warning = cm.warning
-               self.assertEqual(the_warning.some_attribute, 147)
+            with self.assertWarns(SomeWarning) as cm:
+                do_something()
+            the_warning = cm.warning
+            self.assertEqual(the_warning.some_attribute, 147)
         """
         context = _AssertWarnsContext(expected_warning, self)
         return context.handle("assertWarns", args, kwargs)
@@ -948,14 +948,14 @@ class TestCase(object):
 
     def assertEqual(self, first, second, msg=None):
         """Fail if the two objects are unequal as determined by the '=='
-           operator.
+        operator.
         """
         assertion_func = self._getAssertEqualityFunc(first, second)
         assertion_func(first, second, msg=msg)
 
     def assertNotEqual(self, first, second, msg=None):
         """Fail if the two objects are equal as determined by the '!='
-           operator.
+        operator.
         """
         if not first != second:
             msg = self._formatMessage(
@@ -965,16 +965,16 @@ class TestCase(object):
 
     def assertAlmostEqual(self, first, second, places=None, msg=None, delta=None):
         """Fail if the two objects are unequal as determined by their
-           difference rounded to the given number of decimal places
-           (default 7) and comparing to zero, or by comparing that the
-           difference between the two objects is more than the given
-           delta.
+        difference rounded to the given number of decimal places
+        (default 7) and comparing to zero, or by comparing that the
+        difference between the two objects is more than the given
+        delta.
 
-           Note that decimal places (from zero) are usually not the same
-           as significant digits (measured from the most significant digit).
+        Note that decimal places (from zero) are usually not the same
+        as significant digits (measured from the most significant digit).
 
-           If the two objects compare equal then they will automatically
-           compare almost equal.
+        If the two objects compare equal then they will automatically
+        compare almost equal.
         """
         if first == second:
             # shortcut
@@ -1011,14 +1011,14 @@ class TestCase(object):
 
     def assertNotAlmostEqual(self, first, second, places=None, msg=None, delta=None):
         """Fail if the two objects are equal as determined by their
-           difference rounded to the given number of decimal places
-           (default 7) and comparing to zero, or by comparing that the
-           difference between the two objects is less than the given delta.
+        difference rounded to the given number of decimal places
+        (default 7) and comparing to zero, or by comparing that the
+        difference between the two objects is less than the given delta.
 
-           Note that decimal places (from zero) are usually not the same
-           as significant digits (measured from the most significant digit).
+        Note that decimal places (from zero) are usually not the same
+        as significant digits (measured from the most significant digit).
 
-           Objects that are equal automatically fail.
+        Objects that are equal automatically fail.
         """
         if delta is not None and places is not None:
             raise TypeError("specify delta or places not both")

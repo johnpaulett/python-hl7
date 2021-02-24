@@ -101,10 +101,8 @@ def parse(lines, encoding="utf-8", factory=Factory):
 
 
 def _create_batch(batch, messages, encoding, factory):
-    """Creates a :py:class:`hl7.Batch`
-    """
+    """Creates a :py:class:`hl7.Batch`"""
     kwargs = {
-        "separator": "\r",
         "sequence": [
             parse(message, encoding=encoding, factory=factory) for message in messages
         ],
@@ -189,7 +187,6 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
 
 def _create_file(file, batches, encoding, factory):
     kwargs = {
-        "separator": "\r",
         "sequence": [
             _create_batch(batch[0], batch[1], encoding, factory) for batch in batches
         ],
@@ -319,9 +316,15 @@ def _split(text, plan):
         seps = text[4:sep_end_off]
         text = text[sep_end_off + 1 :]
         data = [
-            plan.factory.create_field("", [seg]),
-            plan.factory.create_field("", [sep0]),
-            plan.factory.create_field(sep0, [seps]),
+            plan.factory.create_field(
+                sequence=[seg], esc=plan.esc, separators=plan.separators
+            ),
+            plan.factory.create_field(
+                sequence=[sep0], esc=plan.esc, separators=plan.separators
+            ),
+            plan.factory.create_field(
+                sequence=[seps], esc=plan.esc, separators=plan.separators
+            ),
         ]
     else:
         data = []
@@ -338,7 +341,7 @@ def create_parse_plan(strmsg, factory=Factory):
     the details stored within the message.
     """
     # We will always use a carriage return to separate segments
-    separators = ["\r"]
+    separators = "\r"
 
     # Extract the rest of the separators. Defaults used if not present.
     if strmsg[:3] not in ("MSH", "FHS", "BHS"):
@@ -348,19 +351,19 @@ def create_parse_plan(strmsg, factory=Factory):
     sep0 = strmsg[3]
     seps = list(strmsg[3 : strmsg.find(sep0, 4)])
 
-    separators.append(seps[0])
+    separators += seps[0]
     if len(seps) > 2:
-        separators.append(seps[2])  # repetition separator
+        separators += seps[2]  # repetition separator
     else:
-        separators.append("~")  # repetition separator
+        separators += "~"  # repetition separator
     if len(seps) > 1:
-        separators.append(seps[1])  # component separator
+        separators += seps[1]  # component separator
     else:
-        separators.append("^")  # component separator
+        separators += "^"  # component separator
     if len(seps) > 4:
-        separators.append(seps[4])  # sub-component separator
+        separators += seps[4]  # sub-component separator
     else:
-        separators.append("&")  # sub-component separator
+        separators += "&"  # sub-component separator
     if len(seps) > 3:
         esc = seps[3]
     else:
@@ -374,7 +377,7 @@ def create_parse_plan(strmsg, factory=Factory):
         factory.create_repetition,
         factory.create_component,
     ]
-    return _ParsePlan(separators, containers, esc, factory)
+    return _ParsePlan(separators[0], separators, containers, esc, factory)
 
 
 class _ParsePlan(object):
@@ -384,27 +387,26 @@ class _ParsePlan(object):
 
     # field, component, repetition, escape, subcomponent
 
-    def __init__(self, separators, containers, esc, factory):
+    def __init__(self, seperator, separators, containers, esc, factory):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
-        assert len(containers) == len(separators)
+        assert len(containers) == len(separators[separators.find(seperator) :])
+        self.separator = seperator
         self.separators = separators
         self.containers = containers
         self.esc = esc
         self.factory = factory
-
-    @property
-    def separator(self):
-        """Return the current separator to use based on the plan."""
-        return self.separators[0]
 
     def container(self, data):
         """Return an instance of the approriate container for the *data*
         as specified by the current plan.
         """
         return self.containers[0](
-            self.separator, data, self.esc, self.separators, self.factory
+            sequence=data,
+            esc=self.esc,
+            separators=self.separators,
+            factory=self.factory,
         )
 
     def next(self):
@@ -417,7 +419,11 @@ class _ParsePlan(object):
             # the separators and containers lists. Use self.__class__()
             # in case :class:`hl7.ParsePlan` is subclassed
             return self.__class__(
-                self.separators[1:], self.containers[1:], self.esc, self.factory
+                self.separators[self.separators.find(self.separator) + 1],
+                self.separators,
+                self.containers[1:],
+                self.esc,
+                self.factory,
             )
         # When we have no separators and containers left, return None,
         # which indicates that we have nothing further.
@@ -425,7 +431,7 @@ class _ParsePlan(object):
 
     def applies(self, text):
         """return True if the separator or those if the children are in the text"""
-        for s in self.separators:
+        for s in self.separators[self.separators.find(self.separator) :]:
             if text.find(s) >= 0:
                 return True
         return False

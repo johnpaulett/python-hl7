@@ -163,8 +163,8 @@ Create a response message.
 
     >>> SEP = '|^~\&'
     >>> CR_SEP = '\r'
-    >>> MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSH'])])
-    >>> MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[1], ['MSA'])])
+    >>> MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ['MSH'])])
+    >>> MSA = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ['MSA'])])
     >>> response = hl7.Message(CR_SEP, [MSH, MSA])
     >>> response['MSH.F1.R1'] = SEP[0]
     >>> response['MSH.F2.R1'] = SEP[1:]
