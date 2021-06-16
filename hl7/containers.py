@@ -781,7 +781,7 @@ class Field(Container):
     def __init__(
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
-        assert not separator or separator == separators[2]
+        assert not separator or separator == separators[3]
         super(Field, self).__init__(
             separator=separators[3],
             sequence=sequence,
