@@ -783,7 +783,7 @@ class Field(Container):
     ):
         assert not separator or separator == separators[2]
         super(Field, self).__init__(
-            separator=separators[2],
+            separator=separators[3],
             sequence=sequence,
             esc=esc,
             separators=separators,
