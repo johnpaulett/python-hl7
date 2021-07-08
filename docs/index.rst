@@ -9,7 +9,7 @@ server (:ref:`mllp_send <mllp-send>`).
 HL7 is a communication protocol and message format for
 health care data. It is the de-facto standard for transmitting data
 between clinical information systems and between clinical devices.
-The version 2.x series, which is often is a pipe delimited format
+The version 2.x series, which is often in a pipe delimited format,
 is currently the most widely accepted version of HL7 (there
 is an alternative XML-based format).
 
