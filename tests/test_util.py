@@ -11,6 +11,7 @@ from .samples import (
     sample_file1,
     sample_file2,
     sample_hl7,
+    sample_msh,
 )
 
 
@@ -23,6 +24,7 @@ class IsHL7Test(TestCase):
         self.assertFalse(hl7.ishl7(sample_file))
         self.assertFalse(hl7.ishl7(sample_file1))
         self.assertFalse(hl7.ishl7(sample_file2))
+        self.assertTrue(hl7.ishl7(sample_msh))
 
     def test_ishl7_empty(self):
         self.assertFalse(hl7.ishl7(""))
