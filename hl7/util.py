@@ -15,7 +15,12 @@ def ishl7(line):
     :rtype: bool
     """
     # Prevent issues if the line is empty
-    return line and line.strip()[:4] == "MSH|" and line.count("\rMSH|") == 0
+    if not line:
+        return False
+    msh = line.strip()[:4]
+    if len(msh) != 4:
+        return False
+    return msh[:3] == "MSH" and line.count("\rMSH" + msh[3]) == 0
 
 
 def isbatch(line):
