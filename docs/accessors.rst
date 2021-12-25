@@ -255,7 +255,7 @@ The escape method returns a 'str' object. The unescape method returns a str obje
 
 **Presentation Characters**
 
-HL7 defines a protocol for encoding presentation characters, These include hightlighting,
+HL7 defines a protocol for encoding presentation characters, These include highlighting,
 and rich text functionality. The API does not currently allow for easy access to the
 escape/unescape logic. You must overwrite the message class escape and unescape methods,
 after parsing the message.

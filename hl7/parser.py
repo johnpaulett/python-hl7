@@ -96,7 +96,7 @@ def parse(lines, encoding="utf-8", factory=Factory):
     strmsg = lines.strip()
     # The method for parsing the message
     plan = create_parse_plan(strmsg, factory)
-    # Start spliting the methods based upon the ParsePlan
+    # Start splitting the methods based upon the ParsePlan
     return _split(strmsg, plan)
 
 
@@ -247,7 +247,7 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
     batches = []
     messages = []
     in_batch = False
-    # Split the file into lines, reatining the ends
+    # Split the file into lines, retaining the ends
     for line in lines.strip(_HL7_WHITESPACE).splitlines(keepends=True):
         # strip out all whitespace MINUS the '\r'
         line = line.strip(_HL7_WHITESPACE)
@@ -399,7 +399,7 @@ class _ParsePlan(object):
         self.factory = factory
 
     def container(self, data):
-        """Return an instance of the approriate container for the *data*
+        """Return an instance of the appropriate container for the *data*
         as specified by the current plan.
         """
         return self.containers[0](
