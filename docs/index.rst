@@ -164,7 +164,7 @@ syntax:
     True
 
 Since many many types of segments only have a single instance in a message
-(e.g. PID or MSH), :py:meth:`hl7.Message.segment` provides a convienance
+(e.g. PID or MSH), :py:meth:`hl7.Message.segment` provides a convenience
 wrapper around :py:meth:`hl7.Message.segments` that returns the first matching
 :py:class:`hl7.Segment`:
 
