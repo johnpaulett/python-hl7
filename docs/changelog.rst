@@ -1,6 +1,11 @@
 Changelog
 =========
 
+unreleased
+---------------------
+
+* Dropped support for Python 3.5 & 3.6. Python 3.7 - 3.10 now supported.
+
 0.4.2 - February 2021
 ---------------------
 
