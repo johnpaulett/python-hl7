@@ -21,6 +21,9 @@ setup(
     author="John Paulett",
     author_email="john@paulett.org",
     url="http://python-hl7.readthedocs.org",
+    project_urls={
+        "Source": "https://github.com/johnpaulett/python-hl7",
+    },
     license="BSD",
     platforms=["POSIX", "Windows"],
     keywords=[
