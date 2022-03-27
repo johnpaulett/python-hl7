@@ -60,5 +60,5 @@ format:
 upload:
 	rm -rf dist
 	$(PYTHON) setup.py sdist bdist_wheel
-	twine upload dist/*
+	$(BIN)/twine upload dist/*
 .PHONY: upload
