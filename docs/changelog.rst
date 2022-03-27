@@ -1,10 +1,12 @@
 Changelog
 =========
 
-unreleased
+0.4.3 - March 2022
 ---------------------
 
 * Dropped support for Python 3.5 & 3.6. Python 3.7 - 3.10 now supported.
+* Ensure :py:func:`hl7.parse_hl7` allows legitimate occurrences of "MSH" inside
+  the message contents
 
 0.4.2 - February 2021
 ---------------------
