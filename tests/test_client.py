@@ -43,7 +43,7 @@ class MLLPClientTest(TestCase):
     def test_send_message_unicode(self):
         self.client.socket.recv.return_value = "thanks"
 
-        result = self.client.send_message(u"foobar")
+        result = self.client.send_message("foobar")
         self.assertEqual(result, "thanks")
 
         self.client.socket.send.assert_called_once_with(b"\x0bfoobar\x1c\x0d")

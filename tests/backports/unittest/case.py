@@ -439,7 +439,7 @@ class TestCase(object):
 
     # If a string is longer than _diffThreshold, use normal comparison instead
     # of difflib.  See #11763.
-    _diffThreshold = 2 ** 16
+    _diffThreshold = 2**16
 
     # Attribute used by TestSuite for classSetUp
 
