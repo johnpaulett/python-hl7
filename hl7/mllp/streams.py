@@ -201,7 +201,8 @@ class HL7StreamProtocol(StreamReaderProtocol):
         self._encoding_errors = encoding_errors
 
     def connection_made(self, transport):
-        if self._reject_connection:
+        # _reject_connection not added until 3.8
+        if getattr(self, "_reject_connection", False):
             context = {
                 "message": (
                     "An open stream was garbage collected prior to "
