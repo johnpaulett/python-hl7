@@ -1,12 +1,24 @@
 Changelog
 =========
 
+0.4.4 - March 2022
+---------------------
+
+* Better support for :py:class:`HL7StreamProtocol` in Python 3.7, which lacks
+  `_reject_connection`
+
+Thanks `Joseph Wortmann <https://github.com/joseph-wortmann>`_!
+
+
 0.4.3 - March 2022
 ---------------------
 
 * Dropped support for Python 3.5 & 3.6. Python 3.7 - 3.10 now supported.
 * Ensure :py:func:`hl7.parse_hl7` allows legitimate occurrences of "MSH" inside
   the message contents
+
+Thanks `Andrew Wason <https://github.com/rectalogic>`_!
+
 
 0.4.2 - February 2021
 ---------------------
