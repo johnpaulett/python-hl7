@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.4 - March 2022
+0.4.5 - March 2022
 ---------------------
 
 * Better support for :py:class:`HL7StreamProtocol` in Python 3.7, which lacks
