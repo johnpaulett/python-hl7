@@ -53,7 +53,7 @@ ISORT_ARGS=--check-only
 BLACK_ARGS=--check
 endif
 format:
-	$(BIN)/isort -rc $(ISORT_ARGS) hl7 tests
+	$(BIN)/isort $(ISORT_ARGS) hl7 tests
 	$(BIN)/black $(BLACK_ARGS) hl7 tests
 .PHONY: isort
 
