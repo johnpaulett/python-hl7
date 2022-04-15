@@ -21,6 +21,15 @@ rep_sample_hl7 = "\r".join(
     ]
 )
 
+rep_sample_2 = "\r".join(
+    [
+        "MSH|^~\\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4",
+        "PID|AField1|AComponent1^AComponent2|A1Component1^A1Sub-Component1&A1Sub-Component2^A1Component3~A2Component1^A2Sub-Component1&A2Sub-Component2^A2Component3|ARepeat1~ARepeat2",
+        "PID|BField1|BComponent1^BComponent2|B1Component1^B1Sub-Component1&B1Sub-Component2^B1Component3~B2Component1^B2Sub-Component1&B2Sub-Component2^B2Component3|BRepeat1~BRepeat2~BRepeat3",
+        "",
+    ]
+)
+
 # Source: http://www.health.vic.gov.au/hdss/vinah/2006-07/appendix-a-sample-messages.pdf
 sample_batch = "\r".join(
     [

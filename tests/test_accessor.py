@@ -10,12 +10,30 @@ class AccessorTest(TestCase):
         self.assertEqual("FOO2", Accessor("FOO", 2).key)
         self.assertEqual("FOO2.3", Accessor("FOO", 2, 3).key)
         self.assertEqual("FOO2.3.1.4.6", Accessor("FOO", 2, 3, 1, 4, 6).key)
+        self.assertEqual("FOO*", Accessor("FOO*").key)
+        self.assertEqual("FOO2.3.*.4", Accessor("FOO", 2, 3, Accessor.WILDCARD, 4).key)
+        self.assertEqual(
+            "FOO*.3.*.4",
+            Accessor("FOO", Accessor.WILDCARD, 3, Accessor.WILDCARD, 4).key,
+        )
+        with self.assertRaises(ValueError) as cm:
+            Accessor("FOO", 1, Accessor.WILDCARD, 1)
+        self.assertIn(
+            "wildcard only supported for segment and repeat", cm.exception.args[0]
+        )
 
     def test_parse(self):
         self.assertEqual(Accessor("FOO"), Accessor.parse_key("FOO"))
         self.assertEqual(
             Accessor("FOO", 2, 3, 1, 4, 6), Accessor.parse_key("FOO2.3.1.4.6")
         )
+        self.assertEqual(
+            Accessor("FOO", Accessor.WILDCARD, 3, Accessor.WILDCARD, 4, 6),
+            Accessor.parse_key("FOO*.3.*.4.6"),
+        )
+        with self.assertRaises(ValueError) as cm:
+            Accessor.parse_key("FOO.*.1")
+        self.assertIn("wildcard not supported for F", cm.exception.args[0])
 
     def test_equality(self):
         self.assertEqual(Accessor("FOO", 1, 3, 4), Accessor("FOO", 1, 3, 4))

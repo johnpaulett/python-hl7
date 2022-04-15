@@ -4,7 +4,7 @@ from unittest import TestCase
 import hl7
 from hl7 import Field, Segment
 
-from .samples import sample_hl7
+from .samples import rep_sample_2, sample_hl7, sample_msh
 
 
 class ContainerTest(TestCase):
@@ -32,6 +32,12 @@ class MessageTest(TestCase):
 
         self.assertIsInstance(s[0][1], Field)
 
+    def test_segments_wildcard(self):
+        msg = hl7.parse(sample_hl7)
+        s = msg["OBX*.2"]
+        self.assertEqual(len(s), 2)
+        self.assertEqual(s, ["SN", "FN"])
+
     def test_segments_does_not_exist(self):
         msg = hl7.parse(sample_hl7)
         self.assertRaises(KeyError, msg.segments, "BAD")
@@ -51,6 +57,40 @@ class MessageTest(TestCase):
         self.assertEqual(len(s), 2)
         self.assertEqual(s[0][0:3], [["OBX"], ["1"], ["SN"]])
         self.assertEqual(s[1][0:3], [["OBX"], ["2"], ["FN"]])
+
+    def test_repetition_wildcard(self):
+        msg = hl7.parse(sample_msh)
+        s = msg["PID.3.*"]
+        self.assertEqual(s, ["2148790", "162840"])
+
+    def test_segment_repetition_wildcard(self):
+        msg = hl7.parse(rep_sample_2)
+        self.assertEqual(msg["PID.3.*"], ["A1Component1", "A2Component1"])
+        self.assertEqual(msg["PID.3.*.2"], ["A1Sub-Component1", "A2Sub-Component1"])
+        self.assertEqual(msg["PID.3.*.2.2"], ["A1Sub-Component2", "A2Sub-Component2"])
+        self.assertEqual(
+            msg["PID*.3.*"],
+            [["A1Component1", "A2Component1"], ["B1Component1", "B2Component1"]],
+        )
+        self.assertEqual(
+            msg["PID*.3.*.2"],
+            [
+                ["A1Sub-Component1", "A2Sub-Component1"],
+                ["B1Sub-Component1", "B2Sub-Component1"],
+            ],
+        )
+        self.assertEqual(
+            msg["PID*.3.*.2.2"],
+            [
+                ["A1Sub-Component2", "A2Sub-Component2"],
+                ["B1Sub-Component2", "B2Sub-Component2"],
+            ],
+        )
+        self.assertEqual(msg["PID.4.*"], ["ARepeat1", "ARepeat2"])
+        self.assertEqual(
+            msg["PID*.4.*"],
+            [["ARepeat1", "ARepeat2"], ["BRepeat1", "BRepeat2", "BRepeat3"]],
+        )
 
     def test_MSH_1_field(self):
         msg = hl7.parse(sample_hl7)

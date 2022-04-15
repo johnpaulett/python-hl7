@@ -19,6 +19,12 @@ class ConstructionTest(TestCase):
         response["MSH.F2.R1"] = SEP[1:]
         self.assertEqual(str(response), "MSH|^~\\&|\rMSA\r")
 
+    def test_disallow_wildcard(self):
+        src_msg = hl7.parse(rep_sample_hl7)
+        with self.assertRaises(ValueError) as cm:
+            src_msg["PID.4.*"] = "X"
+        self.assertIn("wildcards not supported for assignment", cm.exception.args[0])
+
     def test_append(self):
         # Append a segment to a message
         MSH = hl7.Segment(SEP[0], [hl7.Field(SEP[2], ["MSH"])])
