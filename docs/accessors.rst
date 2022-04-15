@@ -58,6 +58,8 @@ you need to specify: Field 3, Repeat 1, Component 2, Sub-Component 2 (PID.F1.R1.
 Reading values from a tree structure in this manner is the only safe way to read data
 from a message.
 
+The segment and Repeat indexes may be wildcard with "*".
+
 .. doctest::
 
     >>> h['PID.F1.R1']
@@ -65,6 +67,9 @@ from a message.
 
     >>> h['PID.F2.R1.C1']
     'Component1'
+
+    >>> h['PID.F4.*.C1']
+    ['Repeat1', 'Repeat2']
 
 You can also access values using :py:class:`hl7.Accessor`, or by directly calling
 :py:meth:`hl7.Message.extract_field`. The following are all equivalent:
@@ -79,6 +84,19 @@ You can also access values using :py:class:`hl7.Accessor`, or by directly callin
 
     >>> h.extract_field('PID', 1, 2, 1, 1)
     'Component1'
+
+The following are also all equivalent:
+
+.. doctest::
+
+    >>> h['PID.F4.*.C1']
+    ['Repeat1', 'Repeat2']
+
+    >>> h[hl7.Accessor('PID', 1, 4, hl7.Accessor.WILDCARD, 1)]
+    ['Repeat1', 'Repeat2']
+
+    >>> h.extract_field('PID', 1, 4, hl7.Accessor.WILDCARD, 1)
+    ['Repeat1', 'Repeat2']
 
 All values should be accessed in this manner. Even if a field is marked as being
 non-repeating a repeat of "1" should be specified as later version messages

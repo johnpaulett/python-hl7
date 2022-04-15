@@ -466,9 +466,17 @@ class Message(Container):
 
                 |   PID.F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
-        return self.segments(segment)(segment_num).extract_field(
-            segment_num, field_num, repeat_num, component_num, subcomponent_num
-        )
+        if segment_num is Accessor.WILDCARD:
+            return [
+                segment.extract_field(
+                    num, field_num, repeat_num, component_num, subcomponent_num
+                )
+                for num, segment in enumerate(self.segments(segment), start=1)
+            ]
+        else:
+            return self.segments(segment)(segment_num).extract_field(
+                segment_num, field_num, repeat_num, component_num, subcomponent_num
+            )
 
     def assign_field(
         self,
@@ -487,6 +495,8 @@ class Message(Container):
         Extract a field using a future proofed approach, based on rules in:
         http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
         """
+        if segment_num is Accessor.WILDCARD or repeat_num is Accessor.WILDCARD:
+            raise ValueError("wildcards not supported for assignment")
         self.segments(segment)(segment_num).assign_field(
             value, field_num, repeat_num, component_num, subcomponent_num
         )
@@ -664,7 +674,7 @@ class Segment(Container):
                 |   F4.R1.C1.SC1 = 'Repeat1'    (ignore .SC1)
         """
         # Save original values for error messages
-        accessor = Accessor(
+        original_accessor = Accessor(
             self[0][0],
             segment_num,
             field_num,
@@ -683,13 +693,32 @@ class Segment(Container):
         else:
             if repeat_num == 1 and component_num == 1 and subcomponent_num == 1:
                 return ""  # Assume non-present optional value
-            raise IndexError("Field not present: {0}".format(accessor.key))
+            raise IndexError("Field not present: {0}".format(original_accessor.key))
 
+        accessor = Accessor(
+            original_accessor.segment,
+            segment_num,
+            field_num,
+            repeat_num,
+            component_num,
+            subcomponent_num,
+        )
+        if repeat_num is Accessor.WILDCARD:
+            return [
+                self._extract_repetition(field, accessor, original_accessor, rnum)
+                for rnum in range(1, len(field) + 1)
+            ]
+        else:
+            return self._extract_repetition(
+                field, accessor, original_accessor, repeat_num
+            )
+
+    def _extract_repetition(self, field, accessor, original_accessor, repeat_num):
         rep = field(repeat_num)
 
         if not isinstance(rep, Repetition):
             # leaf
-            if component_num == 1 and subcomponent_num == 1:
+            if accessor.component_num == 1 and accessor.subcomponent_num == 1:
                 return (
                     rep
                     if accessor.segment == "MSH" and accessor.field_num in (1, 2)
@@ -697,28 +726,28 @@ class Segment(Container):
                 )
             raise IndexError(
                 "Field reaches leaf node before completing path: {0}".format(
-                    accessor.key
+                    original_accessor.key
                 )
             )
 
-        if component_num > len(rep):
-            if subcomponent_num == 1:
+        if accessor.component_num > len(rep):
+            if accessor.subcomponent_num == 1:
                 return ""  # Assume non-present optional value
-            raise IndexError("Component not present: {0}".format(accessor.key))
+            raise IndexError("Component not present: {0}".format(original_accessor.key))
 
-        component = rep(component_num)
+        component = rep(accessor.component_num)
         if not isinstance(component, Component):
             # leaf
-            if subcomponent_num == 1:
+            if accessor.subcomponent_num == 1:
                 return unescape(self, component)
             raise IndexError(
                 "Field reaches leaf node before completing path: {0}".format(
-                    accessor.key
+                    original_accessor.key
                 )
             )
 
-        if subcomponent_num <= len(component):
-            subcomponent = component(subcomponent_num)
+        if accessor.subcomponent_num <= len(component):
+            subcomponent = component(accessor.subcomponent_num)
             return unescape(self, subcomponent)
         else:
             return ""  # Assume non-present optional value
