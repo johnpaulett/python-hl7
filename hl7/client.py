@@ -2,7 +2,9 @@ import io
 import os.path
 import socket
 import sys
+import time
 from optparse import OptionParser
+import logging
 
 import hl7
 
@@ -14,6 +16,7 @@ FF = b"\x0c"  # <FF>, new page form feed
 
 RECV_BUFFER = 4096
 
+log = logging.getLogger(__name__)
 
 class MLLPException(Exception):
     pass
@@ -39,13 +42,17 @@ class MLLPClient(object):
     MLLPClient takes an optional ``encoding`` parameter, defaults to UTF-8,
     for encoding unicode messages [#]_.
 
+    `timeout` in seconds will be used to wait for full response from the server.
+
     .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
     """
 
-    def __init__(self, host, port, encoding="utf-8"):
+    def __init__(self, host, port, encoding="utf-8", timeout=10, deadline=3):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
         self.encoding = encoding
+        self.timeout = timeout # seconds
+        self.deadline = deadline # seconds
 
     def __enter__(self):
         return self
@@ -84,9 +91,25 @@ class MLLPClient(object):
         wrapped in an MLLP container).  Blocks until the server returns.
         """
         # upload the data
+        log.debug(f'sending {(data,)}')
         self.socket.send(data)
         # wait for the ACK/NACK
-        return self.socket.recv(RECV_BUFFER)
+        self.socket.settimeout(self.timeout)
+        buff = b''
+        # the whole message should be received within this deadline
+        deadline = (time.time() + self.deadline)
+
+        # This will read data until deadline is reached.
+        # some HL7 counterparts may send responses in chunks, so we should wait some
+        # and read from the socket until we probably receive full message.
+        # timeout/deadline are configurable on client creation.
+        while deadline > time.time():
+            data = self.socket.recv(RECV_BUFFER)
+            if not data:
+                continue
+            buff += data
+        log.debug(f'received {(buff,)}')
+        return buff
 
 
 # wrappers to make testing easier
@@ -117,8 +140,10 @@ def read_stream(stream):
 
     while True:
         data = stream.read(RECV_BUFFER)
-        if data == b"":
+        if not data:
             break
+        if isinstance(data, str):
+            data = data.encode('utf-8')
         # usually should be broken up by EB, but I have seen FF separating
         # messages
         messages = (_buffer + data).split(EB if FF not in data else FF)
@@ -249,7 +274,6 @@ def mllp_send():
         message_stream = (
             read_stream(stream) if not options.loose else read_loose(stream)
         )
-
         for message in message_stream:
             result = client.send_message(message)
             if options.verbose:
