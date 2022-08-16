@@ -4,10 +4,11 @@ import os.path
 import socket
 import sys
 import time
+import typing
 from argparse import ArgumentParser
 
 import hl7
-from hl7.exceptions import CLIException
+from hl7.exceptions import CLIException, MLLPException
 
 SB = b"\x0b"  # <SB>, vertical tab
 EB = b"\x1c"  # <EB>, file separator
@@ -18,10 +19,6 @@ FF = b"\x0c"  # <FF>, new page form feed
 RECV_BUFFER = 4096
 
 log = logging.getLogger(__name__)
-
-
-class MLLPException(Exception):
-    pass
 
 
 class MLLPClient(object):
@@ -68,7 +65,7 @@ class MLLPClient(object):
         """Release the socket connection"""
         self.socket.close()
 
-    def send_message(self, message):
+    def send_message(self, message: typing.Union[bytes, str, hl7.Message]) -> bytes:
         """Wraps a byte string, unicode string, or :py:class:`hl7.Message`
         in a MLLP container and send the message to the server
 
@@ -90,7 +87,7 @@ class MLLPClient(object):
         data = SB + binary + EB + CR
         return self.send(data)
 
-    def send(self, data):
+    def send(self, data: bytes) -> bytes:
         """Low-level, direct access to the socket.send (data must be already
         wrapped in an MLLP container).  Blocks until the server returns.
         """
@@ -112,11 +109,19 @@ class MLLPClient(object):
                 data = self.socket.recv(RECV_BUFFER)
             except TimeoutError:
                 data = None
-            if not data:
-                continue
-            buff += data
+            if data is not None:
+                buff += data
+            # received LLP end markers
+            if buff.endswith(EB + CR):
+                break
         log.debug(f"received {(buff,)}")
-        return buff
+        return self.clean(buff)
+
+    def clean(self, data: bytes) -> bytes:
+        """Removes LLP bytes from data"""
+        data = data.lstrip(SB)
+        data = data.rstrip(EB + CR)
+        return data
 
 
 # wrappers to make testing easier
@@ -234,7 +239,7 @@ def mllp_send(in_args=None):
         "--quiet",
         action="store_false",
         dest="verbose",
-            default=True,
+        default=True,
         help="do not print status messages to stdout",
     )
     parser.add_argument(
@@ -269,10 +274,15 @@ def mllp_send(in_args=None):
     args = parser.parse_args(in_args[1:])
     if args.version:
         import hl7
+
         stdout(hl7.__version__)
         return
 
     host = args.host[0]
+
+    log.setLevel(logging.INFO)
+    if args.verbose:
+        log.setLevel(logging.DEBUG)
 
     if args.filename is not None:
         # Previously set stream to the open() handle, but then we did not
@@ -287,7 +297,6 @@ def mllp_send(in_args=None):
             raise CLIException(1)
 
         stream = stdin()
-
     with MLLPClient(
         host, args.port, deadline=args.deadline, timeout=args.timeout
     ) as client:

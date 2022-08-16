@@ -1,7 +1,7 @@
+import logging
 import os
 import socket
 import typing
-import logging
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
@@ -9,11 +9,11 @@ from unittest.mock import patch
 
 import hl7
 from hl7 import __version__ as hl7_version
-from hl7.client import CR, EB, MLLPClient, MLLPException, SB, mllp_send
-from hl7.exceptions import CLIException
-
+from hl7.client import CR, EB, MLLPClient, SB, mllp_send
+from hl7.exceptions import CLIException, MLLPException
 
 log = logging.getLogger(__name__)
+
 
 def return_values_list(*values) -> typing.Iterable[typing.Any]:
     """
@@ -39,7 +39,6 @@ class MLLPClientTest(TestCase):
         # use a mock version of socket
         self.socket_patch = patch("hl7.client.socket.socket")
         self.mock_socket = self.socket_patch.start()
-
         self.client = MLLPClient("localhost", 6666, deadline=0.0001)
 
     def tearDown(self):
@@ -57,7 +56,7 @@ class MLLPClientTest(TestCase):
     def test_send(self):
         # socket.recv returns bytes: https://docs.python.org/3/library/socket.html#socket.socket.recv
         # > Receive data from the socket. The return value is a bytes object representing the data received.
-        self.client.socket.recv.side_effect = return_values_list(b"thanks")
+        self.client.socket.recv.side_effect = return_values_list(b"thanks", EB, CR)
 
         result = self.client.send("foobar\n")
         self.assertEqual(result, b"thanks")
@@ -66,7 +65,7 @@ class MLLPClientTest(TestCase):
         self.client.socket.recv.assert_any_call(4096)
 
     def test_send_message_unicode(self):
-        self.client.socket.recv.side_effect = return_values_list(b"thanks")
+        self.client.socket.recv.side_effect = return_values_list(b"thanks", EB, CR)
 
         result = self.client.send_message("foobar")
         self.assertEqual(result, b"thanks")
@@ -74,7 +73,7 @@ class MLLPClientTest(TestCase):
         self.client.socket.send.assert_called_once_with(b"\x0bfoobar\x1c\x0d")
 
     def test_send_message_bytestring(self):
-        self.client.socket.recv.side_effect = return_values_list(b"thanks")
+        self.client.socket.recv.side_effect = return_values_list(b"thanks", EB, CR)
 
         result = self.client.send_message(b"foobar")
         self.assertEqual(result, b"thanks")
@@ -82,7 +81,7 @@ class MLLPClientTest(TestCase):
         self.client.socket.send.assert_called_once_with(b"\x0bfoobar\x1c\x0d")
 
     def test_send_message_hl7_message(self):
-        self.client.socket.recv.side_effect = return_values_list(b"thanks")
+        self.client.socket.recv.side_effect = return_values_list(b"thanks", EB, CR)
 
         message = hl7.parse(r"MSH|^~\&|GHH LAB|ELAB")
 
@@ -114,7 +113,7 @@ class MLLPSendTest(TestCase):
         # patch to avoid touching sys and socket
         self.socket_patch = patch("hl7.client.socket.socket")
         self.mock_socket = self.socket_patch.start()
-        self.mock_socket().recv.side_effect = return_values_list(b"thanks")
+        self.mock_socket().recv.side_effect = return_values_list(b"thanks", EB, CR)
 
         self.stdout_patch = patch("hl7.client.stdout")
         self.mock_stdout = self.stdout_patch.start()
@@ -145,7 +144,7 @@ class MLLPSendTest(TestCase):
         ]
 
     def _mllp_send(self, args: typing.Optional[typing.List] = None):
-        log.debug('calling mllp_send with args: ', args or self.option_values)
+        log.debug("calling mllp_send with args: ", args or self.option_values)
         return mllp_send(args or self.option_values)
 
     def tearDown(self):
@@ -172,7 +171,7 @@ class MLLPSendTest(TestCase):
         self.assertFalse(self.mock_exit.called)
 
     def test_send_multiple(self):
-        self.mock_socket().recv.side_effect = return_values_list(b"thanks")
+        self.mock_socket().recv.side_effect = return_values_list(b"thanks", EB, CR)
         self.write(SB + b"foobar" + EB + CR + SB + b"hello" + EB + CR)
 
         self._mllp_send()
@@ -193,7 +192,7 @@ class MLLPSendTest(TestCase):
 
     def test_quiet(self):
         options = self.option_values.copy()
-        options.append('--quiet')
+        options.append("--quiet")
 
         self._mllp_send(options)
 
@@ -202,7 +201,7 @@ class MLLPSendTest(TestCase):
 
     def test_port(self):
         # replace default port with some exotic value
-        options = self.option_values[:4] + ['7890'] + self.option_values[5:]
+        options = self.option_values[:4] + ["7890"] + self.option_values[5:]
 
         self._mllp_send(options)
 
@@ -221,7 +220,7 @@ class MLLPSendTest(TestCase):
 
     def test_loose_no_stdin(self):
         options = self.option_values.copy()
-        options.append('--loose')
+        options.append("--loose")
         # cut out file path
         options = options[:1] + options[3:]
         self.mock_stdin.return_value = FakeStream()
@@ -233,7 +232,7 @@ class MLLPSendTest(TestCase):
 
     def test_loose_windows_newline(self):
         options = self.option_values.copy()
-        options.append('--loose')
+        options.append("--loose")
 
         self.write(SB + b"MSH|^~\\&|foo\r\nbar\r\n" + EB + CR)
 
@@ -245,7 +244,7 @@ class MLLPSendTest(TestCase):
 
     def test_loose_unix_newline(self):
         options = self.option_values.copy()
-        options.append('--loose')
+        options.append("--loose")
 
         self.write(SB + b"MSH|^~\\&|foo\nbar\n" + EB + CR)
 
@@ -257,7 +256,7 @@ class MLLPSendTest(TestCase):
 
     def test_loose_no_mllp_characters(self):
         options = self.option_values.copy()
-        options.append('--loose')
+        options.append("--loose")
         self.write(b"MSH|^~\\&|foo\r\nbar\r\n")
 
         self._mllp_send(options)
@@ -268,8 +267,8 @@ class MLLPSendTest(TestCase):
 
     def test_loose_send_mutliple(self):
         options = self.option_values.copy()
-        options.append('--loose')
-        self.mock_socket().recv.side_effect = return_values_list(b"thanks")
+        options.append("--loose")
+        self.mock_socket().recv.side_effect = return_values_list(b"thanks", EB, CR)
         self.write(b"MSH|^~\\&|1\r\nOBX|1\r\nMSH|^~\\&|2\r\nOBX|2\r\n")
 
         self._mllp_send(options)
@@ -283,10 +282,28 @@ class MLLPSendTest(TestCase):
             SB + b"MSH|^~\\&|2\rOBX|2" + EB + CR,
         )
 
-    def test_version(self):
+    def test_client_end_of_message_parsing(self):
+        options = self.option_values.copy()
+        options.append("--loose")
+        # self.mock_socket().recv.side_effect = return_values_list(b"thanks", EB, CR)
+        self.write(b"MSH|^~\\&|1\r\nOBX|1\r\n")
 
-        options = self.option_values
-        options.append('--version')
+        self._mllp_send(options)
+
+        self.assertEqual(
+            self.mock_socket().recv.call_count, 3, self.mock_socket().recv.mock_calls
+        )
+        # 3 calls for recv - one with the ack, two with closing bytes
+        self.assertEqual(
+            len(self.mock_socket().recv.mock_calls),
+            3,
+            self.mock_socket().recv.mock_calls,
+        )
+        self.mock_stdout.assert_called_once_with(b"thanks")
+
+    def test_version(self):
+        options = self.option_values.copy()
+        options.append("--version")
 
         self._mllp_send(options)
 
