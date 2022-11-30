@@ -84,7 +84,7 @@ class MLLPClient(object):
         wrapped in an MLLP container).  Blocks until the server returns.
         """
         # upload the data
-        self.socket.send(data)
+        self.socket.sendall(data)
         # wait for the ACK/NACK
         return self.socket.recv(RECV_BUFFER)
 
