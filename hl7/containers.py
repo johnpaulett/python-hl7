@@ -497,7 +497,7 @@ class Message(Container):
 
         To process this correctly, the full set of separators (MSH.1/MSH.2) needs to be known.
 
-        Pass through the message. Replace recognised characters with their escaped
+        Pass through the message. Replace recognized characters with their escaped
         version. Return an ascii encoded string.
 
         Functionality:
@@ -563,11 +563,11 @@ class Message(Container):
 
         msh.assign_field(str(source_msh(1)), 1)
         msh.assign_field(str(source_msh(2)), 2)
-        # Sending application is source receving application
+        # Sending application is source receiving application
         msh.assign_field(
             str(application) if application is not None else str(source_msh(5)), 3
         )
-        # Sending facility is source receving facility
+        # Sending facility is source receiving facility
         msh.assign_field(
             str(facility) if facility is not None else str(source_msh(6)), 4
         )
@@ -739,27 +739,52 @@ class Segment(Container):
         http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
         """
 
+        # Extend the segment as needed.
         while len(self) <= field_num:
             self.append(self.create_field([]))
         field = self(field_num)
+
+        # Assign at the field level.
         if repeat_num is None:
             field[:] = [value]
             return
+
+        # Field is never a string so we don't need to test that.
+
+        # Extend the field repeat as needed.
         while len(field) < repeat_num:
             field.append(self.create_repetition([]))
         repetition = field(repeat_num)
+
+        if isinstance(repetition, str):
+            # If the Field was a leaf (string) convert it to a repetition
+            repetition = self.create_repetition([])
+            field(repeat_num, value=repetition)
+            
+        # Assign at the repetition level.
         if component_num is None:
             repetition[:] = [value]
             return
+        
         while len(repetition) < component_num:
             repetition.append(self.create_component([]))
         component = repetition(component_num)
+
+        if isinstance(component, str):
+            # if the repetition was a leaf (string), convert it to a component.
+            component = self.create_component([])
+            repetition(component_num, value=component)
+
+        # Assign at the component level
         if subcomponent_num is None:
             component[:] = [value]
             return
+        
+        # Assign at the subcomponent level
         while len(component) < subcomponent_num:
             component.append("")
         component(subcomponent_num, value)
+
 
     def _adjust_index(self, index):
         # First element is the segment name, so we don't need to adjust to get 1-based
