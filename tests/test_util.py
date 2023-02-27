@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import hl7
 
-from .samples import (
+from samples import (
     sample_batch,
     sample_batch1,
     sample_batch2,

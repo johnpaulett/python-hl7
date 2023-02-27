@@ -4,7 +4,7 @@ from unittest import TestCase
 import hl7
 from hl7 import Accessor, Component, Field, Message, ParseException, Repetition, Segment
 
-from .samples import (
+from samples import (
     rep_sample_hl7,
     sample_bad_batch,
     sample_bad_batch1,

@@ -4,7 +4,7 @@ from unittest import TestCase
 import hl7
 from hl7 import Field, Segment
 
-from .samples import sample_hl7
+from samples import sample_hl7
 
 
 class ContainerTest(TestCase):
