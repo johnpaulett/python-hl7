@@ -470,6 +470,27 @@ class Message(Container):
             segment_num, field_num, repeat_num, component_num, subcomponent_num
         )
 
+    def write_field(
+        self,
+        value,
+        segment,
+        segment_num=1,
+        field_num=None,
+        repeat_num=None,
+        component_num=None,
+        subcomponent_num=None,
+    ):
+        """
+        Write a value, with escaping, into a message using the tree based assignment notation.
+        The segment must exist.
+
+        Extract a field using a future proofed approach, based on rules in:
+        http://wiki.medical-objects.com.au/index.php/Hl7v2_parsing
+        """
+        self.segments(segment)(segment_num).write_field(
+            value, field_num, repeat_num, component_num, subcomponent_num
+        )
+
     def assign_field(
         self,
         value,
@@ -723,6 +744,17 @@ class Segment(Container):
         else:
             return ""  # Assume non-present optional value
 
+    def write_field(
+        self,
+        value,
+        field_num=None,
+        repeat_num=None,
+        component_num=None,
+        subcomponent_num=None,
+    ):
+        """Write a field with escaping."""
+        self.assign_field(escape(self, value), field_num, repeat_num, component_num, subcomponent_num)
+        
     def assign_field(
         self,
         value,

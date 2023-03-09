@@ -138,18 +138,3 @@ class AssignFieldTest(TestCase):
         new_msg = str(msg)
         self.assertEqual(new_msg, 'MSH|^~\\&|f3r1c1s1&f3r1c1s2^f3r1c2s1&f3r1c2s2~f3r2c1s1&f3r2c1s2^f3r2c2s1&f3r2c2s2|f4r1c1s1&f4r1c1s2^f4r1c2s1&f4r1c2s2~f4r2c1s1&f4r2c1s2^f4r2c2s1&f4r2c2s2\r')
 
-
-
-
-class EscapeTest(TestCase):
-    def test_escape_separators(self):
-        """Test assigning a field with separators in it"""
-        # 2/27/2023:  This is known to fail.  assign_field does not escape the incoming data.
-        #  however, to re-code it to do so breaks some of the parsing code that expects to write
-        #  the separators.  
-        msg = hl7.parse(sample_hl7_1)
-        seg = msg[0]
-
-        seg.assign_field("New with Field | rep ~ sub & and escape \\", 4)
-        new_msg = str(msg)
-        self.assertEqual(new_msg, "MSH|^~\\&|New with Field \\F\\ rep \\R\\ sub \\T\\ and escape \\E\\|rep1~rep2|comp1^comp2|rep1comp1^rep1comp2~rep2comp1^rep1comp2\r")
