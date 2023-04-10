@@ -4,7 +4,7 @@ from unittest import TestCase
 import hl7
 from hl7 import Accessor, Component, Field, Message, ParseException, Repetition, Segment
 
-from .samples import (
+from samples import (
     rep_sample_hl7,
     sample_bad_batch,
     sample_bad_batch1,
@@ -26,7 +26,6 @@ from .samples import (
     sample_file6,
     sample_hl7,
 )
-
 
 class ParseTest(TestCase):
     def test_parse(self):
@@ -376,6 +375,23 @@ class ParseTest(TestCase):
         # Hex Codes
         self.assertEqual(msg.unescape("\\X20202020\\"), "    ")
         self.assertEqual(msg.unescape("\\Xe1\\\\Xe9\\\\Xed\\\\Xf3\\\\Xfa\\"), "áéíóú")
+
+
+    def test_unescape_broken(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        self.assertEqual(msg.unescape("Empty \\\\"), "Empty \\\\")
+        self.assertEqual(msg.unescape("Undefined \\A\\"), "Undefined \\A\\")
+        self.assertEqual(msg.unescape("Undefined \\A\\", app_map={"A": "*"}), "Undefined *")
+
+        self.assertEqual(msg.unescape(".br\\ but the text goes on beyond limit"), ".br\\ but the text goes on beyond limit")
+
+        self.assertEqual(msg.unescape("not implemented \\C2842\\"), "not implemented \\C2842\\")        
+        self.assertEqual(msg.unescape("not implemented \\M2442\\"), "not implemented \\M2442\\")    
+
+        self.assertEqual(msg.unescape("part convert \\X30no31\\"), "part convert 0\\X30no31\\")        
+
+
 
     def test_escape(self):
         msg = hl7.parse(rep_sample_hl7)

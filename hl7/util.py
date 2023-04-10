@@ -4,7 +4,7 @@ import logging
 import random
 import string
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def ishl7(line):
@@ -137,7 +137,8 @@ def escape(container, field, app_map=None):
     return "".join(rv)
 
 
-def unescape(container, field, app_map=None):  # noqa: C901
+def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
+
     """
     See: http://www.hl7standards.com/blog/2006/11/02/hl7-escape-sequences/
 
@@ -162,6 +163,9 @@ def unescape(container, field, app_map=None):  # noqa: C901
     It cannot:
 
     *   switch code pages / ISO IR character sets
+
+    If there is an error decoding an escape set, the original text is appended to
+    the returned text.
     """
     if not field or field.find(container.esc) == -1:
         return field
@@ -184,6 +188,10 @@ def unescape(container, field, app_map=None):  # noqa: C901
         ".ce": "\r",
     }
 
+    max_escape = max(10, max(len(x) for x in DEFAULT_MAP.keys()))
+    if app_map:
+        max_escape = max(max_escape, max(len(x) for x in app_map.keys()))
+
     rv = []
     collecting = []
     in_seq = False
@@ -194,11 +202,13 @@ def unescape(container, field, app_map=None):  # noqa: C901
                 value = "".join(collecting)
                 collecting = []
                 if not value:
-                    logger.warn(
-                        "Error unescaping value [%s], empty sequence found at %d",
-                        field,
-                        offset,
-                    )
+                    if is_log_error:
+                        logger.warn(
+                            "Error unescaping empty sequence found at %d",
+                            offset,
+                        )
+                    rv.append(container.esc)
+                    rv.append(container.esc)
                     continue
                 if app_map and value in app_map:
                     rv.append(app_map[value])
@@ -219,41 +229,63 @@ def unescape(container, field, app_map=None):  # noqa: C901
                     value[0] == "C"
                 ):  # Convert to new Single Byte character set : 2.10.2
                     # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
-                    logger.warn(
-                        "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
-                        value,
-                        field,
-                        offset,
-                    )
+                    if is_log_error:
+                        logger.warn(
+                            "Error inline character sets [%s] not implemented, offset [%s]",
+                            value,
+                            offset,
+                        )
+                    rv.append(container.esc)
+                    rv.append(value)
+                    rv.append(container.esc)
                 elif value[0] == "M":  # Switch to new Multi Byte character set : 2.10.2
                     # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
-                    logger.warn(
-                        "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
-                        value,
-                        field,
-                        offset,
-                    )
+                    if is_log_error:
+                        logger.warn(
+                            "Error inline character sets [%s] not implemented, offset [%s]",
+                            value,
+                            offset,
+                        )
+                    rv.append(container.esc)
+                    rv.append(value)
+                    rv.append(container.esc)
                 elif value[0] == "X":  # Hex encoded Bytes: 2.10.5
                     value = value[1:]
                     try:
                         for off in range(0, len(value), 2):
                             rv.append(chr(int(value[off : off + 2], 16)))
                     except Exception:
+                        if is_log_error:
+                            logger.exception(
+                                "Error decoding hex value [%s], offset [%s]",
+                                value,
+                                offset,
+                            )
+                        rv.append(container.esc)
+                        rv.append("X")
+                        rv.append(value)
+                        rv.append(container.esc)
+                else:
+                    if is_log_error:
                         logger.exception(
-                            "Error decoding hex value [%s], field [%s], offset [%s]",
+                            "Error decoding value [%s], offset [%s]",
                             value,
-                            field,
                             offset,
                         )
-                else:
-                    logger.exception(
-                        "Error decoding value [%s], field [%s], offset [%s]",
-                        value,
-                        field,
-                        offset,
-                    )
+                    rv.append(container.esc)
+                    rv.append(value)
+                    rv.append(container.esc)
             else:
                 collecting.append(c)
+                if (len(collecting) > max_escape and collecting[0] not in "XZ") \
+                    or (len(collecting) > 10 and collecting[0] in "XZ"):
+                    # We have collected beyond the maximum number of characters in an escape sequence
+                    # Assume the message is badly formed and append the initial escape plus collected
+                    # characters to the output
+                    rv.append(container.esc)
+                    rv.extend(collecting)
+                    collecting = []
+                    in_seq = False
         elif c == container.esc:
             in_seq = True
         else:

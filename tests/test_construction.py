@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import hl7
 
-from .samples import rep_sample_hl7
+from samples import rep_sample_hl7
 
 SEP = r"|^~\&"
 CR_SEP = "\r"
