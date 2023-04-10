@@ -188,7 +188,7 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
         ".ce": "\r",
     }
 
-    max_escape = max(len(x) for x in DEFAULT_MAP.keys())
+    max_escape = max(10, max(len(x) for x in DEFAULT_MAP.keys()))
     if app_map:
         max_escape = max(max_escape, max(len(x) for x in app_map.keys()))
 
@@ -279,8 +279,8 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
                     rv.append(container.esc)
             else:
                 collecting.append(c)
-                if (len(collecting) > max_escape and collecting[0] not in "XZMC") \
-                    or (len(collecting) > 10 and collecting[0] in "XZMC"):
+                if (len(collecting) > max_escape and collecting[0] not in "XZ") \
+                    or (len(collecting) > 10 and collecting[0] in "XZ"):
                     # We have collected beyond the maximum number of characters in an escape sequence
                     # Assume the message is badly formed and append the initial escape plus collected
                     # characters to the output
