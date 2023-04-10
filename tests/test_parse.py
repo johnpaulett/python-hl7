@@ -27,7 +27,6 @@ from samples import (
     sample_hl7,
 )
 
-
 class ParseTest(TestCase):
     def test_parse(self):
         msg = hl7.parse(sample_hl7)
@@ -381,6 +380,7 @@ class ParseTest(TestCase):
     def test_unescape_broken(self):
         msg = hl7.parse(rep_sample_hl7)
 
+        self.assertEqual(msg.unescape("Empty \\\\"), "Empty \\\\")
         self.assertEqual(msg.unescape("Undefined \\A\\"), "Undefined \\A\\")
         self.assertEqual(msg.unescape("Undefined \\A\\", app_map={"A": "*"}), "Undefined *")
 
@@ -390,6 +390,8 @@ class ParseTest(TestCase):
         self.assertEqual(msg.unescape("not implemented \\M2442\\"), "not implemented \\M2442\\")    
 
         self.assertEqual(msg.unescape("part convert \\X30no31\\"), "part convert 0\\X30no31\\")        
+
+
 
     def test_escape(self):
         msg = hl7.parse(rep_sample_hl7)

@@ -202,11 +202,13 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
                 value = "".join(collecting)
                 collecting = []
                 if not value:
-                    logger.warn(
-                        "Error unescaping value [%s], empty sequence found at %d",
-                        field,
-                        offset,
-                    )
+                    if is_log_error:
+                        logger.warn(
+                            "Error unescaping empty sequence found at %d",
+                            offset,
+                        )
+                    rv.append(container.esc)
+                    rv.append(container.esc)
                     continue
                 if app_map and value in app_map:
                     rv.append(app_map[value])
@@ -229,9 +231,8 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
                     # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
                     if is_log_error:
                         logger.warn(
-                            "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
+                            "Error inline character sets [%s] not implemented, offset [%s]",
                             value,
-                            field,
                             offset,
                         )
                     rv.append(container.esc)
@@ -241,9 +242,8 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
                     # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
                     if is_log_error:
                         logger.warn(
-                            "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
+                            "Error inline character sets [%s] not implemented, offset [%s]",
                             value,
-                            field,
                             offset,
                         )
                     rv.append(container.esc)
@@ -257,9 +257,8 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
                     except Exception:
                         if is_log_error:
                             logger.exception(
-                                "Error decoding hex value [%s], field [%s], offset [%s]",
+                                "Error decoding hex value [%s], offset [%s]",
                                 value,
-                                field,
                                 offset,
                             )
                         rv.append(container.esc)
@@ -269,9 +268,8 @@ def unescape(container, field, app_map=None, is_log_error=False):  # noqa: C901
                 else:
                     if is_log_error:
                         logger.exception(
-                            "Error decoding value [%s], field [%s], offset [%s]",
+                            "Error decoding value [%s], offset [%s]",
                             value,
-                            field,
                             offset,
                         )
                     rv.append(container.esc)
