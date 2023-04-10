@@ -377,6 +377,20 @@ class ParseTest(TestCase):
         self.assertEqual(msg.unescape("\\X20202020\\"), "    ")
         self.assertEqual(msg.unescape("\\Xe1\\\\Xe9\\\\Xed\\\\Xf3\\\\Xfa\\"), "áéíóú")
 
+
+    def test_unescape_broken(self):
+        msg = hl7.parse(rep_sample_hl7)
+
+        self.assertEqual(msg.unescape("Undefined \\A\\"), "Undefined \\A\\")
+        self.assertEqual(msg.unescape("Undefined \\A\\", app_map={"A": "*"}), "Undefined *")
+
+        self.assertEqual(msg.unescape(".br\\ but the text goes on beyond limit"), ".br\\ but the text goes on beyond limit")
+
+        self.assertEqual(msg.unescape("not implemented \\C2842\\"), "not implemented \\C2842\\")        
+        self.assertEqual(msg.unescape("not implemented \\M2442\\"), "not implemented \\M2442\\")    
+
+        self.assertEqual(msg.unescape("part convert \\X30no31\\"), "part convert 0\\X30no31\\")        
+
     def test_escape(self):
         msg = hl7.parse(rep_sample_hl7)
 
