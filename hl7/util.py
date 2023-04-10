@@ -4,7 +4,7 @@ import logging
 import random
 import string
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 def ishl7(line):

@@ -10,7 +10,7 @@ from .exceptions import (
 )
 from .util import escape, generate_message_control_id, unescape
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 _SENTINEL = object()
 
