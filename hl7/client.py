@@ -196,7 +196,7 @@ def mllp_send():
     parser.add_option(
         "-q",
         "--quiet",
-        action="store_true",
+        action="store_false",
         dest="verbose",
         default=True,
         help="do not print status messages to stdout",
