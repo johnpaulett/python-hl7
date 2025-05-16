@@ -8,6 +8,8 @@ MLLP using asyncio
    `hl7.mllp` package is currently experimental and subject to change.
    It aims to replace txHL7.
 
+   To use the examples below you need to install the require packages first e.g. `pip install aiorun hl7`
+
 python-hl7 includes classes for building HL7 clients and
 servers using asyncio. The underlying protocol for these
 clients and servers is MLLP.
@@ -23,6 +25,7 @@ HL7 Sender
 
 .. code:: python
 
+    import asyncio
     # Using the third party `aiorun` instead of the `asyncio.run()` to avoid
     # boilerplate.
     import aiorun
@@ -68,6 +71,7 @@ HL7 Receiver
 
 .. code:: python
 
+    import asyncio
     # Using the third party `aiorun` instead of the `asyncio.run()` to avoid
     # boilerplate.
     import aiorun
