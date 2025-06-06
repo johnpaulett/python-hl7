@@ -1,8 +1,8 @@
+import argparse
 import io
 import os.path
 import socket
 import sys
-import argparse
 
 import hl7
 

@@ -254,6 +254,16 @@ class MLLPSendTest(TestCase):
         self.assertFalse(self.mock_socket().connect.called)
         self.mock_stdout.assert_called_once_with(str(hl7_version))
 
+    def test_missing_server(self):
+        self.option_values.server = None
+
+        mllp_send()
+
+        self.assertFalse(self.mock_socket().connect.called)
+        self.mock_options.print_usage.assert_called_once_with()
+        self.mock_stderr().write.assert_called_with("server required\n")
+        self.mock_exit.assert_called_with(1)
+
 
 class FakeStream(object):
     count = 0
