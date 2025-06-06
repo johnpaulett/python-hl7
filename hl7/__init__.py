@@ -28,9 +28,8 @@ from .exceptions import (
 )
 from .parser import parse, parse_batch, parse_file, parse_hl7
 from .util import generate_message_control_id, isbatch, isfile, ishl7, split_file
-from .version import get_version
 
-__version__ = get_version()
+__version__ = "0.4.6.dev0"
 __author__ = "John Paulett"
 __email__ = "john -at- paulett.org"
 __license__ = "BSD"

@@ -15,18 +15,19 @@ The test suite is located in :file:`tests/` and can be run several ways.
 
 It is recommended to run the full `tox <http://tox.testrun.org/>`_ suite so
 that all supported Python versions are tested and the documentation is built
-and tested.  We provide a :file:`Makefile` to create a virtualenv, install tox,
-and run tox::
+and tested.  We provide a :file:`Makefile` that uses ``uv`` to create a
+virtual environment.  Initialize the environment and run tox::
 
+    $ make init
     $ make tests
       py27: commands succeeded
       py26: commands succeeded
       docs: commands succeeded
       congratulations :)
 
-To run the test suite with a specific python interpreter::
+To run the test suite with a specific Python interpreter::
 
-    python setup.py test
+    python -m unittest discover -t . -s tests
 
 To documentation is built by tox, but you can manually build via::
 
@@ -52,3 +53,19 @@ It is also recommended to run the flake8 checks for PEP8 and PyFlake
 violations.  Commits should be free of warnings::
 
     $ make lint
+
+Releases
+--------
+
+`Commitizen <https://commitizen-tools.github.io/commitizen/>`_ is used to
+manage project versions and the changelog.  After changes are merged to the
+main branch, bump the version and update ``docs/changelog.rst`` with::
+
+    $ make bump
+
+This uses ``cz bump`` to update ``pyproject.toml`` and ``hl7/__init__.py`` with the new version.
+
+Build the release artifacts and publish to PyPI using::
+
+    $ make build
+    $ make upload

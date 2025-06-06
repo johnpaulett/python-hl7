@@ -1,17 +1,21 @@
-.PHONY: test tests build docs lint upload
+.PHONY: init test tests build docs lint upload bump
 
-BIN = env/bin
+BIN = .venv/bin
 PYTHON = $(BIN)/python
-PIP = $(BIN)/pip
+UV = $(BIN)/uv
 
-SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
+SPHINXBUILD   = $(shell pwd)/.venv/bin/sphinx-build
 
-env: requirements.txt setup.py
-	test -f $(PYTHON) || python3 -m venv env
-	$(PIP) install -U -r requirements.txt
-	$(PYTHON) setup.py develop
 
-tests: env
+.venv: pyproject.toml uv.lock
+	which uv >/dev/null || python3 -m pip install -U uv
+	uv sync --extra dev
+
+init: .venv
+.PHONY: init
+
+
+tests: init
 	$(BIN)/tox
 .PHONY: tests
 
@@ -25,7 +29,7 @@ coverage:
 .PHONY: coverage
 
 build:
-	$(PYTHON) setup.py sdist
+	$(UV) build
 .PHONY: build
 
 clean-docs:
@@ -33,7 +37,7 @@ clean-docs:
 .PHONY: clean-docs
 
 clean: clean-docs
-	rm -rf *.egg-info .mypy_cache coverage.xml env
+	rm -rf *.egg-info .mypy_cache coverage.xml .venv
 	find . -name "*.pyc" -type f -delete
 	find . -type d -empty -delete
 .PHONY: clean-python
@@ -57,8 +61,12 @@ format:
 	$(BIN)/black $(BLACK_ARGS) hl7 tests
 .PHONY: isort
 
-upload:
+	upload:
 	rm -rf dist
-	$(PYTHON) setup.py sdist bdist_wheel
-	$(BIN)/twine upload dist/*
+	$(UV) build
+	$(UV) publish
 .PHONY: upload
+
+bump: init
+	$(BIN)/cz bump
+.PHONY: bump
