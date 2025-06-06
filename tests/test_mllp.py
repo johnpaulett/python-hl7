@@ -1,12 +1,10 @@
 import asyncio
 import asyncio.streams
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import create_autospec
 
 import hl7
 import hl7.mllp
-
-from unittest import IsolatedAsyncioTestCase
-
 
 START_BLOCK = b"\x0b"
 END_BLOCK = b"\x1c"
