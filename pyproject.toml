@@ -76,7 +76,7 @@ known_first_party = "hl7"
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.4.6.dev0"
-tag_format = "v$version"
+tag_format = "$version"
 version_files = [
     "pyproject.toml:version",
     "hl7/__init__.py:__version__",

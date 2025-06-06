@@ -1,4 +1,4 @@
-.PHONY: env test tests build docs lint upload
+.PHONY: init test tests build docs lint upload bump
 
 BIN = .venv/bin
 PYTHON = $(BIN)/python
@@ -6,11 +6,16 @@ UV = $(BIN)/uv
 
 SPHINXBUILD   = $(shell pwd)/.venv/bin/sphinx-build
 
-env: pyproject.toml
+
+.venv: pyproject.toml uv.lock
 	which uv >/dev/null || python3 -m pip install -U uv
 	uv sync --extra dev
 
-tests: env
+init: .venv
+.PHONY: init
+
+
+tests: init
 	$(BIN)/tox
 .PHONY: tests
 
@@ -32,7 +37,7 @@ clean-docs:
 .PHONY: clean-docs
 
 clean: clean-docs
-	rm -rf *.egg-info .mypy_cache coverage.xml env
+	rm -rf *.egg-info .mypy_cache coverage.xml .venv
 	find . -name "*.pyc" -type f -delete
 	find . -type d -empty -delete
 .PHONY: clean-python
@@ -56,8 +61,12 @@ format:
 	$(BIN)/black $(BLACK_ARGS) hl7 tests
 .PHONY: isort
 
-upload:
+	upload:
 	rm -rf dist
 	$(UV) build
 	$(UV) publish
 .PHONY: upload
+
+bump: init
+	$(BIN)/cz bump
+.PHONY: bump

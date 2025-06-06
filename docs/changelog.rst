@@ -9,6 +9,8 @@ Changelog
 * Converted packaging to ``pyproject.toml`` using ``hatchling`` and removed
   ``requirements.txt``.
 * Added ``commitizen`` to manage version bumps and changelog entries.
+* Added ``make bump`` target and replaced ``make env`` with ``make init`` for
+  setting up the development environment.
 
 
 0.4.5 - March 2022

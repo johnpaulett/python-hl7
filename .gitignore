@@ -9,7 +9,6 @@ coverage.xml
 /.tox/
 /build/
 /dist/
-/env/
 /.eggs/
 .vscode
 /.venv/
