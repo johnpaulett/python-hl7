@@ -11,6 +11,7 @@ Changelog
 * Added ``commitizen`` to manage version bumps and changelog entries.
 * Added ``make bump`` target and replaced ``make env`` with ``make init`` for
   setting up the development environment.
+* Removed deprecated ``hl7.version`` module; use ``hl7.__version__`` instead.
 
 
 0.4.5 - March 2022
