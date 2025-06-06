@@ -52,3 +52,14 @@ It is also recommended to run the flake8 checks for PEP8 and PyFlake
 violations.  Commits should be free of warnings::
 
     $ make lint
+
+Releases
+--------
+
+`Commitizen <https://commitizen-tools.github.io/commitizen/>`_ is used to
+manage project versions and the changelog.  After changes are merged to the
+main branch, bump the version and update ``docs/changelog.rst`` with::
+
+    $ cz bump
+
+This updates ``pyproject.toml`` and ``hl7/__init__.py`` with the new version.

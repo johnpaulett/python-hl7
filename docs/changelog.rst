@@ -8,6 +8,7 @@ Changelog
 * Switched development dependencies to be installed using ``uv`` instead of ``pip``.
 * Converted packaging to ``pyproject.toml`` using ``hatchling`` and removed
   ``requirements.txt``.
+* Added ``commitizen`` to manage version bumps and changelog entries.
 
 
 0.4.5 - March 2022
