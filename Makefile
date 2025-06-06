@@ -24,7 +24,7 @@ coverage:
 .PHONY: coverage
 
 build:
-	$(PYTHON) -m hatchling build
+	$(UV) build
 .PHONY: build
 
 clean-docs:
@@ -58,6 +58,6 @@ format:
 
 upload:
 	rm -rf dist
-	$(PYTHON) -m hatchling build
-	$(BIN)/twine upload dist/*
+	$(UV) build
+	$(UV) publish
 .PHONY: upload
