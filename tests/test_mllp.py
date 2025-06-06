@@ -1,16 +1,11 @@
 import asyncio
 import asyncio.streams
-import sys
 from unittest.mock import create_autospec
 
 import hl7
 import hl7.mllp
 
-# IsolatedAsyncioTestCase added in 3.8, use backport for older code
-if sys.version_info.major <= 3 and sys.version_info.minor < 8:
-    from .backports.unittest.async_case import IsolatedAsyncioTestCase
-else:
-    from unittest import IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase
 
 
 START_BLOCK = b"\x0b"

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.6 - Unreleased
+------------------
+
+* Dropped support for Python 3.7 and 3.8. Python 3.9 - 3.13 are now supported.
+
+
 0.4.5 - March 2022
 ---------------------
 

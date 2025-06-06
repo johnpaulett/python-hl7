@@ -233,7 +233,7 @@ libraries can depend upon.
 Python 2 vs Python 3 and Unicode vs Byte strings
 -------------------------------------------------
 
-python-hl7 supports Python 3.7+ and primarily deals with the unicode ``str`` type.
+python-hl7 supports Python 3.9 through 3.13 and primarily deals with the unicode ``str`` type.
 
 Passing bytes to :py:func:`hl7.parse`, requires setting the
 ``encoding`` parameter, if using anything other than UTF-8. :py:func:`hl7.parse`
