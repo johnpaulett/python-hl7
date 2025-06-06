@@ -1,5 +1,5 @@
 # pip Requirements for developing python-hl7 (not required to use as a library)
-tox==3.24.5
+tox==4.26.0
 flake8==4.0.1
 Sphinx==4.4.0
 coverage==6.3.2
@@ -7,4 +7,4 @@ isort==5.10.1
 black==22.3.0
 twine==3.8.0
 wheel==0.37.1
-setuptools==65.5.0
+setuptools==80.9.0

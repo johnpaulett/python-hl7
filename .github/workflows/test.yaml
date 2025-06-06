@@ -21,7 +21,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip virtualenv
+        python -m pip install --upgrade pip setuptools virtualenv
         make env
     # - name: Lint with flake8
     #   run: |
