@@ -1,15 +1,14 @@
-.PHONY: test tests build docs lint upload
+.PHONY: env test tests build docs lint upload
 
-BIN = env/bin
+BIN = .venv/bin
 PYTHON = $(BIN)/python
-PIP = $(BIN)/pip
+UV = $(BIN)/uv
 
-SPHINXBUILD   = $(shell pwd)/env/bin/sphinx-build
+SPHINXBUILD   = $(shell pwd)/.venv/bin/sphinx-build
 
-env: requirements.txt setup.py
-	test -f $(PYTHON) || python3 -m venv env
-	$(PIP) install -U -r requirements.txt
-	$(PYTHON) setup.py develop
+env: pyproject.toml
+	which uv >/dev/null || python3 -m pip install -U uv
+	uv sync --extra dev
 
 tests: env
 	$(BIN)/tox
@@ -25,7 +24,7 @@ coverage:
 .PHONY: coverage
 
 build:
-	$(PYTHON) setup.py sdist
+	$(PYTHON) -m hatchling build
 .PHONY: build
 
 clean-docs:
@@ -59,6 +58,6 @@ format:
 
 upload:
 	rm -rf dist
-	$(PYTHON) setup.py sdist bdist_wheel
+	$(PYTHON) -m hatchling build
 	$(BIN)/twine upload dist/*
 .PHONY: upload

@@ -5,6 +5,9 @@ Changelog
 ------------------
 
 * Dropped support for Python 3.7 and 3.8. Python 3.9 - 3.13 are now supported.
+* Switched development dependencies to be installed using ``uv`` instead of ``pip``.
+* Converted packaging to ``pyproject.toml`` using ``hatchling`` and removed
+  ``requirements.txt``.
 
 
 0.4.5 - March 2022

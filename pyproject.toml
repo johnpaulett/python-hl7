@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hl7"
+description = "Python library parsing HL7 v2.x messages"
+readme = "README.rst"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+version = "0.4.6.dev0"
+authors = [
+    { name = "John Paulett", email = "john@paulett.org" }
+]
+keywords = [
+    "HL7",
+    "Health Level 7",
+    "healthcare",
+    "health care",
+    "medical record",
+    "mllp"
+]
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "Topic :: Communications",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[project.urls]
+Source = "https://github.com/johnpaulett/python-hl7"
+
+[project.scripts]
+mllp_send = "hl7.client:mllp_send"
+
+[project.optional-dependencies]
+# Development requirements previously listed in requirements.txt
+dev = [
+    "tox==4.26.0",
+    "flake8==7.2.0",
+    "Sphinx==7.2.6",
+    "coverage==6.3.2",
+    "isort==5.10.1",
+    "black==22.3.0",
+    "twine==3.8.0",
+    "wheel==0.37.1",
+    "setuptools==80.9.0",
+    "hatchling"
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "hl7",
+    "tests",
+    "docs",
+    "README.rst",
+    "LICENSE",
+    "AUTHORS",
+    "MANIFEST.in"
+]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 88
+known_first_party = "hl7"

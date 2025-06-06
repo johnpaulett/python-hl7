@@ -12,3 +12,5 @@ coverage.xml
 /env/
 /.eggs/
 .vscode
+/.venv/
+uv.lock
