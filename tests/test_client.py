@@ -1,6 +1,6 @@
 import os
 import socket
-from optparse import Values
+from argparse import Namespace
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
@@ -107,21 +107,20 @@ class MLLPSendTest(TestCase):
         self.dir = mkdtemp()
         self.write(SB + b"foobar" + EB + CR)
 
-        self.option_values = Values(
-            {
-                "port": 6661,
-                "filename": os.path.join(self.dir, "test.hl7"),
-                "verbose": True,
-                "loose": False,
-                "version": False,
-            }
+        self.option_values = Namespace(
+            port=6661,
+            filename=os.path.join(self.dir, "test.hl7"),
+            verbose=True,
+            loose=False,
+            version=False,
+            server="localhost",
         )
 
-        self.options_patch = patch("hl7.client.OptionParser")
+        self.options_patch = patch("hl7.client.argparse.ArgumentParser")
         option_parser = self.options_patch.start()
         self.mock_options = Mock()
         option_parser.return_value = self.mock_options
-        self.mock_options.parse_args.return_value = (self.option_values, ["localhost"])
+        self.mock_options.parse_args.return_value = self.option_values
 
     def tearDown(self):
         # unpatch
