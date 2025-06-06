@@ -1,8 +1,8 @@
+import argparse
 import io
 import os.path
 import socket
 import sys
-from optparse import OptionParser
 
 import hl7
 
@@ -169,39 +169,40 @@ def mllp_send():
     """Command line tool to send messages to an MLLP server"""
     # set up the command line options
     script_name = os.path.basename(sys.argv[0])
-    parser = OptionParser(usage=script_name + " [options] <server>")
-    parser.add_option(
+    parser = argparse.ArgumentParser(usage=script_name + " [options] <server>")
+
+    parser.add_argument(
         "--version",
         action="store_true",
         dest="version",
         default=False,
         help="print current version and exit",
     )
-    parser.add_option(
+    parser.add_argument(
         "-p",
         "--port",
         action="store",
-        type="int",
+        type=int,
         dest="port",
         default=6661,
         help="port to connect to",
     )
-    parser.add_option(
+    parser.add_argument(
         "-f",
         "--file",
         dest="filename",
         help="read from FILE instead of stdin",
         metavar="FILE",
     )
-    parser.add_option(
+    parser.add_argument(
         "-q",
         "--quiet",
-        action="store_true",
+        action="store_false",
         dest="verbose",
         default=True,
         help="do not print status messages to stdout",
     )
-    parser.add_option(
+    parser.add_argument(
         "--loose",
         action="store_true",
         dest="loose",
@@ -212,8 +213,9 @@ def mllp_send():
             '"MSH|^~\\&|". Requires --file option (no stdin)'
         ),
     )
+    parser.add_argument("server", nargs="?")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
     if options.version:
         import hl7
@@ -221,8 +223,8 @@ def mllp_send():
         stdout(hl7.__version__)
         return
 
-    if len(args) == 1:
-        host = args[0]
+    if options.server is not None:
+        host = options.server
     else:
         # server not present
         parser.print_usage()
