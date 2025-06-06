@@ -43,7 +43,7 @@ docs:
 	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
 
 lint:
-	$(BIN)/flake8 hl7 tests
+	$(BIN)/flake8 --config=.flake8 hl7 tests
 	CHECK_ONLY=true $(MAKE) format
 .PHONY: lint
 
