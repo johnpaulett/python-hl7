@@ -144,8 +144,8 @@ class File(Container):
     It contains a list of :py:class:`hl7.Batch`
     instances. It may contain FHS/FTS :py:class:`hl7.Segment` instances.
 
-    Files may or may not be wrapped in FHS/FTS segements
-    deliniating the start/end of the batch. These are optional.
+    Files may or may not be wrapped in FHS/FTS segments
+    delineating the start/end of the batch. These are optional.
     """
 
     def __init__(
@@ -209,7 +209,7 @@ class File(Container):
         """Join a the child batches into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
-        approriate method for turning the python-hl7 representation of
+        appropriate method for turning the python-hl7 representation of
         HL7 into a standard string.
 
         If this batch has FHS/FTS segments, they will be added to the
@@ -235,8 +235,8 @@ class Batch(Container):
     It contains a list of :py:class:`hl7.Message` instances.
     It may contain BHS/BTS :py:class:`hl7.Segment` instances.
 
-    Batches may or may not be wrapped in BHS/BTS segements
-    deliniating the start/end of the batch. These are optional.
+    Batches may or may not be wrapped in BHS/BTS segments
+    delineating the start/end of the batch. These are optional.
     """
 
     def __init__(
@@ -300,7 +300,7 @@ class Batch(Container):
         """Join a the child messages into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
-        approriate method for turning the python-hl7 representation of
+        appropriate method for turning the python-hl7 representation of
         HL7 into a standard string.
 
         If this batch has BHS/BTS segments, they will be added to the
@@ -557,11 +557,11 @@ class Message(Container):
 
         msh.assign_field(str(source_msh(1)), 1)
         msh.assign_field(str(source_msh(2)), 2)
-        # Sending application is source receving application
+        # Sending application is source receiving application
         msh.assign_field(
             str(application) if application is not None else str(source_msh(5)), 3
         )
-        # Sending facility is source receving facility
+        # Sending facility is source receiving facility
         msh.assign_field(
             str(facility) if facility is not None else str(source_msh(6)), 4
         )
@@ -592,7 +592,7 @@ class Message(Container):
         """Join a the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
-        approriate method for turning the python-hl7 representation of
+        appropriate method for turning the python-hl7 representation of
         HL7 into a standard string.
 
         >>> str(hl7.parse(message)) == message

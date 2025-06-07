@@ -56,7 +56,7 @@ HL7 Sender
         await hl7_writer.drain()
         print(f'Sent message\n {hl7_message}'.replace('\r', '\n'))
 
-        # Now wait for the ACK message from the receiever
+        # Now wait for the ACK message from the receiver
         hl7_ack = await asyncio.wait_for(
           hl7_reader.readmessage(),
           timeout=10
