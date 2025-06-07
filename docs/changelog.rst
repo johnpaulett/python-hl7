@@ -16,6 +16,8 @@ Changelog
 * Switched formatting and linting from black/isort and flake8 to ``ruff``.
 * Fixed timezone formatting when ``parse_datetime`` created ``_UTCOffset`` with a
   float value.
+* Use `socket.sendall` to flush the MLLP buffer. `python-hl7#41 <https://github.com/johnpaulett/python-hl7/issues/41>`_.
+ Thanks `Feenes <https://github.com/feenes>`_!`
 
 
 0.4.5 - March 2022
