@@ -386,12 +386,12 @@ class _ParsePlan:
 
     # field, component, repetition, escape, subcomponent
 
-    def __init__(self, seperator, separators, containers, esc, factory):
+    def __init__(self, separator, separators, containers, esc, factory):
         # TODO test to see performance implications of the assertion
         # since we generate the ParsePlan, this should never be in
         # invalid state
-        assert len(containers) == len(separators[separators.find(seperator) :])
-        self.separator = seperator
+        assert len(containers) == len(separators[separators.find(separator) :])
+        self.separator = separator
         self.separators = separators
         self.containers = containers
         self.esc = esc
@@ -411,7 +411,7 @@ class _ParsePlan:
     def next(self):
         """Generate the next level of the plan (essentially generates
         a copy of this plan with the level of the container and the
-        seperator starting at the next index.
+        separator starting at the next index.
         """
         if len(self.containers) > 1:
             # Return a new instance of this class using the tails of
