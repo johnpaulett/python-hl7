@@ -47,21 +47,20 @@ docs:
 	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
 
 lint:
-	$(BIN)/flake8 --config=.flake8 hl7 tests
+	$(BIN)/ruff check hl7 tests
 	CHECK_ONLY=true $(MAKE) format
 .PHONY: lint
 
 CHECK_ONLY ?=
 ifdef CHECK_ONLY
-ISORT_ARGS=--check-only
-BLACK_ARGS=--check
+RUFF_FORMAT_ARGS=--check
 endif
 format:
-	$(BIN)/isort $(ISORT_ARGS) hl7 tests
-	$(BIN)/black $(BLACK_ARGS) hl7 tests
-.PHONY: isort
+	$(BIN)/ruff format $(RUFF_FORMAT_ARGS) hl7 tests
 
-	upload:
+.PHONY: format
+
+upload:
 	rm -rf dist
 	$(UV) build
 	$(UV) publish

@@ -13,6 +13,7 @@ Changelog
   setting up the development environment.
 * Removed deprecated ``hl7.version`` module; use ``hl7.__version__`` instead.
 * Fixed a bug in `mllp_send --quiet` -- thanks `Spencer Vecile <https://github.com/svecile>`_!
+* Switched formatting and linting from black/isort and flake8 to ``ruff``.
 
 
 0.4.5 - March 2022

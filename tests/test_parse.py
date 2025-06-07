@@ -325,7 +325,7 @@ class ParseTest(TestCase):
             IndexError,
             "PID.1.1.1.2",
             msg.extract_field,
-            *Accessor.parse_key("PID.1.1.1.2")
+            *Accessor.parse_key("PID.1.1.1.2"),
         )
 
         # Optional field, not included in message

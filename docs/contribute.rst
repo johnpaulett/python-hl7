@@ -44,13 +44,13 @@ To documentation is built by tox, but you can manually build via::
 Formatting
 ----------
 
-python-hl7 has converted to use `black <https://black.readthedocs.io/en/stable/>`
-to enforce a coding style.  To automatically format using black and isort::
+python-hl7 uses `ruff <https://docs.astral.sh/ruff/>`_ to enforce a coding
+style.  To automatically format the code::
 
     $ make format
 
-It is also recommended to run the flake8 checks for PEP8 and PyFlake
-violations.  Commits should be free of warnings::
+It is also recommended to run the lint checks with ``ruff``.
+Commits should be free of warnings::
 
     $ make lint
 
