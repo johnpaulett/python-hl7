@@ -10,12 +10,13 @@ SPHINXBUILD   = $(shell pwd)/.venv/bin/sphinx-build
 .venv: pyproject.toml uv.lock
 	which uv >/dev/null || python3 -m pip install -U uv
 	uv sync --extra dev
+	touch -f .venv
 
 init: .venv
 .PHONY: init
 
 
-tests: init
+tests: .venv
 	$(BIN)/tox
 .PHONY: tests
 
@@ -23,7 +24,7 @@ tests: init
 test: tests
 .PHONY: test
 
-coverage:
+coverage: .venv
 	$(BIN)/coverage run -m unittest discover -t . -s tests
 	$(BIN)/coverage xml
 .PHONY: coverage
@@ -43,10 +44,10 @@ clean: clean-docs
 .PHONY: clean-python
 
 
-docs:
+docs: .venv
 	cd docs; make html SPHINXBUILD=$(SPHINXBUILD); make man SPHINXBUILD=$(SPHINXBUILD); make doctest SPHINXBUILD=$(SPHINXBUILD)
 
-lint:
+lint: .venv
 	$(BIN)/ruff check hl7 tests
 	CHECK_ONLY=true $(MAKE) format
 .PHONY: lint
@@ -55,7 +56,7 @@ CHECK_ONLY ?=
 ifdef CHECK_ONLY
 RUFF_FORMAT_ARGS=--check
 endif
-format:
+format: .venv
 	$(BIN)/ruff format $(RUFF_FORMAT_ARGS) hl7 tests
 
 .PHONY: format
@@ -66,6 +67,6 @@ upload:
 	$(UV) publish
 .PHONY: upload
 
-bump: init
+bump: .venv
 	$(BIN)/cz bump
 .PHONY: bump
