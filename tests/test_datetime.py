@@ -44,3 +44,13 @@ class DatetimeTest(TestCase):
     def test_tz(self):
         self.assertEqual("+0205", _UTCOffset(125).tzname(datetime.utcnow()))
         self.assertEqual("-0410", _UTCOffset(-250).tzname(datetime.utcnow()))
+
+    def test_parse_tzname(self):
+        dt = parse_datetime("201403111412-0500")
+        self.assertEqual("-0500", dt.tzname())
+        dt = parse_datetime("201403111412+0530")
+        self.assertEqual("+0530", dt.tzname())
+
+    def test_utc_offset_float(self):
+        self.assertEqual("-0500", _UTCOffset(-300.0).tzname(datetime.utcnow()))
+        self.assertEqual("+0530", _UTCOffset(330.0).tzname(datetime.utcnow()))
