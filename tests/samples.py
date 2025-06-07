@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Sample message from HL7 Normative Edition
 # http://healthinfo.med.dal.ca/hl7intro/CDA_R2_normativewebedition/help/v3guide/v3guide.htm#v3gexamples
 sample_hl7 = "\r".join(

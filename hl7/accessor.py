@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collections import namedtuple
 
 
@@ -27,7 +26,7 @@ class Accessor(
         subcomponent_num=None,
     ):
         """Create a new instance of Accessor for *segment*. Index numbers start from 1."""
-        return super(Accessor, cls).__new__(
+        return super().__new__(
             cls,
             segment,
             segment_num,

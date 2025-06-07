@@ -19,7 +19,7 @@ class MLLPException(Exception):
     pass
 
 
-class MLLPClient(object):
+class MLLPClient:
     """
     A basic, blocking, HL7 MLLP client based upon :py:mod:`socket`.
 

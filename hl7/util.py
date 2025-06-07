@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import logging
 import random
@@ -194,7 +193,7 @@ def unescape(container, field, app_map=None):  # noqa: C901
                 value = "".join(collecting)
                 collecting = []
                 if not value:
-                    logger.warn(
+                    logger.warning(
                         "Error unescaping value [%s], empty sequence found at %d",
                         field,
                         offset,
@@ -219,7 +218,7 @@ def unescape(container, field, app_map=None):  # noqa: C901
                     value[0] == "C"
                 ):  # Convert to new Single Byte character set : 2.10.2
                     # Two HEX values, first value chooses the character set (ISO-IR), second gives the value
-                    logger.warn(
+                    logger.warning(
                         "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
                         value,
                         field,
@@ -227,7 +226,7 @@ def unescape(container, field, app_map=None):  # noqa: C901
                     )
                 elif value[0] == "M":  # Switch to new Multi Byte character set : 2.10.2
                     # Three HEX values, first value chooses the character set (ISO-IR), rest give the value
-                    logger.warn(
+                    logger.warning(
                         "Error inline character sets [%s] not implemented, field [%s], offset [%s]",
                         value,
                         field,

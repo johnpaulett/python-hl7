@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from unittest import TestCase
 
 from hl7 import Accessor, Field, Message, Segment

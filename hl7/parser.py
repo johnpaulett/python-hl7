@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from string import whitespace
 
 from .containers import Factory
@@ -380,7 +379,7 @@ def create_parse_plan(strmsg, factory=Factory):
     return _ParsePlan(separators[0], separators, containers, esc, factory)
 
 
-class _ParsePlan(object):
+class _ParsePlan:
     """Details on how to parse an HL7 message. Typically this object
     should be created via :func:`hl7.create_parse_plan`
     """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # python-hl7 documentation build configuration file, created by
 # sphinx-quickstart on Tue Jul 12 10:57:30 2011.
@@ -43,8 +42,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"python-hl7"
-copyright = u"2011-{}, John Paulett".format(date.today().year)
+project = "python-hl7"
+copyright = "2011-{}, John Paulett".format(date.today().year)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -189,7 +188,7 @@ htmlhelp_basename = "python-hl7doc"
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "python-hl7.tex", u"python-hl7 Documentation", u"John Paulett", "manual"),
+    ("index", "python-hl7.tex", "python-hl7 Documentation", "John Paulett", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -220,16 +219,16 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("mllp_send", "mllp_send", "MLLP network client", [u"John Paulett"], 1)]
+man_pages = [("mllp_send", "mllp_send", "MLLP network client", ["John Paulett"], 1)]
 
 
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u"python-hl7"
-epub_author = u"John Paulett"
-epub_publisher = u"John Paulett"
-epub_copyright = u"2011, John Paulett"
+epub_title = "python-hl7"
+epub_author = "John Paulett"
+epub_publisher = "John Paulett"
+epub_copyright = "2011, John Paulett"
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

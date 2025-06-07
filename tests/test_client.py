@@ -279,7 +279,7 @@ class MLLPSendTest(TestCase):
         self.assertFalse(self.mock_stdout.called)
 
 
-class FakeStream(object):
+class FakeStream:
     count = 0
 
     def read(self, buf):
