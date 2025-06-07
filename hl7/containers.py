@@ -135,7 +135,6 @@ class Container(Sequence):
             )
         return sequence
 
-
     def __str__(self):
         return self.separator.join((str(x) for x in self))
 
