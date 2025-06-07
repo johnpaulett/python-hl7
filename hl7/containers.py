@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import logging
 
@@ -53,7 +52,7 @@ class Container(Sequence):
         # Initialize the list object, optionally passing in the
         # sequence.  Since list([]) == [], using the default
         # parameter will not cause any issues.
-        super(Container, self).__init__(sequence)
+        super().__init__(sequence)
         self.separator = separator
         self.esc = esc
         self.separators = separators
@@ -125,7 +124,7 @@ class Container(Sequence):
     def __getitem__(self, item):
         # Python slice operator was returning a regular list, not a
         # Container subclass
-        sequence = super(Container, self).__getitem__(item)
+        sequence = super().__getitem__(item)
         if isinstance(item, slice):
             return self.__class__(
                 self.separator,
@@ -136,10 +135,6 @@ class Container(Sequence):
             )
         return sequence
 
-    def __getslice__(self, i, j):
-        # Python 2.x compatibility.  __getslice__ is deprecated, and
-        # we want to wrap the logic from __getitem__ when handling slices
-        return self.__getitem__(slice(i, j))
 
     def __str__(self):
         return self.separator.join((str(x) for x in self))
@@ -158,7 +153,7 @@ class File(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[0]
-        super(File, self).__init__(
+        super().__init__(
             separator=separators[0],
             sequence=sequence,
             esc=esc,
@@ -226,11 +221,11 @@ class File(Container):
                 "Either both header and trailer must be present or neither"
             )
         return (
-            super(File, self).__str__()
+            super().__str__()
             if not self.header
             else str(self.header)
             + self.separator
-            + super(File, self).__str__()
+            + super().__str__()
             + str(self.trailer)
             + self.separator
         )
@@ -249,7 +244,7 @@ class Batch(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[0]
-        super(Batch, self).__init__(
+        super().__init__(
             separator=separators[0],
             sequence=sequence,
             esc=esc,
@@ -317,11 +312,11 @@ class Batch(Container):
                 "Either both header and trailer must be present or neither"
             )
         return (
-            super(Batch, self).__str__()
+            super().__str__()
             if not self.header
             else str(self.header)
             + self.separator
-            + super(Batch, self).__str__()
+            + super().__str__()
             + str(self.trailer)
             + self.separator
         )
@@ -332,7 +327,7 @@ class Message(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[0]
-        super(Message, self).__init__(
+        super().__init__(
             separator=separators[0],
             sequence=sequence,
             esc=esc,
@@ -373,7 +368,7 @@ class Message(Container):
             return self.extract_field(*Accessor.parse_key(key))
         elif isinstance(key, Accessor):
             return self.extract_field(*key)
-        return super(Message, self).__getitem__(key)
+        return super().__getitem__(key)
 
     def __setitem__(self, key, value):
         """Index or accessor assignment.
@@ -396,7 +391,7 @@ class Message(Container):
             return self.assign_field(value, *Accessor.parse_key(key))
         elif isinstance(key, Accessor):
             return self.assign_field(value, *key)
-        return super(Message, self).__setitem__(key, value)
+        return super().__setitem__(key, value)
 
     def segment(self, segment_id):
         """Gets the first segment with the *segment_id* from the parsed
@@ -607,7 +602,7 @@ class Message(Container):
         """
         # Per spec, Message Construction Rules, Section 2.6 (v2.8), Message ends
         # with the carriage return
-        return super(Message, self).__str__() + self.separator
+        return super().__str__() + self.separator
 
 
 class Segment(Container):
@@ -615,7 +610,7 @@ class Segment(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[1]
-        super(Segment, self).__init__(
+        super().__init__(
             separator=separators[1],
             sequence=sequence,
             esc=esc,
@@ -774,7 +769,7 @@ class Segment(Container):
                 + str(self[1])
                 + self.separator.join((str(x) for x in self[3:]))
             )
-        return super(Segment, self).__str__()
+        return super().__str__()
 
 
 class Field(Container):
@@ -782,7 +777,7 @@ class Field(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[2]
-        super(Field, self).__init__(
+        super().__init__(
             separator=separators[2],
             sequence=sequence,
             esc=esc,
@@ -801,7 +796,7 @@ class Repetition(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[3]
-        super(Repetition, self).__init__(
+        super().__init__(
             separator=separators[3],
             sequence=sequence,
             esc=esc,
@@ -819,7 +814,7 @@ class Component(Container):
         self, separator=None, sequence=[], esc="\\", separators="\r|~^&", factory=None
     ):
         assert not separator or separator == separators[4]
-        super(Component, self).__init__(
+        super().__init__(
             separator=separators[4],
             sequence=sequence,
             esc=esc,
@@ -832,7 +827,7 @@ class Component(Container):
     """
 
 
-class Factory(object):
+class Factory:
     """Factory used to create each type of Container.
 
     A subclass can be used to create specialized subclasses of each container.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """python-hl7 is a simple library for parsing messages of Health Level 7
 (HL7) version 2.x into Python objects.
 
