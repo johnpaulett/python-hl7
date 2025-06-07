@@ -10,8 +10,13 @@ class _UTCOffset(datetime.tzinfo):
     """Fixed offset timezone from UTC."""
 
     def __init__(self, minutes):
-        """``minutes`` is a offset from UTC, negative for west of UTC"""
-        self.minutes = minutes
+        """``minutes`` is an offset from UTC, negative for west of UTC."""
+        # ``minutes`` may be passed in as a float when constructed via
+        # :func:`parse_datetime`.  ``datetime.timedelta`` and formatting of the
+        # timezone name expect an ``int``.  Store the offset as an ``int`` to
+        # avoid producing values like ``-5.00.0`` from ``tzname`` when floats are
+        # used.
+        self.minutes = int(minutes)
 
     def utcoffset(self, dt):
         return datetime.timedelta(minutes=self.minutes)

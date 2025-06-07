@@ -14,6 +14,8 @@ Changelog
 * Removed deprecated ``hl7.version`` module; use ``hl7.__version__`` instead.
 * Fixed a bug in `mllp_send --quiet` -- thanks `Spencer Vecile <https://github.com/svecile>`_!
 * Switched formatting and linting from black/isort and flake8 to ``ruff``.
+* Fixed timezone formatting when ``parse_datetime`` created ``_UTCOffset`` with a
+  float value.
 
 
 0.4.5 - March 2022
