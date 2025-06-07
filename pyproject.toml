@@ -43,11 +43,9 @@ mllp_send = "hl7.client:mllp_send"
 # Development requirements previously listed in requirements.txt
 dev = [
     "tox==4.26.0",
-    "flake8==7.2.0",
     "Sphinx==7.2.6",
     "coverage==6.3.2",
-    "isort==5.10.1",
-    "black==22.3.0",
+    "ruff==0.4.4",
     "wheel==0.37.1",
     "setuptools==80.9.0",
     "hatchling",
@@ -65,13 +63,14 @@ include = [
     "MANIFEST.in"
 ]
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 88
-known_first_party = "hl7"
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+exclude = [".git", "env", "__pycache__", "build", "dist"]
+
+[tool.ruff.lint]
+ignore = ["E203", "E501"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"

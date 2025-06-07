@@ -25,7 +25,7 @@ async def open_hl7_connection(
     limit=_DEFAULT_LIMIT,
     encoding=None,
     encoding_errors=None,
-    **kwds
+    **kwds,
 ):
     """A wrapper for `loop.create_connection()` returning a (reader, writer) pair.
 
@@ -73,7 +73,7 @@ async def start_hl7_server(
     limit=_DEFAULT_LIMIT,
     encoding=None,
     encoding_errors=None,
-    **kwds
+    **kwds,
 ):
     """Start a socket server, call back for each client connected.
 
