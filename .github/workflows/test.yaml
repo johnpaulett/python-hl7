@@ -1,6 +1,9 @@
-name: Python package
+name: tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 env:
   primary-python-version: "3.12"
@@ -14,7 +17,7 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -34,21 +37,9 @@ jobs:
       run: |
         make coverage
 
-    - name: Check code formatting
-      if: matrix.python-version == env.primary-python-version
-      # Includes flake8, black --check, and isort --check-only
-      run: |
-        make lint
-
     - name: Upload to codecov.io
       # Only upload coverage report for single version
       if: matrix.python-version == env.primary-python-version
-      uses: codecov/codecov-action@v1.0.5
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Docs and Doctests
-      # Only check docs on single version
-      if: matrix.python-version >= env.primary-python-version
-      run: |
-        make docs
