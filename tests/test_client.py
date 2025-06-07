@@ -264,6 +264,20 @@ class MLLPSendTest(TestCase):
         self.mock_stderr().write.assert_called_with("server required\n")
         self.mock_exit.assert_called_with(1)
 
+    def test_quiet_cli_option_suppresses_output(self):
+        argv = [
+            "mllp_send",
+            "--file",
+            os.path.join(self.dir, "test.hl7"),
+            "--quiet",
+            "localhost",
+        ]
+        # stop patched parser to use real CLI parsing
+        self.options_patch.stop()
+        with patch("hl7.client.sys.argv", argv):
+            mllp_send()
+        self.assertFalse(self.mock_stdout.called)
+
 
 class FakeStream(object):
     count = 0
