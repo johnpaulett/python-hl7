@@ -46,7 +46,7 @@ dev = [
     "Sphinx==7.2.6",
     "coverage==6.3.2",
     "ruff==0.4.4",
-    "wheel==0.37.1",
+    "wheel==0.38.1",
     "setuptools==80.9.0",
     "hatchling",
     "commitizen==3.13.0"
