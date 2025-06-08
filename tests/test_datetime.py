@@ -58,3 +58,14 @@ class DatetimeTest(TestCase):
     def test_parse_negative_zero_offset(self):
         dt = parse_datetime("201403111412-0030")
         self.assertEqual(dt.tzinfo, _UTCOffset(-30))
+
+    def test_utcoffset_equality(self):
+        self.assertEqual(_UTCOffset(60), _UTCOffset(60))
+        self.assertNotEqual(_UTCOffset(60), _UTCOffset(-60))
+        self.assertNotEqual(_UTCOffset(60), 60)
+
+    def test_utcoffset_hash(self):
+        a = _UTCOffset(45)
+        b = _UTCOffset(45)
+        self.assertEqual(hash(a), hash(b))
+        self.assertEqual(len({a, b}), 1)
