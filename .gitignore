@@ -12,3 +12,6 @@ coverage.xml
 /.eggs/
 .vscode
 /.venv/
+
+# Ignore old venv location
+/env/

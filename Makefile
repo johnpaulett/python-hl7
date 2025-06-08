@@ -41,6 +41,8 @@ clean: clean-docs
 	rm -rf *.egg-info .mypy_cache coverage.xml .venv
 	find . -name "*.pyc" -type f -delete
 	find . -type d -empty -delete
+	# Legacy venv (remove eventually)
+	rm -rf env
 .PHONY: clean-python
 
 
