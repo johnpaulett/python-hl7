@@ -345,7 +345,7 @@ def create_parse_plan(strmsg, factory=Factory):
     # Extract the rest of the separators. Defaults used if not present.
     if strmsg[:3] not in ("MSH", "FHS", "BHS"):
         raise ParseException(
-            "First segment is {}, must be one of MHS, FHS or BHS".format(strmsg[:3])
+            "First segment is {}, must be one of MSH, FHS or BHS".format(strmsg[:3])
         )
     sep0 = strmsg[3]
     seps = list(strmsg[3 : strmsg.find(sep0, 4)])

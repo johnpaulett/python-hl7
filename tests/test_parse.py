@@ -451,3 +451,8 @@ class ParsePlanTest(TestCase):
 
         n5 = n4.next()
         self.assertTrue(n5 is None)
+
+    def test_create_parse_plan_invalid_segment(self):
+        with self.assertRaises(ParseException) as cm:
+            hl7.parser.create_parse_plan("PID|^~\\&|GHH LAB")
+        self.assertIn("must be one of MSH, FHS or BHS", cm.exception.args[0])
