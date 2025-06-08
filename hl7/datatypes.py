@@ -1,5 +1,4 @@
 import datetime
-import math
 import re
 
 DTM_TZ_RE = re.compile(r"(\d+(?:\.\d+)?)(?:([+-]\d{2})(\d{2}))?")
@@ -16,6 +15,14 @@ class _UTCOffset(datetime.tzinfo):
         # avoid producing values like ``-5.00.0`` from ``tzname`` when floats are
         # used.
         self.minutes = int(minutes)
+
+    def __eq__(self, other):
+        if isinstance(other, _UTCOffset):
+            return self.minutes == other.minutes
+        return NotImplemented
+
+    def __hash__(self):
+        return hash(self.minutes)
 
     def utcoffset(self, dt):
         return datetime.timedelta(minutes=self.minutes)
@@ -49,8 +56,9 @@ def parse_datetime(value):
     tzh = dt_match.group(2)
     tzm = dt_match.group(3)
     if tzh and tzm:
+        sign = -1 if tzh.startswith("-") else 1
         minutes = int(tzh) * 60
-        minutes += math.copysign(int(tzm), minutes)
+        minutes += sign * int(tzm)
         tzinfo = _UTCOffset(minutes)
     else:
         tzinfo = None
