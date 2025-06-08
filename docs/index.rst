@@ -39,12 +39,14 @@ which aims to replace `txHL7 <https://txhl7.readthedocs.io/>`_.
 Result Tree
 -----------
 
-HL7 Messages have a limited number of levels. The top level is a Message.
-A Message is comprised of a number of Fields (:py:class:`hl7.Field`).
-Fields can repeat (:py:class:`hl7.Repetition`). The content of a field
-is either a primitive data type (such as a string) or a composite
-data type comprised of one or more Components (:py:class:`hl7.Component`). Components
-are in turn comprised of Sub-Components (primitive data types).
+HL7 messages have a limited number of levels. The top level is a
+:py:class:`hl7.Message`. A message is comprised of a number of
+:py:class:`hl7.Segment` objects. Each segment contains a series of
+:py:class:`hl7.Field` objects. Fields can repeat (:py:class:`hl7.Repetition`).
+The content of a field is either a primitive data type (such as a string)
+or a composite data type comprised of one or more
+:py:class:`hl7.Component` objects. Components are in turn comprised of
+sub-components (primitive data types).
 
 The result of parsing is accessed as a tree using python list conventions:
 
