@@ -18,7 +18,7 @@ an easy to access data structure. The library could eventually
 also contain the ability to create HL7 v2.x messages.
 
 python-hl7 parses HL7 into a series of wrapped :py:class:`hl7.Container` objects.
-The there are specific subclasses of :py:class:`hl7.Container` depending on
+There are specific subclasses of :py:class:`hl7.Container` depending on
 the part of the HL7 message. The :py:class:`hl7.Container` message itself
 is a subclass of a Python list, thus we can easily access the
 HL7 message as an n-dimensional list. Specifically, the subclasses of
