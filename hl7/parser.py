@@ -13,7 +13,7 @@ def parse_hl7(line, encoding="utf-8", factory=Factory):
     messages or batches respectively.
 
     A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
-    constructing the message/batch/file and it's components.
+    constructing the message/batch/file and its components.
 
     .. note::
 
@@ -61,7 +61,7 @@ def parse(lines, encoding="utf-8", factory=Factory):
     indexed access to the data elements.
 
     A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
-    constructing the message and it's components.
+    constructing the message and its components.
 
     .. note::
 
@@ -129,7 +129,7 @@ def parse_batch(lines, encoding="utf-8", factory=Factory):
     that allows indexed access to the messages.
 
     A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
-    constructing the batch and it's components.
+    constructing the batch and its components.
 
     .. note::
 
@@ -212,7 +212,7 @@ def parse_file(lines, encoding="utf-8", factory=Factory):  # noqa: C901
     indexed access to the batches.
 
     A custom :py:class:`hl7.Factory` subclass can be passed in to be used when
-    constructing the file and it's components.
+    constructing the file and its components.
 
     .. note::
 
