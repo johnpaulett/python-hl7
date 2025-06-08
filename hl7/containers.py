@@ -206,7 +206,7 @@ class File(Container):
         return self.create_segment([self.create_field(["FTS"])])
 
     def __str__(self):
-        """Join a the child batches into a single string, separated
+        """Join the child batches into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
         appropriate method for turning the python-hl7 representation of
@@ -297,7 +297,7 @@ class Batch(Container):
         return self.create_segment([self.create_field(["BTS"])])
 
     def __str__(self):
-        """Join a the child messages into a single string, separated
+        """Join the child messages into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
         appropriate method for turning the python-hl7 representation of
@@ -589,7 +589,7 @@ class Message(Container):
         return ack
 
     def __str__(self):
-        """Join a the child containers into a single string, separated
+        """Join the child containers into a single string, separated
         by the self.separator.  This method acts recursively, calling
         the children's __unicode__ method.  Thus ``unicode()`` is the
         appropriate method for turning the python-hl7 representation of
