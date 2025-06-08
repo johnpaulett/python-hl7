@@ -20,8 +20,9 @@ virtual environment.  Initialize the environment and run tox::
 
     $ make init
     $ make tests
-      py27: commands succeeded
-      py26: commands succeeded
+      py311: commands succeeded
+      py310: commands succeeded
+      py39: commands succeeded
       docs: commands succeeded
       congratulations :)
 
