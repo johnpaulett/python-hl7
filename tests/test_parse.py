@@ -376,6 +376,10 @@ class ParseTest(TestCase):
         self.assertEqual(msg.unescape("\\X20202020\\"), "    ")
         self.assertEqual(msg.unescape("\\Xe1\\\\Xe9\\\\Xed\\\\Xf3\\\\Xfa\\"), "áéíóú")
 
+        # Trailing unterminated escape sequence is preserved literally (#84)
+        self.assertEqual(msg.unescape("\\E\\R\\"), "\\R\\")
+        self.assertEqual(msg.unescape("text\\"), "text\\")
+
     def test_escape(self):
         msg = hl7.parse(rep_sample_hl7)
 
