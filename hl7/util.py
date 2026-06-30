@@ -258,4 +258,11 @@ def unescape(container, field, app_map=None):  # noqa: C901
         else:
             rv.append(str(c))
 
+    if in_seq:
+        # The field ended in the middle of an escape sequence (e.g. a trailing
+        # lone escape character). It cannot be decoded, so preserve the
+        # original characters literally rather than dropping them.
+        rv.append(container.esc)
+        rv.extend(collecting)
+
     return "".join(rv)
