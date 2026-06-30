@@ -356,6 +356,27 @@ class ParseTest(TestCase):
         self.assertEqual(msg2["MSH.21.1.1"], "COMPONENT 21.1.1")
         self.assertEqual(msg2["MSH.21.1.2.4"], "SUBCOMPONENT 21.1.2.4")
 
+    def test_assign_deeper_into_simple_field(self):
+        # Regression for #55: assigning into a field/repetition that was parsed
+        # as a bare string must promote it to a container rather than raising
+        # "TypeError: 'str' object does not support item assignment".
+        sample = "MSH|^~\\&|field|rep1~rep2|"
+
+        # repetition level (the reported case)
+        seg = hl7.parse(sample).segments("MSH")[0]
+        seg.assign_field("NewRep", 3, 1)
+        self.assertEqual(str(seg(3)), "NewRep")
+
+        # component level keeps the existing value as the first component
+        seg = hl7.parse(sample).segments("MSH")[0]
+        seg.assign_field("X", 3, 1, 2)
+        self.assertEqual(str(seg(3)), "field^X")
+
+        # subcomponent level into a single-component repetition
+        seg = hl7.parse(sample).segments("MSH")[0]
+        seg.assign_field("Y", 4, 1, 1, 2)
+        self.assertEqual(str(seg(4)), "rep1&Y~rep2")
+
     def test_unescape(self):
         msg = hl7.parse(rep_sample_hl7)
 

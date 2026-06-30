@@ -742,12 +742,26 @@ class Segment(Container):
         while len(field) < repeat_num:
             field.append(self.create_repetition([]))
         repetition = field(repeat_num)
+        if not isinstance(repetition, Repetition):
+            # A non-repeating field stores its value as a bare string. Promote
+            # it to a Repetition so it can be addressed at the component or
+            # subcomponent level instead of raising a TypeError.
+            repetition = self.create_repetition(
+                [repetition] if repetition != "" else []
+            )
+            field(repeat_num, repetition)
         if component_num is None:
             repetition[:] = [value]
             return
         while len(repetition) < component_num:
             repetition.append(self.create_component([]))
         component = repetition(component_num)
+        if not isinstance(component, Component):
+            # Likewise, a single-component repetition stores a bare string.
+            component = self.create_component(
+                [component] if component != "" else []
+            )
+            repetition(component_num, component)
         if subcomponent_num is None:
             component[:] = [value]
             return
