@@ -11,8 +11,7 @@ python-hl7 is a simple library for parsing messages of Health Level 7
 python-hl7 supports Python 3.9 through 3.13.
 
 .. image::
-   https://github.com/johnpaulett/python-hl7/workflows/Python%20package/badge.svg
-   :target: https://github.com/johnpaulett/python-hl7/actions
+   https://github.com/johnpaulett/python-hl7/actions/workflows/codeql-analysis.yml/badge.svg
 
 
 .. warning::
