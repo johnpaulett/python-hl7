@@ -18,6 +18,10 @@ Changelog
   float value.
 * Use `socket.sendall` to flush the MLLP buffer. `python-hl7#41 <https://github.com/johnpaulett/python-hl7/issues/41>`_.
  Thanks `Feenes <https://github.com/feenes>`_!`
+* :py:func:`hl7.parse` skips empty and whitespace-only segment lines. A doubled
+  ``\r`` was parsed as an empty segment, which made segment lookups like
+  ``msg.segment("PID")`` raise ``IndexError``. For such input, ``len(msg)`` and
+  ``str(msg)`` no longer include those lines.
 
 
 0.4.5 - March 2022
