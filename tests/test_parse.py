@@ -407,6 +407,100 @@ class ParseTest(TestCase):
             [s[0][0] for s in msg], ["MSH", "EVN", "PID", "PD1", "NK1", "PV1"]
         )
 
+    def test_empty_segment_line(self):
+        # A doubled segment terminator leaves an empty segment line, which
+        # is skipped instead of being parsed as an empty segment
+        clean = hl7.parse(sample_hl7)
+        variants = [
+            sample_hl7.replace("\rPID", "\r\rPID"),
+            sample_hl7.replace("\rPID", "\r\r\rPID"),
+            sample_hl7.replace("\rOBX|2", "\r\rOBX|2"),
+            sample_hl7.replace("\r", "\r\r"),
+            sample_hl7.replace("\rPID", "\r \rPID"),
+            sample_hl7.replace("\rPID", "\r\n\rPID"),
+        ]
+        for text in variants:
+            with self.subTest(text=text):
+                msg = hl7.parse(text)
+                self.assertEqual(msg, clean)
+                self.assertEqual(str(msg), sample_hl7)
+                self.assertEqual(msg.segment("PID")[3][0], "555-44-4444")
+                self.assertEqual(msg["PID.F3"], "555-44-4444")
+                self.assertEqual(len(msg.segments("OBX")), 2)
+                self.assertIsInstance(msg.create_ack(), hl7.Message)
+
+    def test_empty_segment_line_crlf(self):
+        crlf = sample_hl7.replace("\r", "\r\n")
+        clean = hl7.parse(crlf)
+        variants = [
+            crlf.replace("\r\nPID", "\r\n\r\nPID"),
+            crlf.replace("\r\nOBX|2", "\r\n\r\nOBX|2"),
+        ]
+        for text in variants:
+            with self.subTest(text=text):
+                msg = hl7.parse(text)
+                self.assertEqual(msg, clean)
+                self.assertEqual(str(msg), str(clean))
+                self.assertEqual(len(msg), 5)
+
+    def test_empty_segment_line_at_start_or_end(self):
+        # Already handled by the strip() in parse; pinned here as a guard.
+        clean = hl7.parse(sample_hl7)
+        for text in [
+            "\r\r" + sample_hl7,
+            sample_hl7 + "\r\r",
+            "\r\n\r\n" + sample_hl7,
+            sample_hl7 + "\r\n\r\n",
+        ]:
+            with self.subTest(text=text):
+                self.assertEqual(hl7.parse(text), clean)
+
+    def test_only_segment_terminators(self):
+        # Already handled by the strip() in parse; pinned here as a guard.
+        for text in ["", "\r", "\r\r", "\r\n\r\n", "\n\n"]:
+            with self.subTest(text=text):
+                with self.assertRaises(ParseException):
+                    hl7.parse(text)
+
+    def test_parse_hl7_empty_segment_line(self):
+        msg = hl7.parse_hl7(sample_hl7.replace("\rPID", "\r\rPID"))
+        self.assertIsInstance(msg, hl7.Message)
+        self.assertEqual(msg, hl7.parse(sample_hl7))
+
+    def test_parse_batch_empty_segment_line(self):
+        clean = hl7.parse_batch(sample_batch1)
+        variants = [
+            sample_batch1.replace("\rEVN", "\r\rEVN"),
+            sample_batch1.replace("\rPID", "\r \rPID"),
+            sample_batch1.replace("\rEVN", "\r\n\r\nEVN"),
+            sample_batch1.replace("^^^^^1\rMSH", "^^^^^1\r\rMSH"),
+            sample_batch1.replace("\rBTS", "\r\rBTS"),
+            sample_batch1 + "\r\r",
+        ]
+        for text in variants:
+            with self.subTest(text=text):
+                batch = hl7.parse_batch(text)
+                self.assertEqual(str(batch), str(clean))
+                self.assertEqual(len(batch), 2)
+                self.assertEqual(batch.trailer[1][0], "2")
+                self.assertEqual(batch[1].segment("PID")[3][0][0][0], "0000112234")
+
+    def test_parse_file_empty_segment_line(self):
+        clean = hl7.parse_file(sample_file1)
+        variants = [
+            sample_file1.replace("\rEVN", "\r\rEVN"),
+            sample_file1.replace("\rPID", "\r \rPID"),
+            sample_file1.replace("\rEVN", "\r\n\r\nEVN"),
+            sample_file1.replace("^^^^^1\rMSH", "^^^^^1\r\rMSH"),
+            sample_file1.replace("\rBTS", "\r\rBTS"),
+        ]
+        for text in variants:
+            with self.subTest(text=text):
+                file = hl7.parse_file(text)
+                self.assertEqual(str(file), str(clean))
+                self.assertEqual(len(file), 2)
+                self.assertEqual(file[0][1].segment("PID")[3][0][0][0], "0000112234")
+
 
 class ParsePlanTest(TestCase):
     def test_create_parse_plan(self):

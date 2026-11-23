@@ -93,6 +93,9 @@ def parse(lines, encoding="utf-8", factory=Factory):
         lines = lines.decode(encoding)
     # Strip out unnecessary whitespace
     strmsg = lines.strip()
+    # Skip empty segment lines, such as those left by a doubled
+    # segment terminator ("\r\r" or "\r\n\r\n")
+    strmsg = "\r".join(segment for segment in strmsg.split("\r") if segment.strip())
     # The method for parsing the message
     plan = create_parse_plan(strmsg, factory)
     # Start splitting the methods based upon the ParsePlan
