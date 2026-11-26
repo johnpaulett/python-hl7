@@ -1,14 +1,24 @@
 import os
 import socket
+import threading
 from argparse import Namespace
 from shutil import rmtree
 from tempfile import mkdtemp
+from io import StringIO
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import hl7
 from hl7 import __version__ as hl7_version
-from hl7.client import CR, EB, SB, MLLPClient, MLLPException, mllp_send
+from hl7.client import (
+    CR,
+    EB,
+    SB,
+    MLLPClient,
+    MLLPException,
+    _positive_timeout,
+    mllp_send,
+)
 
 
 class MLLPClientTest(TestCase):
@@ -26,6 +36,37 @@ class MLLPClientTest(TestCase):
     def test_connect(self):
         self.mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
         self.client.socket.connect.assert_called_once_with(("localhost", 6666))
+
+    def test_no_timeout_by_default(self):
+        self.assertFalse(self.client.socket.settimeout.called)
+
+    def test_timeout_set_before_connect(self):
+        self.mock_socket.reset_mock()
+
+        MLLPClient("localhost", 6666, timeout=2.5)
+
+        self.assertEqual(
+            self.mock_socket.return_value.mock_calls,
+            [call.settimeout(2.5), call.connect(("localhost", 6666))],
+        )
+
+    def test_socket_closed_when_connect_times_out(self):
+        self.mock_socket.reset_mock()
+        self.mock_socket.return_value.connect.side_effect = socket.timeout
+
+        with self.assertRaises(socket.timeout):
+            MLLPClient("localhost", 6666, timeout=1)
+
+        self.mock_socket.return_value.close.assert_called_once_with()
+
+    def test_socket_closed_when_connect_refused(self):
+        self.mock_socket.reset_mock()
+        self.mock_socket.return_value.connect.side_effect = ConnectionRefusedError
+
+        with self.assertRaises(ConnectionRefusedError):
+            MLLPClient("localhost", 6666)
+
+        self.mock_socket.return_value.close.assert_called_once_with()
 
     def test_close(self):
         self.client.close()
@@ -84,6 +125,37 @@ class MLLPClientTest(TestCase):
         self.client.socket.close.assert_called_once_with()
 
 
+class MLLPClientTimeoutTest(TestCase):
+    def setUp(self):
+        # real loopback server that accepts a connection but never replies
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.addCleanup(self.server.close)
+        self.server.bind(("127.0.0.1", 0))
+        self.server.listen(1)
+        self.server.settimeout(5)
+        self.port = self.server.getsockname()[1]
+
+        self.done = threading.Event()
+        self.thread = threading.Thread(target=self.accept_and_ignore, daemon=True)
+        self.thread.start()
+        # cleanups run in reverse: release the thread, join it, close server
+        self.addCleanup(self.thread.join, 5)
+        self.addCleanup(self.done.set)
+
+    def accept_and_ignore(self):
+        try:
+            conn, _ = self.server.accept()
+        except OSError:
+            return
+        with conn:
+            self.done.wait(5)
+
+    def test_send_message_times_out(self):
+        with MLLPClient("127.0.0.1", self.port, timeout=0.2) as client:
+            with self.assertRaises(socket.timeout):
+                client.send_message(b"MSH|^~\\&|foo")
+
+
 class MLLPSendTest(TestCase):
     def setUp(self):
         # patch to avoid touching sys and socket
@@ -109,6 +181,7 @@ class MLLPSendTest(TestCase):
 
         self.option_values = Namespace(
             port=6661,
+            timeout=None,
             filename=os.path.join(self.dir, "test.hl7"),
             verbose=True,
             loose=False,
@@ -180,6 +253,18 @@ class MLLPSendTest(TestCase):
         mllp_send()
 
         self.mock_socket().connect.assert_called_once_with(("localhost", 7890))
+
+    def test_no_timeout(self):
+        mllp_send()
+
+        self.assertFalse(self.mock_socket().settimeout.called)
+
+    def test_timeout(self):
+        self.option_values.timeout = 2.5
+
+        mllp_send()
+
+        self.mock_socket().settimeout.assert_called_once_with(2.5)
 
     def test_stdin(self):
         self.option_values.filename = None
@@ -277,6 +362,57 @@ class MLLPSendTest(TestCase):
         with patch("hl7.client.sys.argv", argv):
             mllp_send()
         self.assertFalse(self.mock_stdout.called)
+
+    def test_timeout_cli_option(self):
+        argv = [
+            "mllp_send",
+            "--file",
+            os.path.join(self.dir, "test.hl7"),
+            "--timeout",
+            "2.5",
+            "localhost",
+        ]
+        # stop patched parser to use real CLI parsing
+        self.options_patch.stop()
+        with patch("hl7.client.sys.argv", argv):
+            mllp_send()
+        self.mock_socket().settimeout.assert_called_once_with(2.5)
+
+    def test_timeout_expiry_raises_and_closes(self):
+        self.option_values.timeout = 0.5
+        self.mock_socket().recv.side_effect = socket.timeout
+
+        with self.assertRaises(socket.timeout):
+            mllp_send()
+
+        self.mock_socket().close.assert_called_once_with()
+
+    def test_invalid_timeout_cli_option_is_rejected(self):
+        # stop patched parser to use real CLI parsing
+        self.options_patch.stop()
+        self.mock_exit.side_effect = SystemExit(2)
+        for value in ["0", "-1", "nan", "inf", "soon"]:
+            with self.subTest(value=value):
+                argv = [
+                    "mllp_send",
+                    "--file",
+                    os.path.join(self.dir, "test.hl7"),
+                    "--timeout",
+                    value,
+                    "localhost",
+                ]
+                with (
+                    patch("hl7.client.sys.argv", argv),
+                    patch("sys.stderr", new_callable=StringIO) as err,
+                ):
+                    with self.assertRaises(SystemExit):
+                        mllp_send()
+                self.assertIn("timeout", err.getvalue())
+                self.assertFalse(self.mock_socket().connect.called)
+
+    def test_positive_timeout_accepts_seconds(self):
+        self.assertEqual(_positive_timeout("2.5"), 2.5)
+        self.assertEqual(_positive_timeout("10"), 10.0)
 
 
 class FakeStream:
