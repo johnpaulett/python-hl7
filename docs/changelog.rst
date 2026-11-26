@@ -16,6 +16,9 @@ Changelog
 * Switched formatting and linting from black/isort and flake8 to ``ruff``.
 * Fixed timezone formatting when ``parse_datetime`` created ``_UTCOffset`` with a
   float value.
+* Added an optional ``timeout`` to :py:class:`hl7.client.MLLPClient` and a
+  ``--timeout`` option to ``mllp_send``, so the client no longer waits
+  forever on a server that never replies. `python-hl7#18 <https://github.com/johnpaulett/python-hl7/issues/18>`_.
 * Use `socket.sendall` to flush the MLLP buffer. `python-hl7#41 <https://github.com/johnpaulett/python-hl7/issues/41>`_.
  Thanks `Feenes <https://github.com/feenes>`_!`
 

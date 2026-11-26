@@ -1,5 +1,6 @@
 import argparse
 import io
+import math
 import os.path
 import socket
 import sys
@@ -39,12 +40,33 @@ class MLLPClient:
     MLLPClient takes an optional ``encoding`` parameter, defaults to UTF-8,
     for encoding unicode messages [#]_.
 
+    MLLPClient also takes an optional ``timeout`` parameter, a positive number
+    of seconds. The default, ``None``, leaves the socket's timeout unchanged
+    (blocking, unless a global default was set with
+    :py:func:`socket.setdefaulttimeout`), so a server that never replies makes
+    :py:meth:`MLLPClient.send_message` wait forever. A ``timeout`` applies to
+    each socket operation (connect, send and receive) separately; the hostname
+    lookup is not covered. :py:exc:`socket.timeout` is raised when it expires
+    (on Python 3.10+ this is an alias of :py:exc:`TimeoutError`). After a
+    timeout the reply may still arrive later, so close the client rather than
+    reuse it::
+
+        with MLLPClient(host, port, timeout=10) as client:
+            client.send_message('MSH|...')
+
     .. [#] http://wiki.hl7.org/index.php?title=Character_Set_used_in_v2_messages
     """
 
-    def __init__(self, host, port, encoding="utf-8"):
+    def __init__(self, host, port, encoding="utf-8", timeout=None):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
+        try:
+            if timeout is not None:
+                self.socket.settimeout(timeout)
+            self.socket.connect((host, port))
+        except BaseException:
+            # no client object is returned, so nobody else can close it
+            self.socket.close()
+            raise
         self.encoding = encoding
 
     def __enter__(self):
@@ -81,7 +103,8 @@ class MLLPClient:
 
     def send(self, data):
         """Low-level, direct access to the socket.send (data must be already
-        wrapped in an MLLP container).  Blocks until the server returns.
+        wrapped in an MLLP container).  Blocks until the server returns, or
+        raises :py:exc:`socket.timeout` if a ``timeout`` was given and expires.
         """
         # upload the data
         self.socket.sendall(data)
@@ -165,6 +188,19 @@ def read_loose(stream):
         yield START_BLOCK + m
 
 
+def _positive_timeout(value):
+    """argparse type for ``--timeout``: a finite number of seconds above 0."""
+    try:
+        seconds = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid timeout: {value!r}") from None
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise argparse.ArgumentTypeError(
+            f"timeout must be a positive number of seconds, got {value!r}"
+        )
+    return seconds
+
+
 def mllp_send():
     """Command line tool to send messages to an MLLP server"""
     # set up the command line options
@@ -186,6 +222,14 @@ def mllp_send():
         dest="port",
         default=6661,
         help="port to connect to",
+    )
+    parser.add_argument(
+        "--timeout",
+        action="store",
+        type=_positive_timeout,
+        dest="timeout",
+        default=None,
+        help="seconds to wait for the server before giving up (default: no timeout)",
     )
     parser.add_argument(
         "-f",
@@ -247,7 +291,7 @@ def mllp_send():
 
         stream = stdin()
 
-    with MLLPClient(host, options.port) as client:
+    with MLLPClient(host, options.port, timeout=options.timeout) as client:
         message_stream = (
             read_stream(stream) if not options.loose else read_loose(stream)
         )

@@ -26,6 +26,8 @@ Usage
       -h, --help            show this help message and exit
       --version             print current version and exit
       -p PORT, --port=PORT  port to connect to
+      --timeout=TIMEOUT     seconds to wait for the server before giving up
+                            (default: no timeout)
       -f FILE, --file=FILE  read from FILE instead of stdin
       -q, --quiet           do not print status messages to stdout
       --loose               allow file to be a HL7-like object (\r\n instead of
@@ -45,6 +47,18 @@ carriage returns will be replaced with the platform's default line endings.
 In this case, ``mllp_send`` provides the ``--loose`` option, which attempts
 to take something that "looks like HL7" and convert it into a proper HL7
 message..
+
+Timeouts
+========
+
+By default, ``mllp_send`` waits as long as it takes for the server to accept
+the connection and to reply to each message. Use ``--timeout`` with a positive
+number of seconds to give up instead. The timeout applies to each network
+operation (connect, send and receive) separately, and the hostname lookup is
+not covered. When it expires, ``mllp_send`` exits with a timeout error
+(``socket.timeout``, shown as ``TimeoutError`` on Python 3.10+)::
+
+    $ mllp_send --file sample.hl7 --timeout 10 mirth.example.com
 
 
 Additional Resources
